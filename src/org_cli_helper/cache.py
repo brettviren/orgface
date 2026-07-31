@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Brett Viren <brett.viren@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """XDG file cache for values that are expensive to ask Emacs for.
 
 Only org-roam's locations are cached.  They change about as often as a

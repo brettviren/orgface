@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Brett Viren <brett.viren@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """git-style date specifications for --since/--after/--until/--before.
 
 Supports the forms people actually type at ``git log``: ISO dates and

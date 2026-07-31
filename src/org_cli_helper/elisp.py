@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Brett Viren <brett.viren@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Serialising Python values to Elisp and reading results back.
 
 ``emacsclient --eval`` returns the printed (``prin1``) form of the result.

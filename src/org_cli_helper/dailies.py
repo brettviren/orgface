@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Brett Viren <brett.viren@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Reading org-roam daily notes into log entries.
 
 Daily notes are plain files, so ``org log`` reads them directly rather than

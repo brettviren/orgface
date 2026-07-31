@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Brett Viren <brett.viren@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """``org commit`` -- write an entry into today's org-roam daily note."""
 
 from __future__ import annotations

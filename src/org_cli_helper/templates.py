@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Brett Viren <brett.viren@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Selecting and filling org-roam dailies capture templates.
 
 This module is pure: it operates on template descriptions already fetched

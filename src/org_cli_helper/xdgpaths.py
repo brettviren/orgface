@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Brett Viren <brett.viren@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Freedesktop XDG base directory locations for org-cli-helper.
 
 Pure path computation.  Nothing here creates directories or touches the

@@ -1,5 +1,8 @@
 ;;; bootstrap.el --- daemon-side support for org-cli-helper  -*- lexical-binding: t; -*-
 
+;; SPDX-FileCopyrightText: 2026 Brett Viren <brett.viren@gmail.com>
+;; SPDX-License-Identifier: GPL-3.0-or-later
+
 ;; Loaded into the managed `emacs --daemon' by org-cli-helper.  Every
 ;; function returns a base64-encoded UTF-8 JSON string so the CLI never has
 ;; to parse Emacs' printed representation of anything richer than a string.

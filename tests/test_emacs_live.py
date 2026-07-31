@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Brett Viren <brett.viren@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """End to end tests against a real Emacs daemon.
 
 These exercise the parts that cannot be reasoned about safely in isolation:

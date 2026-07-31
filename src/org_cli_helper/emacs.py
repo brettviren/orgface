@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Brett Viren <brett.viren@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Lifecycle management for the Emacs daemon backing org-cli-helper.
 
 Modelled on ssh's master control: the first command that needs Emacs starts

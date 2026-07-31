@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Brett Viren <brett.viren@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Working out where the org-roam daily notes live.
 
 Configuration wins, then the file cache, and only then is the daemon asked.

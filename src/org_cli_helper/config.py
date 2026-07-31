@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Brett Viren <brett.viren@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Layered configuration for org-cli-helper.
 
 Settings are declared once in :data:`SETTINGS` and resolved in

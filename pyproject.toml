@@ -6,6 +6,8 @@ readme = {file = "README.org", content-type = "text/org"}
 authors = [
     { name = "Brett Viren", email = "brett.viren@gmail.com" }
 ]
+license = "GPL-3.0-or-later"
+license-files = ["COPYING"]
 requires-python = ">=3.12"
 dependencies = [
     "click>=8.4.2",
@@ -15,7 +17,8 @@ dependencies = [
 org-cli-helper = "org_cli_helper:main"
 
 [build-system]
-requires = ["setuptools>=61"]
+# 77.0.3 is the first release supporting PEP 639 license expressions.
+requires = ["setuptools>=77.0.3"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.package-data]

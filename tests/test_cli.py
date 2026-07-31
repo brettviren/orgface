@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Brett Viren <brett.viren@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Command line surface: parsing, help, and the paths that avoid Emacs.
 
 Anything needing a live daemon lives in test_emacs_live.py.  Here the

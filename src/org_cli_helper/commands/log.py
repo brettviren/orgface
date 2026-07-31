@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Brett Viren <brett.viren@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """``org log`` -- show recent org-roam daily entries, in the style of git log."""
 
 from __future__ import annotations
