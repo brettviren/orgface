@@ -1,0 +1,237 @@
+#+title: org-cli-helper
+#+options: toc:2
+
+Do some Emacs org things quickly from the command line.
+
+The CLI is shaped like =git=: a top level program with subcommands that do
+one thing and exit. It manages an =emacs --daemon= the way =ssh= manages a
+master control connection — started on first use, reused by later commands,
+and shut down by itself once it has been idle long enough.
+
+The entry point is =org-cli-helper=. This document assumes you have aliased
+it to =org=:
+
+#+begin_src sh
+alias org=org-cli-helper
+#+end_src
+
+* Quick start
+
+#+begin_src sh
+org commit -m "Fixed the thing" -m "Took all day."
+org log --today
+org log --since "2 weeks ago" --oneline
+org daemon status
+#+end_src
+
+* Installation
+
+org-cli-helper uses [[https://docs.astral.sh/uv/][uv]] for development.
+
+#+begin_src sh
+uv sync                # set up the development area
+uv run pytest          # run the tests
+uv run org-cli-helper  # run the CLI
+#+end_src
+
+Emacs must provide =org-roam=. Nothing about your notes or your Emacs
+configuration is duplicated here: the capture templates and the org-roam
+directories are read from the running daemon, which loads your normal init
+file.
+
+* The daemon
+
+Commands that need Emacs talk to a daemon under a private server name,
+=org-cli-helper= by default, so your interactive Emacs is never touched. If
+you would rather share one Emacs, point =daemon.server_name= at it.
+
+- The first command needing Emacs starts the daemon. Cold start costs a few
+  seconds; everything afterwards is a few tens of milliseconds.
+- Every request resets an idle timer inside Emacs. After
+  =daemon.lifetime= of quiet the daemon saves modified buffers and exits.
+  The default is one hour; =never= keeps it alive indefinitely.
+- No supervising process is involved. The countdown lives in the daemon,
+  so nothing is left behind if the CLI is interrupted.
+
+=org daemon= exposes =start=, =stop=, =restart=, =status= and =info= for
+when you want to take charge explicitly.
+
+* Commands
+** org commit
+
+Record an entry in today's org-roam daily note, in the style of
+=git commit=. The first =-m= is the entry title; any further =-m= options
+become body paragraphs.
+
+#+begin_src sh
+org commit -m "Fixed the thing" -m "Took all day." -m "Worth it."
+#+end_src
+
+With no =-m= at all, an interactive capture opens in the terminal, exactly
+as =org-roam-dailies-capture-today= would. Finishing or aborting the
+capture returns you to the shell. Use =--gui= for a separate frame instead.
+
+*** Choosing a template
+
+Writing goes through =org-roam-dailies-capture-today=, so the templates on
+offer are the ones in your =org-roam-dailies-capture-templates=. Note this
+is a different variable from =org-roam-capture-templates=: if you want a
+directory-based daily note, add that template to the *dailies* list.
+
+=-t/--template= selects one by *key*, then by *0-based index*, then by
+*description*, in that order of precedence — so a template keyed =1= still
+wins over the template at index 1. Descriptions match case-insensitively
+and may be abbreviated to an unambiguous prefix. Without =-t= the first
+template is used. If you define no templates at all, org-roam's own
+default applies.
+
+#+begin_src sh
+org commit --list-templates      # what is on offer
+org commit -t d       -m "..."   # by key
+org commit -t 0       -m "..."   # by index
+org commit -t default -m "..."   # by description
+#+end_src
+
+*** Seeing what would be written
+
+=--dry-run= prints the capture text that would be handed to Emacs and
+writes nothing:
+
+#+begin_src sh
+$ org commit --dry-run -m "Fixed the thing" -m "Took all day."
+* Fixed the thing
+%T
+%?Took all day.
+#+end_src
+
+The =%T= and =%?= are still there because Emacs, not this tool, expands
+them. Your message text is escaped so that it cannot be.
+
+** org log
+
+Show recent daily entries, newest first, through your pager. Each top level
+heading in a daily note is one entry — the unit =org commit= creates —
+which makes it the natural analogue of a commit.
+
+Daily notes are read straight from disk, so =org log= works whether or not
+Emacs is running.
+
+| Option              | Meaning                                        |
+|---------------------+------------------------------------------------|
+| =--today=           | Only entries written today                     |
+| =--since=, =--after=  | At or after a date                             |
+| =--until=, =--before= | At or before a date                            |
+| =-n=, =--max-count=   | Limit to the N most recent entries             |
+| =--oneline=         | One compact line per entry                     |
+| =--reverse=         | Oldest first                                   |
+| =--color=           | =auto= (default), =always=, =never=                |
+| =--no-pager=        | Write straight to stdout                       |
+| =--refresh=         | Re-read org-roam locations from Emacs          |
+
+Dates accept =YYYY-MM-DD= (also =YYYY/MM/DD=, =YYYYMMDD=, and with a time),
+=today=, =yesterday=, =now=, and the =N units ago= family including git's
+dotted spelling — =2.weeks.ago=, =3 days ago=, =last month=. This is a
+documented subset of git's =approxidate=, not a reimplementation of it;
+anything unrecognised is reported rather than guessed at.
+
+An upper bound named as a bare day covers that whole day, so
+=--until 2026-07-30= includes everything written on the 30th.
+
+** org config
+
+=org config show= prints the resolved configuration and where it came from,
+=org config paths= the XDG locations in use, and =org config clear-cache=
+forgets the cached org-roam locations.
+
+* Configuration
+
+org-cli-helper follows the freedesktop XDG conventions. Configuration is
+read from a file named with =-c/--config=, otherwise from
+=~/.config/org-cli-helper/config.toml=. Cached org-roam locations live
+under =~/.cache/org-cli-helper/=.
+
+Layers apply in last-one-wins order:
+
+: environment variables -> config file -> command line options
+
+#+begin_src conf-toml
+[daemon]
+server_name   = "org-cli-helper"  # ORG_CLI_HELPER_SERVER_NAME
+lifetime      = "1h"              # ORG_CLI_HELPER_LIFETIME
+emacs         = "emacs"           # ORG_CLI_HELPER_EMACS
+emacsclient   = "emacsclient"     # ORG_CLI_HELPER_EMACSCLIENT
+start_timeout = "120s"            # ORG_CLI_HELPER_START_TIMEOUT
+
+[roam]
+# Both are discovered from the daemon and cached when left unset.
+directory         = "~/org/roam"  # ORG_CLI_HELPER_ROAM_DIRECTORY
+dailies_directory = "daily/"      # ORG_CLI_HELPER_DAILIES_DIRECTORY
+
+[log]
+pager = "less"                    # ORG_CLI_HELPER_PAGER
+#+end_src
+
+Durations accept =90s=, =30m=, =1h=, =1h30m=, =2 hours=, =1d=, a bare
+number of seconds, or =never= (equivalently =none=, =inf=, =0=) to disable
+expiry.
+
+Setting =roam.directory= and =roam.dailies_directory= explicitly lets
+=org log= run without ever consulting Emacs.
+
+* Notes and limitations
+
+*Your message text is never expanded.* Splicing text into a capture
+template means Emacs would otherwise interpret =%t=, =%(sexp)=, =%^{...}=
+and friends in whatever you wrote — =%(shell)= would genuinely start a
+shell. Messages are escaped so every such sequence survives literally. The
+escaping accounts for org-roam expanding a capture body *twice*, which is
+why =tests/test_emacs_live.py= checks it against a real Emacs rather than
+trusting the arithmetic.
+
+*=${...}= is refused.* org-roam expands =${foo}= by calling a function
+named =foo= or prompting for a value, and offers no escape mechanism at
+all. Rather than execute or hang, =org commit -m= refuses such a message
+and says so. Capture interactively if you need that text.
+
+*=%?= in a title is reported.* Emacs finds the capture point with a plain
+search for =%?= that honours no escaping. A =%?= in the body is safe, but
+one ahead of the capture point cannot be protected, so a warning is
+printed instead of pretending otherwise.
+
+*Whitespace follows your template literally.* The body is placed exactly
+where =%?= sits. With the common =* %^{Title}\n%T\n%?= there is no blank
+line between the timestamp and the body. If you would rather have one, put
+it in the template:
+
+#+begin_src elisp
+(setq org-roam-dailies-capture-templates
+      '(("d" "default" entry "* %^{Title}\n%T\n\n%?"
+         :target (file+head "%<%Y-%m-%d>.org" "#+title: %<%Y-%m-%d>\n"))))
+#+end_src
+
+*Templates needing a person are refused for =-m=.* Interactive escapes
+with no non-interactive answer (=%^t=, =%^{Prop}p= and similar) cause
+=commit -m= to stop and suggest capturing interactively. A second plain
+=%^{...}= prompt is filled empty with a warning, since the first one takes
+the title.
+
+* Development
+
+Tests live in =tests/= and run with =uv run pytest=.
+
+#+begin_src sh
+uv run pytest                  # everything
+uv run pytest -m "not emacs"   # skip the live Emacs integration tests
+#+end_src
+
+The =emacs=-marked tests build a throwaway org-roam directory and an init
+file of their own, then drive a real daemon against them, so your notes and
+your Emacs configuration are untouched. They skip when Emacs or org-roam
+cannot be found.
+
+Layering follows =CLAUDE.md=: =cli.py= and =commands/= parse and present,
+=ui.py= renders, and the decisions live in the data modules —
+=config.py=, =templates.py=, =dailies.py=, =dates.py=, =locations.py=,
+=emacs.py= and =elisp.py=. =bootstrap.el= is the daemon-side half, loaded
+on demand and returning base64 JSON so nothing has to parse Emacs' printed
+output.
