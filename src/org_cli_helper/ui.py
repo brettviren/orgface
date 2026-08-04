@@ -14,6 +14,7 @@ import shutil
 import subprocess
 import sys
 from collections.abc import Iterable, Sequence
+from pathlib import Path
 
 import click
 
@@ -88,6 +89,26 @@ def format_log(
     if oneline:
         return "\n".join(format_oneline(e, colour) for e in entries)
     return "\n\n".join(format_entry(e, colour) for e in entries)
+
+
+def tildify(path: Path) -> str:
+    """Abbreviate a path under the home directory the way a shell does."""
+    try:
+        return "~/" + str(path.relative_to(Path.home()))
+    except (ValueError, RuntimeError):
+        return str(path)
+
+
+def format_capture_summary(
+    where: str, title: str, path: Path | None = None, tags: Sequence[str] = ()
+) -> str:
+    """The confirmation ``commit`` and ``note`` print after capturing."""
+    lines = [f"[{where}] {title}"]
+    if path is not None:
+        lines.append(f" 1 entry added to {tildify(path)}")
+    if tags:
+        lines.append(" tags: " + "".join(f":{tag}" for tag in tags) + ":")
+    return "\n".join(lines)
 
 
 def format_templates(templates: Iterable) -> str:

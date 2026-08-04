@@ -175,6 +175,14 @@ class Emacs:
         """Capture BODY into today's daily note via template KEYS."""
         return self.eval_json(elisp.call("org-cli-helper-commit", keys, body))
 
+    def note(self, topic: str, body: str) -> dict[str, Any]:
+        """Capture BODY into the org-roam topic TOPIC, creating it if new."""
+        return self.eval_json(elisp.call("org-cli-helper-note", topic, body))
+
+    def topic(self, title: str) -> dict[str, Any]:
+        """Locate the org-roam node titled TITLE; ``file`` is None if absent."""
+        return self.eval_json(elisp.call("org-cli-helper-topic", title))
+
     def status(self) -> dict[str, Any]:
         """Liveness and identity of the daemon, without starting one."""
         if not self.is_running():
@@ -188,7 +196,19 @@ class Emacs:
         }
 
     def capture_interactive(self, keys: str | None, gui: bool = False) -> None:
-        """Hand the terminal (or a new frame) to an interactive capture."""
+        """Hand the terminal (or a new frame) to an interactive dailies capture."""
+        self._interactive(
+            elisp.call("org-cli-helper-capture-interactive", keys or ""), gui=gui
+        )
+
+    def note_interactive(self, topic: str, body: str, gui: bool = False) -> None:
+        """Hand the terminal (or a new frame) to an interactive topic note."""
+        self._interactive(
+            elisp.call("org-cli-helper-note-interactive", topic, body), gui=gui
+        )
+
+    def _interactive(self, form: str, gui: bool = False) -> None:
+        """Evaluate FORM in a frame of its own, blocking until it is gone."""
         self._require(self.config.emacsclient)
         if not self.is_running():
             self.start()
@@ -196,7 +216,6 @@ class Emacs:
         # the terminal, so it must not also carry setup output.
         self.eval("t")
 
-        form = elisp.call("org-cli-helper-capture-interactive", keys or "")
         argv = self._client_argv("-c" if gui else "-t", "-e", form)
         try:
             # Inherits this terminal: emacsclient -t blocks with a live frame

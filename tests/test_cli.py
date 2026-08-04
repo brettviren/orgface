@@ -10,6 +10,7 @@ which is the documented way to run ``log`` without Emacs.
 
 from __future__ import annotations
 
+import re
 from datetime import datetime
 
 import pytest
@@ -177,12 +178,95 @@ class TestCommitArguments:
         assert "-m" in result.output
 
 
+class TestNote:
+    """Everything up to the capture, plus the capture call itself."""
+
+    @pytest.fixture
+    def captured(self, monkeypatch):
+        """Record what would have been handed to the daemon."""
+        calls = []
+
+        def note(self, topic, body):
+            calls.append((topic, body))
+            return {"topic": topic, "file": "/roam/20260804-context_notes.org"}
+
+        monkeypatch.setattr("org_cli_helper.emacs.Emacs.note", note)
+        return calls
+
+    def test_dry_run_needs_a_message(self, runner, workspace):
+        result = run(runner, workspace, "note", "--dry-run")
+        assert result.exit_code != 0
+        assert "--dry-run needs at least one -m" in result.output
+
+    def test_dry_run_shows_the_context(self, runner, workspace, tmp_path, monkeypatch):
+        work = tmp_path / "some-repo" / "src"
+        (tmp_path / "some-repo" / ".git").mkdir(parents=True)
+        work.mkdir(parents=True)
+        monkeypatch.chdir(work)
+
+        result = run(runner, workspace, "note", "--dry-run", "-m", "Fixed the thing")
+        assert result.exit_code == 0
+        assert "* Fixed the thing :some_repo:" in result.output
+        assert f":DIRECTORY: {work.resolve()}" in result.output
+        assert ":HOST:" in result.output and ":USER:" in result.output
+        # An org timestamp, to the second, on its own line.
+        assert re.search(r"^\[\d{4}-\d\d-\d\d \w{3} \d\d:\d\d:\d\d\]$",
+                         result.output, re.MULTILINE)
+
+    def test_empty_title_is_refused(self, runner, workspace):
+        result = run(runner, workspace, "note", "-m", "   ")
+        assert result.exit_code != 0
+        assert "must not be empty" in result.output
+
+    def test_captures_to_the_configured_topic(self, runner, workspace, captured):
+        result = run(runner, workspace, "note", "-m", "Fixed the thing")
+        assert result.exit_code == 0
+        assert [topic for topic, _ in captured] == ["Context Notes"]
+        assert "* Fixed the thing" in captured[0][1]
+        assert "[Context Notes] Fixed the thing" in result.output
+        assert "1 entry added to" in result.output
+
+    def test_topic_option_wins(self, runner, workspace, captured):
+        result = run(runner, workspace, "note", "-T", "Other Topic", "-m", "Hi")
+        assert result.exit_code == 0
+        assert captured[0][0] == "Other Topic"
+        assert "[Other Topic] Hi" in result.output
+
+    def test_configured_topic_is_used(self, runner, workspace, captured, tmp_path):
+        config = tmp_path / "with-topic.toml"
+        config.write_text(
+            workspace.read_text(encoding="utf-8") + '[note]\ntopic = "Journal"\n',
+            encoding="utf-8",
+        )
+        assert run(runner, config, "note", "-m", "Hi").exit_code == 0
+        assert captured[0][0] == "Journal"
+
+    def test_quiet_says_nothing(self, runner, workspace, captured):
+        result = run(runner, workspace, "note", "-q", "-m", "Fixed the thing")
+        assert result.exit_code == 0
+        assert result.output == ""
+
+    def test_tags_are_reported(
+        self, runner, workspace, captured, tmp_path, monkeypatch
+    ):
+        (tmp_path / "some-repo" / ".git").mkdir(parents=True)
+        monkeypatch.chdir(tmp_path / "some-repo")
+        result = run(runner, workspace, "note", "-m", "Fixed the thing")
+        assert "tags: :some_repo:" in result.output
+
+    def test_help_does_not_touch_emacs(self, runner, workspace):
+        result = run(runner, workspace, "note", "-h")
+        assert result.exit_code == 0
+        assert "--topic" in result.output and "-m" in result.output
+
+
 class TestConfigCommand:
     def test_show_reports_resolved_values(self, runner, workspace):
         result = run(runner, workspace, "config", "show")
         assert result.exit_code == 0
         assert "daemon.server_name = org-cli-helper" in result.output
         assert "roam.dailies_directory = daily" in result.output
+        assert "note.topic = Context Notes" in result.output
 
     def test_show_env_names(self, runner, workspace):
         result = run(runner, workspace, "config", "show", "--env")
@@ -238,6 +322,59 @@ class TestVisit:
         result = run(runner, workspace, "visit", "-h")
         assert result.exit_code == 0
         assert "DATE" in result.output
+        assert "--topic" in result.output
+
+    def test_a_multi_word_date_needs_no_quoting(self, runner, workspace, monkeypatch):
+        monkeypatch.setattr(
+            "org_cli_helper.emacs.Emacs.visit", lambda self, path: None
+        )
+        result = run(runner, workspace, "visit", "3", "days", "ago")
+        assert result.exit_code == 1
+        assert "no daily note for" in result.output
+
+
+class TestVisitTopic:
+    @pytest.fixture
+    def topics(self, monkeypatch, tmp_path):
+        """An org-roam database holding one topic."""
+        note = tmp_path / "roam" / "20260804-context_notes.org"
+        note.write_text("#+title: Context Notes\n", encoding="utf-8")
+        known = {"Context Notes": str(note)}
+        monkeypatch.setattr(
+            "org_cli_helper.emacs.Emacs.topic",
+            lambda self, title: {"topic": title, "file": known.get(title)},
+        )
+        return note
+
+    @pytest.fixture
+    def visited(self, monkeypatch):
+        seen = []
+        monkeypatch.setattr(
+            "org_cli_helper.emacs.Emacs.visit", lambda self, path: seen.append(path)
+        )
+        return seen
+
+    def test_defaults_to_the_configured_topic(self, runner, workspace, topics, visited):
+        result = run(runner, workspace, "visit", "-T")
+        assert result.exit_code == 0
+        assert visited == [topics]
+
+    def test_arguments_name_the_topic(self, runner, workspace, topics, visited):
+        result = run(runner, workspace, "visit", "-T", "Context", "Notes")
+        assert result.exit_code == 0
+        assert visited == [topics]
+
+    def test_a_date_is_not_interpreted(self, runner, workspace, topics, visited):
+        """With -T, 'today' is a title and nothing else."""
+        result = run(runner, workspace, "visit", "-T", "today")
+        assert result.exit_code == 1
+        assert "no org-roam note titled 'today'" in result.output
+        assert visited == []
+
+    def test_a_missing_topic_is_reported(self, runner, workspace, topics, visited):
+        result = run(runner, workspace, "visit", "-T", "Nothing Here")
+        assert result.exit_code == 1
+        assert "no org-roam note titled 'Nothing Here'" in result.output
 
 
 class TestDaemonCommand:

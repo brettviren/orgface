@@ -87,10 +87,11 @@ def main(
 
 
 def _register() -> None:
-    from .commands import commit, daemon, log, visit
+    from .commands import commit, daemon, log, note, visit
     from .commands import config as config_cmd
 
     main.add_command(commit.commit)
+    main.add_command(note.note)
     main.add_command(log.log)
     main.add_command(daemon.daemon)
     main.add_command(config_cmd.config)

@@ -38,10 +38,53 @@ A nil or non-positive SECONDS cancels expiry entirely."
           (run-at-time seconds nil #'org-cli-helper-expire)))
   nil)
 
+(defun org-cli-helper--require (feature)
+  "Load FEATURE, signalling a useful error if it is unavailable."
+  (unless (require feature nil t)
+    (error "%s is not available in this Emacs; check your init file" feature)))
+
 (defun org-cli-helper--require-roam ()
+  "Load org-roam, signalling a useful error if unavailable."
+  (org-cli-helper--require 'org-roam))
+
+(defun org-cli-helper--require-dailies ()
   "Load org-roam dailies, signalling a useful error if unavailable."
-  (unless (require 'org-roam-dailies nil t)
-    (error "org-roam is not available in this Emacs; check your init file")))
+  (org-cli-helper--require 'org-roam-dailies))
+
+(defun org-cli-helper--stored-file (marker)
+  "The file org-capture last stored into, per MARKER, or nil.
+
+The capture happens in an indirect buffer, so the base buffer is the one
+holding the file name once that indirect buffer has been killed."
+  (when (and (markerp marker) (marker-buffer marker))
+    (buffer-file-name (or (buffer-base-buffer (marker-buffer marker))
+                          (marker-buffer marker)))))
+
+(defun org-cli-helper--with-capture-frame (thunk)
+  "Call THUNK, deleting this emacsclient frame once the capture finalises.
+
+Evaluated inside the frame `emacsclient -t' (or -c) just created, which
+emacsclient keeps alive until it is deleted.  Finishing or aborting the
+capture therefore has to delete that frame, otherwise the caller is left
+sitting in Emacs with no obvious way back to the shell.
+
+Only a frame emacsclient owns is ever deleted, so an unexpected
+`selected-frame' cannot cost the daemon its own."
+  (let ((frame (selected-frame))
+        (hook nil))
+    (setq hook
+          (lambda ()
+            (remove-hook 'org-capture-after-finalize-hook hook)
+            (when (and (frame-live-p frame)
+                       (frame-parameter frame 'client)
+                       (cdr (frame-list)))
+              (ignore-errors (delete-frame frame)))))
+    (add-hook 'org-capture-after-finalize-hook hook)
+    (condition-case err
+        (funcall thunk)
+      (error
+       (remove-hook 'org-capture-after-finalize-hook hook)
+       (signal (car err) (cdr err))))))
 
 (defun org-cli-helper--split-template (entry)
   "Split org-roam capture template ENTRY into (HEAD BODY REST).
@@ -96,7 +139,7 @@ Returns nil for a two element prefix group or anything unrecognised."
 
 (defun org-cli-helper-info ()
   "Report org-roam locations and dailies capture templates."
-  (org-cli-helper--require-roam)
+  (org-cli-helper--require-dailies)
   (org-cli-helper--payload
    (list :roam_directory (expand-file-name org-roam-directory)
          :dailies_directory org-roam-dailies-directory
@@ -123,7 +166,7 @@ building it up with `plist-put', so for duplicated keys the last one wins."
 (defun org-cli-helper-commit (keys body)
   "Capture BODY into today's daily note using template KEYS.
 BODY is a fully expanded capture template string."
-  (org-cli-helper--require-roam)
+  (org-cli-helper--require-dailies)
   (let* ((org-roam-dailies-capture-templates
           (mapcar (lambda (entry)
                     (if (equal (car entry) keys)
@@ -132,44 +175,94 @@ BODY is a fully expanded capture template string."
                   org-roam-dailies-capture-templates))
          (org-capture-last-stored-marker (make-marker)))
     (org-roam-dailies-capture-today nil keys)
-    (let ((marker org-capture-last-stored-marker))
-      (org-cli-helper--payload
-       (list :file (if (and (markerp marker) (marker-buffer marker))
-                       (or (buffer-file-name
-                            (or (buffer-base-buffer (marker-buffer marker))
-                                (marker-buffer marker)))
-                           :null)
-                     :null))))))
+    (org-cli-helper--payload
+     (list :file (or (org-cli-helper--stored-file org-capture-last-stored-marker)
+                     :null)))))
 
 (defun org-cli-helper-capture-interactive (keys)
-  "Run an interactive dailies capture with template KEYS.
-
-Evaluated inside the frame `emacsclient -t' (or -c) just created, which
-emacsclient keeps alive until it is deleted.  Finishing or aborting the
-capture therefore has to delete that frame, otherwise the caller is left
-sitting in Emacs with no obvious way back to the shell.
-
-Only a frame emacsclient owns is ever deleted, so an unexpected
-`selected-frame' cannot cost the daemon its own."
-  (org-cli-helper--require-roam)
-  (let ((frame (selected-frame))
-        (hook nil))
-    (setq hook
-          (lambda ()
-            (remove-hook 'org-capture-after-finalize-hook hook)
-            (when (and (frame-live-p frame)
-                       (frame-parameter frame 'client)
-                       (cdr (frame-list)))
-              (ignore-errors (delete-frame frame)))))
-    (add-hook 'org-capture-after-finalize-hook hook)
-    (condition-case err
-        (if (and keys (not (equal keys "")))
-            (org-roam-dailies-capture-today nil keys)
-          (org-roam-dailies-capture-today))
-      (error
-       (remove-hook 'org-capture-after-finalize-hook hook)
-       (signal (car err) (cdr err)))))
+  "Run an interactive dailies capture with template KEYS."
+  (org-cli-helper--require-dailies)
+  (org-cli-helper--with-capture-frame
+   (lambda ()
+     (if (and keys (not (equal keys "")))
+         (org-roam-dailies-capture-today nil keys)
+       (org-roam-dailies-capture-today))))
   nil)
+
+
+;;; Topic notes
+;;
+;; Where `org commit' writes to today's daily note, `org note' writes to a
+;; named org-roam topic.  Both are org-roam captures, so a note body is
+;; expanded the same number of times as a commit body and needs no separate
+;; escaping arithmetic on the CLI side.
+
+(defconst org-cli-helper-note-target
+  '(file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
+  "Capture target for the topic notes `org-cli-helper-note' writes.
+
+Only reached when the topic does not exist yet: for one that does,
+`org-roam-capture--target-truepath' answers with the node's own file and
+the head is never inserted.  The shape deliberately matches org-roam's own
+default so a topic created here is indistinguishable from one created
+interactively.")
+
+(defun org-cli-helper--topic-node (topic)
+  "An `org-roam-node' titled TOPIC, existing or waiting to be created.
+
+`org-roam-capture-' gives a node with no ID an ID, and its target creates
+the file, so a fresh node is all that is needed to make a new topic."
+  (or (org-roam-node-from-title-or-alias topic)
+      (org-roam-node-create :title topic)))
+
+(defun org-cli-helper--note-capture (topic body immediate)
+  "Capture BODY as an entry in the org-roam node titled TOPIC.
+
+BODY is a fully expanded capture template string.  With IMMEDIATE the
+capture finalises without anyone at a keyboard.  Returns the node captured
+into.
+
+The entry lands at the end of the topic's file: the target leaves point at
+the start of the file, which is not a heading, and org-capture appends a
+top level entry when its target is not an entry."
+  (let ((node (org-cli-helper--topic-node topic))
+        (template (list "n" "context note" 'entry body
+                        :target org-cli-helper-note-target)))
+    (org-roam-capture-
+     :node node
+     :keys "n"
+     :templates (list (if immediate
+                          (append template '(:immediate-finish t))
+                        template)))
+    node))
+
+(defun org-cli-helper-note (topic body)
+  "Capture BODY into the org-roam topic TOPIC, reporting where it landed."
+  (org-cli-helper--require-roam)
+  (let* ((org-capture-last-stored-marker (make-marker))
+         (node (org-cli-helper--note-capture topic body t)))
+    (org-cli-helper--payload
+     (list :topic topic
+           :id (or (org-roam-node-id node) :null)
+           :file (or (org-cli-helper--stored-file org-capture-last-stored-marker)
+                     (org-roam-node-file node)
+                     :null)))))
+
+(defun org-cli-helper-note-interactive (topic body)
+  "Run an interactive capture of BODY into the org-roam topic TOPIC."
+  (org-cli-helper--require-roam)
+  (org-cli-helper--with-capture-frame
+   (lambda () (org-cli-helper--note-capture topic body nil)))
+  nil)
+
+(defun org-cli-helper-topic (topic)
+  "Report the org-roam node titled TOPIC, with nulls if there is none."
+  (org-cli-helper--require-roam)
+  (let ((node (org-roam-node-from-title-or-alias topic)))
+    (org-cli-helper--payload
+     (list :topic topic
+           :id (or (and node (org-roam-node-id node)) :null)
+           :file (or (and node (org-roam-node-file node)) :null)))))
 
 (provide 'org-cli-helper-bootstrap)
 ;;; bootstrap.el ends here

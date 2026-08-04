@@ -15,6 +15,7 @@ Tests skip when Emacs or org-roam cannot be found.
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import tempfile
 import time
@@ -22,7 +23,7 @@ from pathlib import Path
 
 import pytest
 
-from org_cli_helper import elisp
+from org_cli_helper import context, elisp
 from org_cli_helper.config import Config
 from org_cli_helper.emacs import Emacs
 from org_cli_helper.templates import Template, fill
@@ -141,6 +142,19 @@ def _only_note(daily: Path) -> str:
     return notes[0].read_text(encoding="utf-8")
 
 
+def _topic_files(daily: Path) -> list[Path]:
+    """Topic notes, which org-roam puts in the roam directory itself."""
+    return sorted(daily.parent.glob("*.org"))
+
+
+def _note_body(directory: Path, title: str, body: str = "") -> str:
+    """A note capture body for DIRECTORY, by the route the CLI takes."""
+    run = context.gather(
+        directory=directory, host="somehost", user="someone", where_home=directory
+    )
+    return fill(context.note_template(run), title, body).text
+
+
 class TestDaemon:
     def test_starts_on_demand_and_reports_itself(self, workspace):
         emacs, _ = workspace
@@ -203,6 +217,109 @@ class TestCommit:
         note = _only_note(daily)
         assert "* Just a title" in note
         assert "And a body." in note
+
+
+class TestNote:
+    """Topic notes: org-roam capture into a named node rather than a daily."""
+
+    def test_creates_the_topic_it_needs(self, workspace, tmp_path):
+        emacs, daily = workspace
+        result = emacs.note("Context Notes", _note_body(tmp_path, "Fixed the thing"))
+
+        files = _topic_files(daily)
+        assert len(files) == 1, f"expected one topic note, found {files}"
+        assert result["file"] == str(files[0])
+        assert result["topic"] == "Context Notes"
+        assert result["id"]
+
+        text = files[0].read_text(encoding="utf-8")
+        assert "#+title: Context Notes" in text
+        assert ":ID:" in text  # org-roam registered the node
+        assert "* Fixed the thing" in text
+
+    def test_records_the_context(self, workspace, tmp_path):
+        emacs, daily = workspace
+        emacs.note("Context Notes", _note_body(tmp_path, "Fixed the thing", "Slowly."))
+
+        text = _topic_files(daily)[0].read_text(encoding="utf-8")
+        assert f":DIRECTORY: {tmp_path}" in text
+        assert ":HOST: somehost" in text
+        assert ":USER: someone" in text
+        assert re.search(
+            r"^\[\d{4}-\d\d-\d\d \w{3} \d\d:\d\d:\d\d\]$", text, re.MULTILINE
+        )
+        assert "Slowly." in text
+        # The tags reached the headline, and org parsed them as tags.
+        assert re.search(r"^\* Fixed the thing\s+:home:$", text, re.MULTILINE)
+        tags = emacs.eval(
+            "(with-current-buffer (find-file-noselect "
+            + elisp.quote_string(str(_topic_files(daily)[0]))
+            + ") (org-with-wide-buffer (goto-char (point-max))"
+            " (org-back-to-heading t) (org-get-tags)))"
+        )
+        assert "home" in tags
+
+    def test_a_second_note_joins_the_same_topic(self, workspace, tmp_path):
+        emacs, daily = workspace
+        first = emacs.note("Context Notes", _note_body(tmp_path, "First", "one"))
+        second = emacs.note("Context Notes", _note_body(tmp_path, "Second", "two"))
+
+        assert second["file"] == first["file"]
+        assert second["id"] == first["id"]
+        assert len(_topic_files(daily)) == 1
+
+        text = Path(first["file"]).read_text(encoding="utf-8")
+        assert "* First" in text and "* Second" in text
+        assert text.count("\n* ") == 2
+
+    def test_topics_are_separate_files(self, workspace, tmp_path):
+        emacs, daily = workspace
+        emacs.note("Context Notes", _note_body(tmp_path, "Here"))
+        emacs.note("Other Topic", _note_body(tmp_path, "There"))
+        assert len(_topic_files(daily)) == 2
+
+    def test_a_note_never_lands_in_the_dailies(self, workspace, tmp_path):
+        emacs, daily = workspace
+        emacs.note("Context Notes", _note_body(tmp_path, "Fixed the thing"))
+        assert list(daily.glob("*.org")) == []
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "100% done, 50% left",
+            "Literal %t stays",
+            "Elisp %(shell) stays",
+            "Prompt %^{Mood} stays",
+        ],
+    )
+    def test_user_text_survives_verbatim(self, workspace, tmp_path, text):
+        """A note body is expanded as many times as a commit body."""
+        emacs, daily = workspace
+        emacs.note("Context Notes", _note_body(tmp_path, "Title", text))
+        assert text in _topic_files(daily)[0].read_text(encoding="utf-8")
+
+    def test_a_percent_in_the_directory_survives_too(self, workspace, tmp_path):
+        emacs, daily = workspace
+        directory = tmp_path / "100%t of it"
+        directory.mkdir()
+        emacs.note("Context Notes", _note_body(directory, "Title"))
+        text = _topic_files(daily)[0].read_text(encoding="utf-8")
+        assert f":DIRECTORY: {directory}" in text
+
+
+class TestTopic:
+    def test_finds_a_topic_that_exists(self, workspace, tmp_path):
+        emacs, daily = workspace
+        written = emacs.note("Context Notes", _note_body(tmp_path, "Fixed the thing"))
+        found = emacs.topic("Context Notes")
+        assert found["file"] == written["file"]
+        assert found["id"] == written["id"]
+
+    def test_reports_nothing_for_a_topic_that_does_not(self, workspace):
+        emacs, _ = workspace
+        found = emacs.topic("No Such Topic")
+        assert found["file"] is None
+        assert found["id"] is None
 
 
 class TestEscaping:

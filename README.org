@@ -22,8 +22,10 @@ alias org=org-cli-helper
 
 #+begin_src sh
 org commit -m "Fixed the thing" -m "Took all day."
+org note -m "Fixed the thing" -m "Took all day."
 org log --today
 org log --since "2 weeks ago" --oneline
+org visit yesterday
 org daemon status
 #+end_src
 
@@ -110,6 +112,74 @@ $ org commit --dry-run -m "Fixed the thing" -m "Took all day."
 The =%T= and =%?= are still there because Emacs, not this tool, expands
 them. Your message text is escaped so that it cannot be.
 
+** org note
+
+Record an entry the way =org commit= does, but keep the context it was
+written in and file it under a topic rather than under today's date.
+
+#+begin_src sh
+org note -m "Fixed the thing" -m "Took all day."
+#+end_src
+
+The first =-m= is the title and any further =-m= options become body
+paragraphs, exactly as for =commit=. With no =-m= an interactive capture
+opens with the context already in place and Emacs asking you for the title;
+=--gui= puts it in a frame of its own.
+
+*** The context
+
+Where and when the command ran becomes part of the entry: an inactive org
+timestamp to the second, and the working directory, host and user as
+properties on the headline. Inactive, because a record of when something was
+written is not something to be done and has no business in your agenda.
+
+#+begin_src org
+* Fixed the thing :home:org_cli_helper:
+:PROPERTIES:
+:DIRECTORY: /home/you/dev/org-cli-helper
+:HOST: yourhost
+:USER: you
+:END:
+[2026-08-04 Tue 13:45:02]
+
+Took all day.
+#+end_src
+
+The headline tags say where that was:
+
+- =home= when the working directory is your =$HOME=.
+- The name of the enclosing git working tree, if the working directory or
+  any directory above it holds a =.git=. A =.git= file counts as well as a
+  directory, so worktrees and submodules are tagged too.
+
+Org accepts only alphanumerics and =_@#= in a tag, so a repository named
+=org-cli-helper= is tagged =org_cli_helper=: runs of anything else collapse
+to a single underscore, and a name with nothing usable left in it is not
+tagged at all.
+
+*** The topic
+
+Entries go to an org-roam topic, by default one titled =Context Notes=,
+which is created on first use like any other org-roam node. =-T/--topic=
+names a different one, and =note.topic= changes the default:
+
+#+begin_src sh
+org note -T "Work Log" -m "Fixed the thing"
+#+end_src
+
+Because the topic is looked up by title, the note joins whatever node
+already carries that title; only when there is none is a new file made, in
+your =org-roam-directory= and in the same form org-roam itself would use.
+
+=--dry-run= prints what would be handed to Emacs, and =-q/--quiet= suppresses
+the summary. Unlike =commit= the capture template is built by this tool, so
+=org-roam-dailies-capture-templates= and =-t= play no part.
+
+Notes live outside the dailies, so =org log= does not report them; read a
+topic with =org visit -T= instead. The entry is shaped like a daily entry
+all the same — heading, properties, timestamp, then the text — so nothing
+about it is peculiar to this tool.
+
 ** org log
 
 Show recent daily entries, newest first, through your pager. Each top level
@@ -139,6 +209,27 @@ anything unrecognised is reported rather than guessed at.
 
 An upper bound named as a bare day covers that whole day, so
 =--until 2026-07-30= includes everything written on the 30th.
+
+** org visit
+
+Open a note in Emacs, in a frame of its own, without waiting for you to
+close it.
+
+#+begin_src sh
+org visit                     # today's daily note
+org visit yesterday           # a daily note by date
+org visit 3 days ago          # dates need no quoting
+org visit -T                   # the topic 'note' captures into
+org visit -T "Work Log"        # a topic by title
+#+end_src
+
+Without =-T= the arguments are a date, in the same free-form spelling
+=org log= takes. With =-T= they are an org-roam topic title instead, taken
+as =note -T= takes it, and default to =note.topic=. Either way, a note that
+does not exist is reported rather than created.
+
+Finding a topic means asking org-roam's database, so =visit -T= needs the
+daemon. Visiting a daily note does not.
 
 ** org config
 
@@ -170,6 +261,9 @@ start_timeout = "120s"            # ORG_CLI_HELPER_START_TIMEOUT
 directory         = "~/org/roam"  # ORG_CLI_HELPER_ROAM_DIRECTORY
 dailies_directory = "daily/"      # ORG_CLI_HELPER_DAILIES_DIRECTORY
 
+[note]
+topic = "Context Notes"           # ORG_CLI_HELPER_NOTE_TOPIC
+
 [log]
 pager = "less"                    # ORG_CLI_HELPER_PAGER
 #+end_src
@@ -194,7 +288,9 @@ trusting the arithmetic.
 *=${...}= is refused.* org-roam expands =${foo}= by calling a function
 named =foo= or prompting for a value, and offers no escape mechanism at
 all. Rather than execute or hang, =org commit -m= refuses such a message
-and says so. Capture interactively if you need that text.
+and says so. Capture interactively if you need that text. =org note=
+refuses it in the context too, on the vanishing chance of a working
+directory named that way.
 
 *=%?= in a title is reported.* Emacs finds the capture point with a plain
 search for =%?= that honours no escaping. A =%?= in the body is safe, but
@@ -238,8 +334,8 @@ without a paragraph of boilerplate per file.
 
 Layering follows =CLAUDE.md=: =cli.py= and =commands/= parse and present,
 =ui.py= renders, and the decisions live in the data modules —
-=config.py=, =templates.py=, =dailies.py=, =dates.py=, =locations.py=,
-=emacs.py= and =elisp.py=. =bootstrap.el= is the daemon-side half, loaded
+=config.py=, =templates.py=, =context.py=, =dailies.py=, =dates.py=,
+=locations.py=, =emacs.py= and =elisp.py=. =bootstrap.el= is the daemon-side half, loaded
 on demand and returning base64 JSON so nothing has to parse Emacs' printed
 output.
 

@@ -204,6 +204,15 @@ SETTINGS: tuple[Setting, ...] = (
         "org-roam-dailies-directory; discovered from the daemon when unset.",
     ),
     Setting(
+        "note_topic",
+        "note",
+        "topic",
+        "ORG_CLI_HELPER_NOTE_TOPIC",
+        "Context Notes",
+        parse_str,
+        "org-roam topic 'note' captures into; -T/--topic overrides it.",
+    ),
+    Setting(
         "pager",
         "log",
         "pager",
@@ -228,6 +237,7 @@ class Config:
     start_timeout: int | None = 120
     roam_directory: Path | None = None
     dailies_directory: str | None = None
+    note_topic: str = "Context Notes"
     pager: str | None = None
     source: Path | None = None  # config file actually loaded, if any
 

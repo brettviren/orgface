@@ -115,10 +115,9 @@ def commit(
         return
 
     written = result.get("file")
-    where = Path(written).name if written else "today's note"
-    click.echo(f"[{where}] {title}")
-    if written:
-        click.echo(f" 1 entry added to {_tildify(Path(written))}")
+    path = Path(written) if written else None
+    where = path.name if path else "today's note"
+    click.echo(ui.format_capture_summary(where, title, path))
 
 
 def _templates(emacs: Emacs) -> list[tmpl.Template]:
@@ -127,10 +126,3 @@ def _templates(emacs: Emacs) -> list[tmpl.Template]:
     except DaemonError as exc:
         raise click.ClickException(str(exc)) from exc
     return tmpl.parse_templates(info.get("templates") or [])
-
-
-def _tildify(path: Path) -> str:
-    try:
-        return "~/" + str(path.relative_to(Path.home()))
-    except ValueError:
-        return str(path)
