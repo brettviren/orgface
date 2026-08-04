@@ -13,6 +13,7 @@ from org_cli_helper.dailies import (
     DailiesError,
     collect,
     daily_files,
+    daily_path,
     parse_note,
 )
 
@@ -60,6 +61,11 @@ class TestDailyFiles:
     def test_missing_directory(self, tmp_path):
         with pytest.raises(DailiesError):
             daily_files(tmp_path / "absent")
+
+
+class TestDailyPath:
+    def test_names_the_file_regardless_of_existence(self, tmp_path):
+        assert daily_path(tmp_path, date(2026, 7, 30)) == tmp_path / "2026-07-30.org"
 
 
 class TestParseNote:

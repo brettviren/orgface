@@ -313,6 +313,11 @@ def collect(
     return entries
 
 
+def daily_path(directory: Path, day: date) -> Path:
+    """The daily note file for ``day``, whether or not it exists."""
+    return directory / f"{day:%Y-%m-%d}.org"
+
+
 def resolve_directory(roam: Path, dailies: str) -> Path:
     """Combine org-roam-directory with org-roam-dailies-directory."""
     return (roam / dailies).resolve()

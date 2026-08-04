@@ -209,6 +209,16 @@ class Emacs:
                 f"interactive capture exited with status {completed.returncode}"
             )
 
+    def visit(self, path: Path) -> None:
+        """Open PATH in a new frame, without waiting for it to close."""
+        self._require(self.config.emacsclient)
+        if not self.is_running():
+            self.start()
+        argv = self._client_argv("-c", "-n", str(path))
+        result = self._run(argv, timeout=self.config.start_timeout)
+        if result.returncode != 0:
+            raise DaemonError(_emacs_error(result.stderr) or "emacsclient failed")
+
     def socket_hint(self) -> str:
         """Where emacsclient will look for this daemon's socket."""
         runtime = os.environ.get("XDG_RUNTIME_DIR")

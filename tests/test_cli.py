@@ -10,6 +10,8 @@ which is the documented way to run ``log`` without Emacs.
 
 from __future__ import annotations
 
+from datetime import datetime
+
 import pytest
 from click.testing import CliRunner
 
@@ -195,6 +197,47 @@ class TestConfigCommand:
         result = run(runner, workspace, "config")
         assert result.exit_code != 0
         assert "Usage:" in result.output
+
+
+class TestVisit:
+    def test_visits_an_existing_note(self, runner, workspace, tmp_path, monkeypatch):
+        visited = []
+        monkeypatch.setattr(
+            "org_cli_helper.emacs.Emacs.visit", lambda self, path: visited.append(path)
+        )
+        result = run(runner, workspace, "visit", "2026-07-30")
+        assert result.exit_code == 0
+        assert visited == [tmp_path / "roam" / "daily" / "2026-07-30.org"]
+
+    def test_defaults_to_today(self, runner, workspace, tmp_path, monkeypatch):
+        class FixedDatetime(datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return datetime(2026, 7, 30)
+
+        monkeypatch.setattr("org_cli_helper.commands.visit.datetime", FixedDatetime)
+        visited = []
+        monkeypatch.setattr(
+            "org_cli_helper.emacs.Emacs.visit", lambda self, path: visited.append(path)
+        )
+        result = run(runner, workspace, "visit")
+        assert result.exit_code == 0
+        assert visited == [tmp_path / "roam" / "daily" / "2026-07-30.org"]
+
+    def test_missing_daily_note_is_reported(self, runner, workspace):
+        result = run(runner, workspace, "visit", "2026-08-01")
+        assert result.exit_code == 1
+        assert "no daily note for 2026-08-01" in result.output
+
+    def test_bad_date_is_reported(self, runner, workspace):
+        result = run(runner, workspace, "visit", "next tuesday")
+        assert result.exit_code != 0
+        assert "unrecognised date" in result.output
+
+    def test_help_does_not_touch_emacs(self, runner, workspace):
+        result = run(runner, workspace, "visit", "-h")
+        assert result.exit_code == 0
+        assert "DATE" in result.output
 
 
 class TestDaemonCommand:

@@ -46,6 +46,7 @@ _ISO_FORMATS = (
     "%Y-%m-%d",
     "%Y/%m/%d",
     "%Y%m%d",
+    "%y%m%d",
 )
 
 _RELATIVE_RE = re.compile(r"^(?:(\d+)\s+)?([a-z]+)(?:\s+ago)?$")
@@ -151,7 +152,7 @@ def _is_bare_day(spec: str) -> bool:
     text = " ".join(spec.strip().replace(".", " ").split()).lower()
     if text in {"today", "yesterday"}:
         return True
-    for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%Y%m%d"):
+    for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%Y%m%d", "%y%m%d"):
         try:
             datetime.strptime(text, fmt)
             return True
