@@ -237,6 +237,127 @@ daemon. Visiting a daily note does not.
 =org config paths= the XDG locations in use, and =org config clear-cache=
 forgets the cached org-roam locations.
 
+** org store
+
+The store keeps org documents in a canonical, schema-validated JSON form
+so they can be queried and edited a piece at a time. It is independent of
+the capture commands above and needs no Emacs daemon.
+
+#+begin_src sh
+org store add notes.org                     # add an org file (no Emacs needed)
+org store add exported.json --id notes.org  # or canonical JSON from ox-json
+org store list                              # one line per document
+org store show notes.org                    # summary
+org store show notes.org --json             # the canonical document
+org store node notes.org org1a2b3c4d5e6f    # one node, addressed by ref
+org store rm-node notes.org org1a2b3c4d5e6f
+org store rm notes.org
+org store reindex                           # rebuild the derived tables
+#+end_src
+
+Org files are read by a standalone tree-sitter parser, so nothing here
+needs Emacs running. Canonical JSON — the shape [[https://github.com/jlumpe/ox-json][ox-json]] exports — is accepted
+too, and both land on the same document.
+
+*Refs name positions, not objects.* A ref is a hash of the document id and
+the node's structural path, recomputed on this side rather than taken from
+whichever parser produced the document, so both ingestion paths agree.
+The consequence is that inserting or deleting a node changes the refs of
+its later siblings: re-read a document before reusing a ref taken before
+an edit. The identifier that survives edits is the one org already has,
+the =ID= property.
+
+*The JSON is the source of truth.* Everything else in the database —
+nodes, tags, properties, links, timestamps — is an index derived from it
+on every write. =org store reindex= rebuilds all of it from the stored
+documents, so a change to how content is indexed needs no migration.
+
+The schema is generated from the model and committed at
+=src/org_store/schemas/org-document.schema.json=. Regenerate it with
+=uv run python -m org_store.schema=; a test fails if it drifts.
+
+** org search
+
+Full text search over everything in the store, down to the individual
+node rather than the whole file.
+
+#+begin_src sh
+org search inline math                    # both words, anywhere
+org search 'E=mc^2'                       # punctuation is text, not syntax
+org search neutr*                         # prefix match
+org search deadline --scope heading       # headings only
+org search --scope body notes             # bodies only
+org search dune -t physics                # only under headings tagged :physics:
+org search setup -T src-block             # only source blocks
+org search plan -p CATEGORY=work          # only under headings with that property
+org search plan -d notes.org -n 5         # one document, at most five hits
+#+end_src
+
+Words are ANDed, so two words means both. A trailing =*= matches by
+prefix; everything else is taken literally, so maths and punctuation need
+no quoting.
+
+*Tag and property filters are inherited*, the way org inherits them: a
+paragraph under a heading tagged =:urgent:= is part of something urgent
+and will be found by =-t urgent=, even though only the heading carries
+the tag.
+
+*A hit names a node, not a file.* Each result prints =DOC_ID:REF=, which
+=org store node= takes directly. Matching against headings and bodies
+separately is what makes =--scope= meaningful — a heading match ranks
+above a passing mention in prose.
+
+Search is available for whichever store the content lives in; a backend
+that keeps no index says so rather than quietly returning nothing.
+
+** Store backends
+
+Three, chosen with =store.backend=. All answer the same commands.
+
+- =sqlite= (the default) keeps documents in one database with the derived
+  indexes that make =org search= possible. Nothing but this tool reads it.
+- =orgfs= keeps them as ordinary org files in a directory. There is no
+  database and nothing to import: a file you wrote by hand is already in
+  the store, and Emacs, git and your editor are all first-class writers.
+  It has no search index, and says so rather than returning nothing.
+- =emacs= reads that same directory through your running Emacs, using
+  [[https://github.com/jlumpe/ox-json][ox-json]]. Slower, and it needs =ox-json= installed, but it is the only
+  reader that is *definitionally* right: org-element decides what org
+  means, and it is running inside your configuration — your link types,
+  your TODO keywords, your in-buffer settings. It also sees a buffer's
+  unsaved edits, which nothing reading the file can.
+
+The =orgfs= backend needs the parser and renderer, which are an optional
+extra so that sqlite-only users need not install them:
+
+#+begin_src sh
+uv sync --extra orgfs        # or: pip install 'org-cli-helper[orgfs]'
+#+end_src
+
+*Writing re-renders the whole file.* Everything the model records survives
+— a round trip is checked in the test suite against the whole fixture
+corpus and is exact — but formatting the model does not record does not:
+blank-line runs and table column alignment come back normalised, the way
+org itself normalises them on save. Rendering is idempotent, so a file
+settles after the first write rather than drifting on each one.
+
+*Content hashes mean the same thing in both file backends*, because both
+hash the canonical content rather than their own storage.
+
+The =emacs= backend is the exception, and deliberately so: ox-json
+carries org-element's own bookkeeping — =mode=, =true-level=, a
+=post-blank= on everything — which no independent parser can reproduce.
+The documents mean the same thing, and the conformance tests assert that
+they do, but they are not the same JSON and so do not hash alike. A
+hash is comparable between stores that read the same way.
+
+*The =emacs= backend will not overwrite unsaved work.* It is one writer
+among several, and the others include you with the file open. If Emacs
+has unsaved changes to a file, writing to it or deleting it is refused
+rather than resolved — a merge invented here would be a worse answer
+than a clear stop. An unmodified buffer is written under and then
+reverted, so Emacs is never left showing content the file no longer has.
+
 * Configuration
 
 org-cli-helper follows the freedesktop XDG conventions. Configuration is
@@ -266,6 +387,12 @@ topic = "Context Notes"           # ORG_CLI_HELPER_NOTE_TOPIC
 
 [log]
 pager = "less"                    # ORG_CLI_HELPER_PAGER
+
+[store]
+backend   = "sqlite"       # ORG_CLI_HELPER_STORE_BACKEND: sqlite or orgfs
+database  = "~/.local/state/org-cli-helper/store.sqlite"
+                           # ORG_CLI_HELPER_STORE_DATABASE, for sqlite
+directory = "~/org"        # ORG_CLI_HELPER_STORE_DIRECTORY, for orgfs
 #+end_src
 
 Durations accept =90s=, =30m=, =1h=, =1h30m=, =2 hours=, =1d=, a bare

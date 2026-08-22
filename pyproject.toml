@@ -11,10 +11,17 @@ license-files = ["COPYING"]
 requires-python = ">=3.12"
 dependencies = [
     "click>=8.4.2",
+    "pydantic>=2.13.4",
 ]
 
 [project.scripts]
 org-cli-helper = "org_cli_helper:main"
+
+[project.optional-dependencies]
+orgfs = [
+    "jinja2>=3.1.6",
+    "org-parser>=0.28.0",
+]
 
 [build-system]
 # 77.0.3 is the first release supporting PEP 639 license expressions.
@@ -23,6 +30,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.package-data]
 org_cli_helper = ["*.el"]
+org_store = ["schemas/*.json", "render/templates/*.j2"]
 
 [dependency-groups]
 dev = [

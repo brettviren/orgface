@@ -1,0 +1,5 @@
+* Head
+A meeting <2026-09-01 Tue 10:00-11:00> and <2026-08-01 Sat>--<2026-08-05 Wed> plus [2026-07-01 Wed] here.
+
+* Repeating
+SCHEDULED: <2026-09-01 Tue +1w -2d>

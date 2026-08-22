@@ -13,6 +13,7 @@ from .. import dailies, dates, ui
 from ..cli import Context, pass_context
 from ..emacs import DaemonError, Emacs
 from ..locations import LocationError, resolve
+from . import colour_option
 
 
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
@@ -40,14 +41,7 @@ from ..locations import LocationError, resolve
 )
 @click.option("--oneline", is_flag=True, help="One compact line per entry.")
 @click.option("--reverse", is_flag=True, help="Show oldest entries first.")
-@click.option(
-    "--color",
-    "colour",
-    type=click.Choice(["auto", "always", "never"]),
-    default="auto",
-    show_default=True,
-    help="Colourise the output.",
-)
+@colour_option
 @click.option("--no-pager", is_flag=True, help="Write straight to stdout.")
 @click.option(
     "--refresh",

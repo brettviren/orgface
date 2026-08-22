@@ -37,6 +37,27 @@ def style(text: str, colour: str | None, enabled: bool, bold: bool = False) -> s
     return click.style(text, fg=colour, bold=bold or None)
 
 
+def indent(text: str, prefix: str = "    ") -> str:
+    """Indent every non-blank line, the way git log indents a message."""
+    return "\n".join(
+        prefix + line if line.strip() else "" for line in text.split("\n")
+    )
+
+
+def format_tags(tags: Sequence[str], separate: bool = True) -> str:
+    """Render org tags.
+
+    ``:a: :b:`` reads as a list of tags, which suits a labelled line;
+    ``:a:b:`` is how org writes them in a file, which suits echoing back
+    what was captured.
+    """
+    if not tags:
+        return ""
+    if separate:
+        return " ".join(f":{tag}:" for tag in tags)
+    return "".join(f":{tag}" for tag in tags) + ":"
+
+
 def format_datetime(entry: Entry) -> str:
     """A git-log style date line value."""
     if entry.timestamp is not None:
@@ -52,7 +73,7 @@ def format_entry(entry: Entry, colour: bool = False) -> str:
     ]
     lines.append(f"Date:   {format_datetime(entry)}")
     if entry.tags:
-        lines.append("Tags:   " + " ".join(f":{tag}:" for tag in entry.tags))
+        lines.append("Tags:   " + format_tags(entry.tags))
     lines.append("")
 
     heading = entry.heading or "(untitled)"
@@ -63,7 +84,7 @@ def format_entry(entry: Entry, colour: bool = False) -> str:
     body = entry.body.strip("\n")
     if body:
         lines.append("")
-        lines.extend("    " + line if line.strip() else "" for line in body.split("\n"))
+        lines.append(indent(body))
     return "\n".join(lines)
 
 
@@ -107,7 +128,7 @@ def format_capture_summary(
     if path is not None:
         lines.append(f" 1 entry added to {tildify(path)}")
     if tags:
-        lines.append(" tags: " + "".join(f":{tag}" for tag in tags) + ":")
+        lines.append(" tags: " + format_tags(tags, separate=False))
     return "\n".join(lines)
 
 
@@ -120,6 +141,64 @@ def format_templates(templates: Iterable) -> str:
     lines = []
     for index, template in enumerate(rows):
         lines.append(f"  [{index}] {template.key:<{width}}  {template.description}")
+    return "\n".join(lines)
+
+
+def format_store_list(summaries: Sequence, colour: bool = False) -> str:
+    """One line per stored document, id first."""
+    if not summaries:
+        return "no documents in the store"
+    width = max(len(s.doc_id) for s in summaries)
+    lines = []
+    for summary in summaries:
+        line = style(f"{summary.doc_id:<{width}}", "yellow", colour)
+        line += f"  {summary.title or '(untitled)'}"
+        if summary.filetags:
+            tags = format_tags(summary.filetags, separate=False)
+            line += "  " + style(tags, "cyan", colour)
+        lines.append(line)
+    return "\n".join(lines)
+
+
+def format_store_summary(summary, colour: bool = False) -> str:
+    """The detail ``store show`` prints for one document."""
+    lines = [
+        style(f"document {summary.doc_id}", "yellow", colour),
+        f"Title:  {summary.title or '(untitled)'}",
+        f"Hash:   {summary.content_hash[:16]}",
+        f"Schema: {summary.schema_version}",
+    ]
+    if summary.filetags:
+        lines.append("File tags: " + format_tags(summary.filetags))
+    if summary.tags:
+        lines.append("Tags:   " + format_tags(summary.tags))
+    lines.append("")
+    lines.append(
+        f"    {summary.nodes} nodes, {summary.headings} headings, "
+        f"{summary.links} links, {summary.timestamps} timestamps"
+    )
+    return "\n".join(lines)
+
+
+def format_node(summary, colour: bool = False) -> str:
+    """A single node, identified and summarised."""
+    head = style(f"node {summary.ref}", "yellow", colour)
+    head += style(f"  ({summary.type})", "cyan", colour)
+    if not summary.text:
+        return head
+    return head + "\n\n" + indent(summary.text)
+
+
+def format_search_results(results: Sequence, colour: bool = False) -> str:
+    """One block per hit: where it is, then the matching text."""
+    lines = []
+    for result in results:
+        head = style(f"{result.doc_id}:{result.ref}", "yellow", colour)
+        head += style(f"  ({result.type})", "cyan", colour)
+        lines.append(head)
+        excerpt = " ".join(result.excerpt.split())
+        if excerpt:
+            lines.append(indent(excerpt))
     return "\n".join(lines)
 
 

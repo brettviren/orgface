@@ -1,0 +1,709 @@
+{
+  "$$data_type": "org-document",
+  "contents": [
+    {
+      "$$data_type": "org-node",
+      "contents": [
+        {
+          "$$data_type": "org-node",
+          "properties": {
+            "key": "TITLE",
+            "mode": "top-comment",
+            "value": "Canonical model fixture"
+          },
+          "ref": "org636f48c",
+          "type": "keyword"
+        },
+        {
+          "$$data_type": "org-node",
+          "properties": {
+            "key": "AUTHOR",
+            "value": "Brett Viren"
+          },
+          "ref": "org34540e8",
+          "type": "keyword"
+        },
+        {
+          "$$data_type": "org-node",
+          "properties": {
+            "key": "FILETAGS",
+            "value": ":physics:dune:"
+          },
+          "ref": "org79aac9c",
+          "type": "keyword"
+        },
+        {
+          "$$data_type": "org-node",
+          "properties": {
+            "key": "DATE",
+            "value": "2026-08-22"
+          },
+          "ref": "org6e9c275",
+          "type": "keyword"
+        },
+        {
+          "$$data_type": "org-node",
+          "properties": {
+            "key": "DESCRIPTION",
+            "post-blank": 1,
+            "value": "A representative org file for schema fixtures"
+          },
+          "ref": "org3f33d2c",
+          "type": "keyword"
+        },
+        {
+          "$$data_type": "org-node",
+          "contents": [
+            "An introductory paragraph with ",
+            {
+              "$$data_type": "org-node",
+              "contents": [
+                "bold"
+              ],
+              "properties": {},
+              "ref": "org292b3e9",
+              "type": "bold"
+            },
+            ", ",
+            {
+              "$$data_type": "org-node",
+              "contents": [
+                "italic"
+              ],
+              "properties": {},
+              "ref": "org35df2b5",
+              "type": "italic"
+            },
+            ", ",
+            {
+              "$$data_type": "org-node",
+              "properties": {
+                "value": "verbatim"
+              },
+              "ref": "org762ee24",
+              "type": "verbatim"
+            },
+            ", ",
+            {
+              "$$data_type": "org-node",
+              "properties": {
+                "value": "code"
+              },
+              "ref": "orga28d1de",
+              "type": "code"
+            },
+            ", and a\n",
+            {
+              "$$data_type": "org-node",
+              "contents": [
+                "link to org mode"
+              ],
+              "is-inline-image": false,
+              "is-internal": false,
+              "properties": {
+                "format": "bracket",
+                "path": "//orgmode.org",
+                "raw-link": "https://orgmode.org",
+                "type": "https",
+                "type-explicit-p": true
+              },
+              "ref": "orge99dac1",
+              "target-ref": null,
+              "type": "link"
+            },
+            ".\n"
+          ],
+          "properties": {
+            "post-blank": 1
+          },
+          "ref": "org0e876b6",
+          "type": "paragraph"
+        }
+      ],
+      "properties": {
+        "mode": "first-section"
+      },
+      "ref": "org354809b",
+      "type": "section"
+    },
+    {
+      "$$data_type": "org-node",
+      "contents": [
+        {
+          "$$data_type": "org-node",
+          "contents": [
+            {
+              "$$data_type": "org-node",
+              "contents": [
+                "Body text under the headline.  Inline math ",
+                {
+                  "$$data_type": "org-node",
+                  "properties": {
+                    "post-blank": 1,
+                    "value": "$E = mc^2$"
+                  },
+                  "ref": "org0a23b96",
+                  "type": "latex-fragment"
+                },
+                "and a display\nequation follow.\n"
+              ],
+              "properties": {
+                "post-blank": 1
+              },
+              "ref": "org63f2898",
+              "type": "paragraph"
+            },
+            {
+              "$$data_type": "org-node",
+              "properties": {
+                "post-blank": 1,
+                "value": "\\begin{equation}\n\\nabla \\cdot \\mathbf{E} = \\frac{\\rho}{\\epsilon_0}\n\\end{equation}\n"
+              },
+              "ref": "org329c901",
+              "type": "latex-environment"
+            }
+          ],
+          "properties": {
+            "mode": "section"
+          },
+          "ref": "org4e839db",
+          "type": "section"
+        },
+        {
+          "$$data_type": "org-node",
+          "contents": [
+            {
+              "$$data_type": "org-node",
+              "contents": [
+                {
+                  "$$data_type": "org-node",
+                  "properties": {
+                    "label-fmt": null,
+                    "language": "python",
+                    "mode": "property-drawer",
+                    "number-lines": null,
+                    "parameters": ":results output",
+                    "post-blank": 1,
+                    "preserve-indent": false,
+                    "retain-labels": true,
+                    "switches": null,
+                    "use-labels": true,
+                    "value": "print(\"hello\")\n"
+                  },
+                  "ref": "orgf384b88",
+                  "type": "src-block"
+                },
+                {
+                  "$$data_type": "org-node",
+                  "contents": [
+                    {
+                      "$$data_type": "org-node",
+                      "contents": [
+                        "Quoted text.\n"
+                      ],
+                      "properties": {},
+                      "ref": "orgee3ef52",
+                      "type": "paragraph"
+                    }
+                  ],
+                  "properties": {
+                    "post-blank": 1
+                  },
+                  "ref": "orgd39e927",
+                  "type": "quote-block"
+                },
+                {
+                  "$$data_type": "org-node",
+                  "contents": [
+                    {
+                      "$$data_type": "org-node",
+                      "contents": [
+                        {
+                          "$$data_type": "org-node",
+                          "contents": [
+                            "a list item\n"
+                          ],
+                          "properties": {},
+                          "ref": "org2a586ff",
+                          "type": "paragraph"
+                        }
+                      ],
+                      "properties": {
+                        "bullet": "- ",
+                        "mode": "item",
+                        "secondary": [
+                          ":tag"
+                        ]
+                      },
+                      "ref": "org4a59457",
+                      "type": "item"
+                    },
+                    {
+                      "$$data_type": "org-node",
+                      "contents": [
+                        {
+                          "$$data_type": "org-node",
+                          "contents": [
+                            "another with a checkbox\n"
+                          ],
+                          "properties": {},
+                          "ref": "org29ebd36",
+                          "type": "paragraph"
+                        },
+                        {
+                          "$$data_type": "org-node",
+                          "contents": [
+                            {
+                              "$$data_type": "org-node",
+                              "contents": [
+                                {
+                                  "$$data_type": "org-node",
+                                  "contents": [
+                                    "nested unchecked\n"
+                                  ],
+                                  "properties": {},
+                                  "ref": "org83fdae3",
+                                  "type": "paragraph"
+                                }
+                              ],
+                              "properties": {
+                                "bullet": "- ",
+                                "checkbox": "off",
+                                "mode": "item",
+                                "secondary": [
+                                  ":tag"
+                                ]
+                              },
+                              "ref": "org28cffa9",
+                              "type": "item"
+                            }
+                          ],
+                          "properties": {
+                            "type": "unordered"
+                          },
+                          "ref": "org985719e",
+                          "type": "plain-list"
+                        }
+                      ],
+                      "properties": {
+                        "bullet": "- ",
+                        "mode": "item",
+                        "secondary": [
+                          ":tag"
+                        ]
+                      },
+                      "ref": "orgdd3e8f7",
+                      "type": "item"
+                    },
+                    {
+                      "$$data_type": "org-node",
+                      "contents": [
+                        {
+                          "$$data_type": "org-node",
+                          "contents": [
+                            "checked\n"
+                          ],
+                          "properties": {},
+                          "ref": "orgd1eca17",
+                          "type": "paragraph"
+                        }
+                      ],
+                      "properties": {
+                        "bullet": "- ",
+                        "checkbox": "on",
+                        "mode": "item",
+                        "secondary": [
+                          ":tag"
+                        ]
+                      },
+                      "ref": "org5142069",
+                      "type": "item"
+                    }
+                  ],
+                  "properties": {
+                    "post-blank": 1,
+                    "type": "unordered"
+                  },
+                  "ref": "orgce37a9c",
+                  "type": "plain-list"
+                },
+                {
+                  "$$data_type": "org-node",
+                  "contents": [
+                    {
+                      "$$data_type": "org-node",
+                      "contents": [
+                        {
+                          "$$data_type": "org-node",
+                          "contents": [
+                            "name"
+                          ],
+                          "properties": {},
+                          "ref": "orgf568059",
+                          "type": "table-cell"
+                        },
+                        {
+                          "$$data_type": "org-node",
+                          "contents": [
+                            "value"
+                          ],
+                          "properties": {},
+                          "ref": "orgb90cd3e",
+                          "type": "table-cell"
+                        }
+                      ],
+                      "properties": {
+                        "mode": "table-row",
+                        "type": "standard"
+                      },
+                      "ref": "org13dfd6c",
+                      "type": "table-row"
+                    },
+                    {
+                      "$$data_type": "org-node",
+                      "properties": {
+                        "mode": "table-row",
+                        "type": "rule"
+                      },
+                      "ref": "orgdb5e581",
+                      "type": "table-row"
+                    },
+                    {
+                      "$$data_type": "org-node",
+                      "contents": [
+                        {
+                          "$$data_type": "org-node",
+                          "contents": [
+                            "a"
+                          ],
+                          "properties": {},
+                          "ref": "orgd9f7135",
+                          "type": "table-cell"
+                        },
+                        {
+                          "$$data_type": "org-node",
+                          "contents": [
+                            "1"
+                          ],
+                          "properties": {},
+                          "ref": "org109242a",
+                          "type": "table-cell"
+                        }
+                      ],
+                      "properties": {
+                        "mode": "table-row",
+                        "type": "standard"
+                      },
+                      "ref": "org1436564",
+                      "type": "table-row"
+                    },
+                    {
+                      "$$data_type": "org-node",
+                      "contents": [
+                        {
+                          "$$data_type": "org-node",
+                          "contents": [
+                            "b"
+                          ],
+                          "properties": {},
+                          "ref": "org85bf156",
+                          "type": "table-cell"
+                        },
+                        {
+                          "$$data_type": "org-node",
+                          "contents": [
+                            "2"
+                          ],
+                          "properties": {},
+                          "ref": "org85eb626",
+                          "type": "table-cell"
+                        }
+                      ],
+                      "properties": {
+                        "mode": "table-row",
+                        "type": "standard"
+                      },
+                      "ref": "orgf11c875",
+                      "type": "table-row"
+                    }
+                  ],
+                  "properties": {
+                    "post-blank": 1,
+                    "tblfm": null,
+                    "type": "org",
+                    "value": null
+                  },
+                  "ref": "orgb896544",
+                  "type": "table"
+                },
+                {
+                  "$$data_type": "org-node",
+                  "contents": [
+                    "A footnote reference",
+                    {
+                      "$$data_type": "org-node",
+                      "properties": {
+                        "label": "1",
+                        "post-blank": 1,
+                        "type": "standard"
+                      },
+                      "ref": "org07e2bed",
+                      "type": "footnote-reference"
+                    },
+                    "in a paragraph.\n"
+                  ],
+                  "properties": {
+                    "post-blank": 1
+                  },
+                  "ref": "org7f30c29",
+                  "type": "paragraph"
+                },
+                {
+                  "$$data_type": "org-node",
+                  "contents": [
+                    {
+                      "$$data_type": "org-node",
+                      "contents": [
+                        "The footnote definition.\n"
+                      ],
+                      "properties": {},
+                      "ref": "org5fd1164",
+                      "type": "paragraph"
+                    }
+                  ],
+                  "properties": {
+                    "label": "1",
+                    "post-blank": 1
+                  },
+                  "ref": "org925008a",
+                  "type": "footnote-definition"
+                }
+              ],
+              "properties": {
+                "mode": "section"
+              },
+              "ref": "org04884e3",
+              "type": "section"
+            }
+          ],
+          "drawer": {},
+          "properties": {
+            "closed": {
+              "$$data_type": "timestamp",
+              "end": "2026-08-21T14:03:00",
+              "raw-value": "[2026-08-21 Fri 14:03]",
+              "repeater": {
+                "type": null,
+                "unit": null,
+                "value": null
+              },
+              "start": "2026-08-21T14:03:00",
+              "type": "inactive",
+              "warning": {
+                "type": null,
+                "unit": null,
+                "value": null
+              }
+            },
+            "level": 2,
+            "raw-value": "A subheading",
+            "secondary": [
+              ":title"
+            ],
+            "title": [
+              "A subheading"
+            ],
+            "todo-keyword": "DONE",
+            "todo-type": "done",
+            "true-level": 2
+          },
+          "ref": "org5931ba2",
+          "tags-all": [
+            "physics",
+            "dune",
+            "work",
+            "urgent"
+          ],
+          "type": "headline"
+        }
+      ],
+      "drawer": {
+        "CUSTOM_ID": "a-headline",
+        "EFFORT": "2:00"
+      },
+      "properties": {
+        "deadline": {
+          "$$data_type": "timestamp",
+          "end": "2026-08-30",
+          "raw-value": "<2026-08-30 Sun>",
+          "repeater": {
+            "type": null,
+            "unit": null,
+            "value": null
+          },
+          "start": "2026-08-30",
+          "type": "active",
+          "warning": {
+            "type": null,
+            "unit": null,
+            "value": null
+          }
+        },
+        "level": 1,
+        "priority": "A",
+        "raw-value": "A headline with tags",
+        "scheduled": {
+          "$$data_type": "timestamp",
+          "end": "2026-08-24",
+          "raw-value": "<2026-08-24 Mon>",
+          "repeater": {
+            "type": null,
+            "unit": null,
+            "value": null
+          },
+          "start": "2026-08-24",
+          "type": "active",
+          "warning": {
+            "type": null,
+            "unit": null,
+            "value": null
+          }
+        },
+        "secondary": [
+          ":title"
+        ],
+        "tags": [
+          "work",
+          "urgent"
+        ],
+        "title": [
+          "A headline with tags"
+        ],
+        "todo-keyword": "TODO",
+        "todo-type": "todo",
+        "true-level": 1
+      },
+      "ref": "org8950e07",
+      "tags-all": [
+        "physics",
+        "dune",
+        "work",
+        "urgent"
+      ],
+      "type": "headline"
+    },
+    {
+      "$$data_type": "org-node",
+      "contents": [
+        {
+          "$$data_type": "org-node",
+          "contents": [
+            {
+              "$$data_type": "org-node",
+              "properties": {
+                "label-fmt": null,
+                "number-lines": null,
+                "post-blank": 1,
+                "preserve-indent": false,
+                "retain-labels": true,
+                "switches": null,
+                "use-labels": true,
+                "value": "literal example\n"
+              },
+              "ref": "org98eac6d",
+              "type": "example-block"
+            },
+            {
+              "$$data_type": "org-node",
+              "properties": {
+                "post-blank": 2,
+                "value": "fixed width line"
+              },
+              "ref": "org00b7604",
+              "type": "fixed-width"
+            },
+            {
+              "$$data_type": "org-node",
+              "contents": [
+                "Text with an entity ",
+                {
+                  "$$data_type": "org-node",
+                  "properties": {
+                    "ascii": "alpha",
+                    "html": "&alpha;",
+                    "latex": "\\alpha",
+                    "latex-math-p": true,
+                    "latin1": "alpha",
+                    "name": "alpha",
+                    "post-blank": 1,
+                    "use-brackets-p": false,
+                    "utf-8": "\u03b1"
+                  },
+                  "ref": "orgefa8281",
+                  "type": "entity"
+                },
+                "and a statistics cookie ",
+                {
+                  "$$data_type": "org-node",
+                  "properties": {
+                    "value": "[1/2]"
+                  },
+                  "ref": "org74d1bb6",
+                  "type": "statistics-cookie"
+                },
+                ".\n"
+              ],
+              "properties": {},
+              "ref": "org50aeb64",
+              "type": "paragraph"
+            }
+          ],
+          "properties": {
+            "mode": "section"
+          },
+          "ref": "org4023f2c",
+          "type": "section"
+        }
+      ],
+      "drawer": {
+        "ID": "9f8b7c6d-1234-4321-abcd-0123456789ab"
+      },
+      "properties": {
+        "level": 1,
+        "raw-value": "Second headline",
+        "secondary": [
+          ":title"
+        ],
+        "title": [
+          "Second headline"
+        ],
+        "true-level": 1
+      },
+      "ref": "orgfb6e679",
+      "tags-all": [
+        "physics",
+        "dune"
+      ],
+      "type": "headline"
+    }
+  ],
+  "properties": {
+    "author": [
+      "Brett Viren"
+    ],
+    "creator": "Emacs 30.1 (Org mode 9.7.11)",
+    "date": [
+      "2026-08-22"
+    ],
+    "description": [],
+    "email": "bv@hokum",
+    "filetags": [
+      "physics",
+      "dune"
+    ],
+    "language": "en",
+    "title": [
+      "Canonical model fixture"
+    ]
+  }
+}

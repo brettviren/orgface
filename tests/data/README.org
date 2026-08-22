@@ -1,0 +1,50 @@
+# SPDX-FileCopyrightText: 2026 Brett Viren <brett.viren@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+#+title: Golden fixtures for the canonical model
+
+* Provenance
+
+=fixture.ox-json.json= is *real* =ox-json= output, not a transcription of
+its README.  It was produced by exporting =fixture.org= with GNU Emacs
+30.1 / Org 9.7.11 and =ox-json= (github.com/jlumpe/ox-json), then
+reformatted with =json.dumps(indent=2, sort_keys=True)= so that a diff of
+a regenerated copy is readable.
+
+This matters because the exporter turned out to emit a shape the design
+notes did not describe: extra keys hang off the *node* rather than off its
+=properties= (a headline's =tags-all= and =drawer=, a link's
+=is-internal=/=is-inline-image=/=target-ref=), leaf nodes omit =contents=
+entirely, and timestamps are a distinct =$$data_type= value object nested
+inside =properties=.  A hand-written fixture would have encoded the design
+notes' guess instead, and the model would have been wrong in exactly the
+places that are hard to notice.
+
+=fixture.org= deliberately exercises the constructs the store has to
+handle: file keywords, tags and filetags, TODO/priority/scheduled/deadline,
+property drawers, source and quote blocks, nested lists with checkboxes,
+tables, footnotes, entities, statistics cookies, and both inline and
+display LaTeX.
+
+* Regenerating
+
+The exporter is not a dependency of this project and is not installed by
+=uv sync=.  To refresh the fixture, clone =ox-json= and its =s.el=
+dependency somewhere, then:
+
+#+begin_src elisp
+  (add-to-list 'load-path "/path/to/ox-json")
+  (add-to-list 'load-path "/path/to/s.el")
+  (require 'ox-json)
+  (with-current-buffer (find-file-noselect "fixture.org")
+    (let ((json (org-export-as 'json nil nil nil
+                               '(:json-deterministic-refs t))))
+      (with-temp-file "fixture.ox-json.json" (insert json))))
+#+end_src
+
+run as =emacs -Q --batch -l that-file.el=, and reformat the result.
+
+=:json-deterministic-refs t= is required: without it =ox-json= generates
+fresh =ref= values on every export, so the fixture would never compare
+equal to itself.  Those refs are not used as identifiers anyway -- see
+=org_store.refs= for why they are recomputed on the Python side -- but a
+fixture that changes every time it is regenerated is useless.

@@ -1,0 +1,60 @@
+#+title: Canonical model fixture
+#+author: Brett Viren
+#+filetags: :physics:dune:
+#+date: 2026-08-22
+#+description: A representative org file for schema fixtures
+
+An introductory paragraph with *bold*, /italic/, =verbatim=, ~code~, and a
+[[https://orgmode.org][link to org mode]].
+
+* TODO [#A] A headline with tags                                    :work:urgent:
+SCHEDULED: <2026-08-24 Mon> DEADLINE: <2026-08-30 Sun>
+:PROPERTIES:
+:CUSTOM_ID: a-headline
+:EFFORT:   2:00
+:END:
+
+Body text under the headline.  Inline math $E = mc^2$ and a display
+equation follow.
+
+\begin{equation}
+\nabla \cdot \mathbf{E} = \frac{\rho}{\epsilon_0}
+\end{equation}
+
+** DONE A subheading
+CLOSED: [2026-08-21 Fri 14:03]
+
+#+begin_src python :results output
+print("hello")
+#+end_src
+
+#+begin_quote
+Quoted text.
+#+end_quote
+
+- a list item
+- another with a checkbox
+  - [ ] nested unchecked
+- [X] checked
+
+| name | value |
+|------+-------|
+| a    |     1 |
+| b    |     2 |
+
+A footnote reference[fn:1] in a paragraph.
+
+[fn:1] The footnote definition.
+
+* Second headline
+:PROPERTIES:
+:ID:       9f8b7c6d-1234-4321-abcd-0123456789ab
+:END:
+
+#+begin_example
+literal example
+#+end_example
+
+: fixed width line
+
+Text with an entity \alpha and a statistics cookie [1/2].

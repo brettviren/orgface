@@ -1,0 +1,7 @@
+{{ heading }}{% if tags %} {{ tags }}{% endif %}
+{% if planning %}{{ planning }}
+{% endif %}{% if drawer %}:PROPERTIES:
+{% for key, value in drawer %}:{{ key }}: {{ value }}
+{% endfor %}:END:
+{% endif %}{% if content %}
+{{ content }}{% endif %}

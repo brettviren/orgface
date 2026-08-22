@@ -1,0 +1,1 @@
+{% if props.format == 'plain' %}{{ target }}{% elif props.format == 'angle' %}<{{ target }}>{% else %}[[{{ target }}]{% if description %}[{{ description }}]{% endif %}]{% endif %}

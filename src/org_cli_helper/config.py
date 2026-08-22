@@ -221,6 +221,33 @@ SETTINGS: tuple[Setting, ...] = (
         parse_str,
         "Pager for 'log' output; falls back to $PAGER then less/more.",
     ),
+    Setting(
+        "store_backend",
+        "store",
+        "backend",
+        "ORG_CLI_HELPER_STORE_BACKEND",
+        "sqlite",
+        parse_str,
+        "Which store backend holds org content.",
+    ),
+    Setting(
+        "store_database",
+        "store",
+        "database",
+        "ORG_CLI_HELPER_STORE_DATABASE",
+        None,
+        parse_path,
+        "Sqlite file for the 'sqlite' store; defaults under the XDG state dir.",
+    ),
+    Setting(
+        "store_directory",
+        "store",
+        "directory",
+        "ORG_CLI_HELPER_STORE_DIRECTORY",
+        None,
+        parse_path,
+        "Org file directory for the 'orgfs' store; defaults under XDG state.",
+    ),
 )
 
 _BY_NAME = {setting.name: setting for setting in SETTINGS}
@@ -239,6 +266,9 @@ class Config:
     dailies_directory: str | None = None
     note_topic: str = "Context Notes"
     pager: str | None = None
+    store_backend: str = "sqlite"
+    store_database: Path | None = None
+    store_directory: Path | None = None
     source: Path | None = None  # config file actually loaded, if any
 
     def describe(self) -> list[tuple[str, str, Any]]:

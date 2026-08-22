@@ -1,0 +1,146 @@
+{
+  "$$data_type": "org-document",
+  "contents": [
+    {
+      "$$data_type": "org-node",
+      "contents": [
+        {
+          "$$data_type": "org-node",
+          "contents": [
+            {
+              "$$data_type": "org-node",
+              "contents": [
+                "A meeting ",
+                {
+                  "$$data_type": "org-node",
+                  "end": "2026-09-01T11:00:00",
+                  "properties": {
+                    "post-blank": 1,
+                    "range-type": "timerange",
+                    "raw-value": "<2026-09-01 Tue 10:00-11:00>",
+                    "type": "active-range"
+                  },
+                  "ref": "orgd8ea6e1",
+                  "start": "2026-09-01T10:00:00",
+                  "type": "timestamp"
+                },
+                "and ",
+                {
+                  "$$data_type": "org-node",
+                  "end": "2026-08-05",
+                  "properties": {
+                    "post-blank": 1,
+                    "range-type": "daterange",
+                    "raw-value": "<2026-08-01 Sat>--<2026-08-05 Wed>",
+                    "type": "active-range"
+                  },
+                  "ref": "org4dfb54a",
+                  "start": "2026-08-01",
+                  "type": "timestamp"
+                },
+                "plus ",
+                {
+                  "$$data_type": "org-node",
+                  "end": "2026-07-01",
+                  "properties": {
+                    "post-blank": 1,
+                    "raw-value": "[2026-07-01 Wed]",
+                    "type": "inactive"
+                  },
+                  "ref": "org346a025",
+                  "start": "2026-07-01",
+                  "type": "timestamp"
+                },
+                "here.\n"
+              ],
+              "properties": {
+                "mode": "planning",
+                "post-blank": 1
+              },
+              "ref": "orgd7218e5",
+              "type": "paragraph"
+            }
+          ],
+          "properties": {
+            "mode": "section"
+          },
+          "ref": "org13f290c",
+          "type": "section"
+        }
+      ],
+      "drawer": {},
+      "properties": {
+        "level": 1,
+        "mode": "first-section",
+        "raw-value": "Head",
+        "secondary": [
+          ":title"
+        ],
+        "title": [
+          "Head"
+        ],
+        "true-level": 1
+      },
+      "ref": "org75cc7e1",
+      "tags-all": [],
+      "type": "headline"
+    },
+    {
+      "$$data_type": "org-node",
+      "contents": [
+        {
+          "$$data_type": "org-node",
+          "properties": {
+            "mode": "section"
+          },
+          "ref": "org4e839db",
+          "type": "section"
+        }
+      ],
+      "drawer": {},
+      "properties": {
+        "level": 1,
+        "raw-value": "Repeating",
+        "scheduled": {
+          "$$data_type": "timestamp",
+          "end": "2026-09-01",
+          "raw-value": "<2026-09-01 Tue +1w -2d>",
+          "repeater": {
+            "type": "cumulate",
+            "unit": "week",
+            "value": 1
+          },
+          "start": "2026-09-01",
+          "type": "active",
+          "warning": {
+            "type": "all",
+            "unit": "day",
+            "value": 2
+          }
+        },
+        "secondary": [
+          ":title"
+        ],
+        "title": [
+          "Repeating"
+        ],
+        "true-level": 1
+      },
+      "ref": "org8950e07",
+      "tags-all": [],
+      "type": "headline"
+    }
+  ],
+  "properties": {
+    "author": [
+      "Brett Viren"
+    ],
+    "creator": "Emacs 30.1 (Org mode 9.7.11)",
+    "date": [],
+    "description": [],
+    "email": "bv@hokum",
+    "filetags": [],
+    "language": "en",
+    "title": []
+  }
+}

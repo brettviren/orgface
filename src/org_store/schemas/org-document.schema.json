@@ -1,0 +1,2794 @@
+{
+  "$defs": {
+    "Contents": {
+      "items": {
+        "$ref": "#/$defs/OrgContent"
+      },
+      "type": "array"
+    },
+    "DocumentProperties": {
+      "additionalProperties": true,
+      "description": "File-level keywords, as ``ox-json`` collects them.\n\nThe parsed ones (``title``, ``author``, ``date``, ``description``) are\nsecondary strings -- lists that may contain markup nodes, not plain\nstrings -- so a bare string is promoted to a one-element list rather\nthan rejected.  ``filetags`` arrives already split into a list, which\nthe Emacs-free ingestion path has to reproduce from a raw\n``:tag1:tag2:`` string.",
+      "properties": {
+        "author": {
+          "items": {
+            "$ref": "#/$defs/OrgContent"
+          },
+          "title": "Author",
+          "type": "array"
+        },
+        "creator": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Creator"
+        },
+        "date": {
+          "items": {
+            "$ref": "#/$defs/OrgContent"
+          },
+          "title": "Date",
+          "type": "array"
+        },
+        "description": {
+          "items": {
+            "$ref": "#/$defs/OrgContent"
+          },
+          "title": "Description",
+          "type": "array"
+        },
+        "email": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Email"
+        },
+        "filetags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Filetags",
+          "type": "array"
+        },
+        "language": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Language"
+        },
+        "title": {
+          "items": {
+            "$ref": "#/$defs/OrgContent"
+          },
+          "title": "Title",
+          "type": "array"
+        }
+      },
+      "title": "DocumentProperties",
+      "type": "object"
+    },
+    "DrawerNode": {
+      "additionalProperties": true,
+      "properties": {
+        "$$data_type": {
+          "const": "org-node",
+          "default": "org-node",
+          "title": "$$Data Type",
+          "type": "string"
+        },
+        "contents": {
+          "$ref": "#/$defs/Contents"
+        },
+        "properties": {
+          "$ref": "#/$defs/DrawerProperties"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ref"
+        },
+        "type": {
+          "const": "drawer",
+          "default": "drawer",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "DrawerNode",
+      "type": "object"
+    },
+    "DrawerProperties": {
+      "additionalProperties": true,
+      "properties": {
+        "drawer-name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Drawer-Name"
+        },
+        "mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "post-blank": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Post-Blank"
+        },
+        "secondary": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Secondary"
+        }
+      },
+      "title": "DrawerProperties",
+      "type": "object"
+    },
+    "EntityNode": {
+      "additionalProperties": true,
+      "properties": {
+        "$$data_type": {
+          "const": "org-node",
+          "default": "org-node",
+          "title": "$$Data Type",
+          "type": "string"
+        },
+        "contents": {
+          "$ref": "#/$defs/Contents"
+        },
+        "properties": {
+          "$ref": "#/$defs/EntityProperties"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ref"
+        },
+        "type": {
+          "const": "entity",
+          "default": "entity",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "EntityNode",
+      "type": "object"
+    },
+    "EntityProperties": {
+      "additionalProperties": true,
+      "properties": {
+        "ascii": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ascii"
+        },
+        "html": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Html"
+        },
+        "latex": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Latex"
+        },
+        "latex-math-p": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Latex-Math-P"
+        },
+        "latin1": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Latin1"
+        },
+        "mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "post-blank": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Post-Blank"
+        },
+        "secondary": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Secondary"
+        },
+        "use-brackets-p": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Use-Brackets-P"
+        },
+        "utf-8": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Utf-8"
+        }
+      },
+      "title": "EntityProperties",
+      "type": "object"
+    },
+    "ExampleBlockNode": {
+      "additionalProperties": true,
+      "properties": {
+        "$$data_type": {
+          "const": "org-node",
+          "default": "org-node",
+          "title": "$$Data Type",
+          "type": "string"
+        },
+        "contents": {
+          "$ref": "#/$defs/Contents"
+        },
+        "properties": {
+          "$ref": "#/$defs/ValueProperties"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ref"
+        },
+        "type": {
+          "const": "example-block",
+          "default": "example-block",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "ExampleBlockNode",
+      "type": "object"
+    },
+    "FixedWidthNode": {
+      "additionalProperties": true,
+      "properties": {
+        "$$data_type": {
+          "const": "org-node",
+          "default": "org-node",
+          "title": "$$Data Type",
+          "type": "string"
+        },
+        "contents": {
+          "$ref": "#/$defs/Contents"
+        },
+        "properties": {
+          "$ref": "#/$defs/ValueProperties"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ref"
+        },
+        "type": {
+          "const": "fixed-width",
+          "default": "fixed-width",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "FixedWidthNode",
+      "type": "object"
+    },
+    "FootnoteDefinitionNode": {
+      "additionalProperties": true,
+      "properties": {
+        "$$data_type": {
+          "const": "org-node",
+          "default": "org-node",
+          "title": "$$Data Type",
+          "type": "string"
+        },
+        "contents": {
+          "$ref": "#/$defs/Contents"
+        },
+        "properties": {
+          "$ref": "#/$defs/FootnoteDefinitionProperties"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ref"
+        },
+        "type": {
+          "const": "footnote-definition",
+          "default": "footnote-definition",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "FootnoteDefinitionNode",
+      "type": "object"
+    },
+    "FootnoteDefinitionProperties": {
+      "additionalProperties": true,
+      "properties": {
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        },
+        "mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "post-blank": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Post-Blank"
+        },
+        "secondary": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Secondary"
+        }
+      },
+      "title": "FootnoteDefinitionProperties",
+      "type": "object"
+    },
+    "FootnoteReferenceNode": {
+      "additionalProperties": true,
+      "properties": {
+        "$$data_type": {
+          "const": "org-node",
+          "default": "org-node",
+          "title": "$$Data Type",
+          "type": "string"
+        },
+        "contents": {
+          "$ref": "#/$defs/Contents"
+        },
+        "properties": {
+          "$ref": "#/$defs/FootnoteReferenceProperties"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ref"
+        },
+        "type": {
+          "const": "footnote-reference",
+          "default": "footnote-reference",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "FootnoteReferenceNode",
+      "type": "object"
+    },
+    "FootnoteReferenceProperties": {
+      "additionalProperties": true,
+      "properties": {
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        },
+        "mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "post-blank": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Post-Blank"
+        },
+        "secondary": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Secondary"
+        },
+        "type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Type"
+        }
+      },
+      "title": "FootnoteReferenceProperties",
+      "type": "object"
+    },
+    "GenericNode": {
+      "additionalProperties": true,
+      "description": "Any node type without a dedicated class.\n\nEverything survives here -- the type string is kept as-is and the\nproperties keep their raw keys -- so an unrecognised org construct is\nstored faithfully rather than rejected.",
+      "properties": {
+        "$$data_type": {
+          "const": "org-node",
+          "default": "org-node",
+          "title": "$$Data Type",
+          "type": "string"
+        },
+        "contents": {
+          "$ref": "#/$defs/Contents"
+        },
+        "properties": {
+          "$ref": "#/$defs/NodeProperties"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ref"
+        },
+        "type": {
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "title": "GenericNode",
+      "type": "object"
+    },
+    "HeadlineNode": {
+      "additionalProperties": true,
+      "properties": {
+        "$$data_type": {
+          "const": "org-node",
+          "default": "org-node",
+          "title": "$$Data Type",
+          "type": "string"
+        },
+        "contents": {
+          "$ref": "#/$defs/Contents"
+        },
+        "drawer": {
+          "additionalProperties": true,
+          "title": "Drawer",
+          "type": "object"
+        },
+        "properties": {
+          "$ref": "#/$defs/HeadlineProperties"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ref"
+        },
+        "tags-all": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags-All",
+          "type": "array"
+        },
+        "type": {
+          "const": "headline",
+          "default": "headline",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "HeadlineNode",
+      "type": "object"
+    },
+    "HeadlineProperties": {
+      "additionalProperties": true,
+      "properties": {
+        "archivedp": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Archivedp"
+        },
+        "closed": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "commentedp": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Commentedp"
+        },
+        "deadline": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "footnote-section-p": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Footnote-Section-P"
+        },
+        "level": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Level"
+        },
+        "mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "post-blank": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Post-Blank"
+        },
+        "priority": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Priority"
+        },
+        "raw-value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Raw-Value"
+        },
+        "scheduled": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "secondary": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Secondary"
+        },
+        "tags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "title": {
+          "items": {
+            "$ref": "#/$defs/OrgContent"
+          },
+          "title": "Title",
+          "type": "array"
+        },
+        "todo-keyword": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Todo-Keyword"
+        },
+        "todo-type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Todo-Type"
+        },
+        "true-level": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "True-Level"
+        }
+      },
+      "title": "HeadlineProperties",
+      "type": "object"
+    },
+    "ItemNode": {
+      "additionalProperties": true,
+      "properties": {
+        "$$data_type": {
+          "const": "org-node",
+          "default": "org-node",
+          "title": "$$Data Type",
+          "type": "string"
+        },
+        "contents": {
+          "$ref": "#/$defs/Contents"
+        },
+        "properties": {
+          "$ref": "#/$defs/ItemProperties"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ref"
+        },
+        "type": {
+          "const": "item",
+          "default": "item",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "ItemNode",
+      "type": "object"
+    },
+    "ItemProperties": {
+      "additionalProperties": true,
+      "properties": {
+        "bullet": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bullet"
+        },
+        "checkbox": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Checkbox"
+        },
+        "counter": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Counter"
+        },
+        "mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "post-blank": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Post-Blank"
+        },
+        "pre-blank": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pre-Blank"
+        },
+        "secondary": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Secondary"
+        },
+        "tag": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/OrgContent"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tag"
+        }
+      },
+      "title": "ItemProperties",
+      "type": "object"
+    },
+    "KeyValueProperties": {
+      "additionalProperties": true,
+      "description": "A ``#+key: value`` keyword, or a ``:key: value`` drawer property.",
+      "properties": {
+        "key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Key"
+        },
+        "mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "post-blank": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Post-Blank"
+        },
+        "secondary": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Secondary"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        }
+      },
+      "title": "KeyValueProperties",
+      "type": "object"
+    },
+    "KeywordNode": {
+      "additionalProperties": true,
+      "properties": {
+        "$$data_type": {
+          "const": "org-node",
+          "default": "org-node",
+          "title": "$$Data Type",
+          "type": "string"
+        },
+        "contents": {
+          "$ref": "#/$defs/Contents"
+        },
+        "properties": {
+          "$ref": "#/$defs/KeyValueProperties"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ref"
+        },
+        "type": {
+          "const": "keyword",
+          "default": "keyword",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "KeywordNode",
+      "type": "object"
+    },
+    "LatexEnvironmentNode": {
+      "additionalProperties": true,
+      "properties": {
+        "$$data_type": {
+          "const": "org-node",
+          "default": "org-node",
+          "title": "$$Data Type",
+          "type": "string"
+        },
+        "contents": {
+          "$ref": "#/$defs/Contents"
+        },
+        "properties": {
+          "$ref": "#/$defs/LatexProperties"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ref"
+        },
+        "type": {
+          "const": "latex-environment",
+          "default": "latex-environment",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "LatexEnvironmentNode",
+      "type": "object"
+    },
+    "LatexFragmentNode": {
+      "additionalProperties": true,
+      "properties": {
+        "$$data_type": {
+          "const": "org-node",
+          "default": "org-node",
+          "title": "$$Data Type",
+          "type": "string"
+        },
+        "contents": {
+          "$ref": "#/$defs/Contents"
+        },
+        "properties": {
+          "$ref": "#/$defs/LatexProperties"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ref"
+        },
+        "type": {
+          "const": "latex-fragment",
+          "default": "latex-fragment",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "LatexFragmentNode",
+      "type": "object"
+    },
+    "LatexProperties": {
+      "additionalProperties": true,
+      "description": "A LaTeX fragment or environment, captured verbatim.\n\nMath is stored as source, never as a parsed expression tree.\n``display`` and ``dialect`` are not part of ``ox-json``'s output --\norg-element distinguishes fragment from environment by node type\nalone.  They are here so the Emacs-free ingestion path, which has to\nsynthesise these nodes out of plain text, can record what it detected.",
+      "properties": {
+        "dialect": {
+          "default": "latex",
+          "title": "Dialect",
+          "type": "string"
+        },
+        "display": {
+          "anyOf": [
+            {
+              "enum": [
+                "inline",
+                "block"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Display"
+        },
+        "mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "post-blank": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Post-Blank"
+        },
+        "secondary": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Secondary"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        }
+      },
+      "title": "LatexProperties",
+      "type": "object"
+    },
+    "LinkNode": {
+      "additionalProperties": true,
+      "properties": {
+        "$$data_type": {
+          "const": "org-node",
+          "default": "org-node",
+          "title": "$$Data Type",
+          "type": "string"
+        },
+        "contents": {
+          "$ref": "#/$defs/Contents"
+        },
+        "is-inline-image": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Is-Inline-Image"
+        },
+        "is-internal": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Is-Internal"
+        },
+        "properties": {
+          "$ref": "#/$defs/LinkProperties"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ref"
+        },
+        "target-ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target-Ref"
+        },
+        "type": {
+          "const": "link",
+          "default": "link",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "LinkNode",
+      "type": "object"
+    },
+    "LinkProperties": {
+      "additionalProperties": true,
+      "properties": {
+        "application": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Application"
+        },
+        "format": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Format"
+        },
+        "mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Path"
+        },
+        "post-blank": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Post-Blank"
+        },
+        "raw-link": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Raw-Link"
+        },
+        "search-option": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Search-Option"
+        },
+        "secondary": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Secondary"
+        },
+        "type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Type"
+        },
+        "type-explicit-p": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Type-Explicit-P"
+        }
+      },
+      "title": "LinkProperties",
+      "type": "object"
+    },
+    "NodeProperties": {
+      "additionalProperties": true,
+      "description": "Properties shared by every node type.\n\n``ox-json`` attaches these to essentially everything; they are\norg-element's own bookkeeping rather than content, but dropping them\nwould make the model lossy.",
+      "properties": {
+        "mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "post-blank": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Post-Blank"
+        },
+        "secondary": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Secondary"
+        }
+      },
+      "title": "NodeProperties",
+      "type": "object"
+    },
+    "NodePropertyNode": {
+      "additionalProperties": true,
+      "properties": {
+        "$$data_type": {
+          "const": "org-node",
+          "default": "org-node",
+          "title": "$$Data Type",
+          "type": "string"
+        },
+        "contents": {
+          "$ref": "#/$defs/Contents"
+        },
+        "properties": {
+          "$ref": "#/$defs/KeyValueProperties"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ref"
+        },
+        "type": {
+          "const": "node-property",
+          "default": "node-property",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "NodePropertyNode",
+      "type": "object"
+    },
+    "OrgContent": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/OrgNode"
+        }
+      ]
+    },
+    "OrgNode": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/DrawerNode"
+        },
+        {
+          "$ref": "#/$defs/EntityNode"
+        },
+        {
+          "$ref": "#/$defs/ExampleBlockNode"
+        },
+        {
+          "$ref": "#/$defs/FixedWidthNode"
+        },
+        {
+          "$ref": "#/$defs/FootnoteDefinitionNode"
+        },
+        {
+          "$ref": "#/$defs/FootnoteReferenceNode"
+        },
+        {
+          "$ref": "#/$defs/HeadlineNode"
+        },
+        {
+          "$ref": "#/$defs/ItemNode"
+        },
+        {
+          "$ref": "#/$defs/KeywordNode"
+        },
+        {
+          "$ref": "#/$defs/LatexEnvironmentNode"
+        },
+        {
+          "$ref": "#/$defs/LatexFragmentNode"
+        },
+        {
+          "$ref": "#/$defs/LinkNode"
+        },
+        {
+          "$ref": "#/$defs/NodePropertyNode"
+        },
+        {
+          "$ref": "#/$defs/ParagraphNode"
+        },
+        {
+          "$ref": "#/$defs/PlainListNode"
+        },
+        {
+          "$ref": "#/$defs/PropertyDrawerNode"
+        },
+        {
+          "$ref": "#/$defs/QuoteBlockNode"
+        },
+        {
+          "$ref": "#/$defs/SectionNode"
+        },
+        {
+          "$ref": "#/$defs/SrcBlockNode"
+        },
+        {
+          "$ref": "#/$defs/StatisticsCookieNode"
+        },
+        {
+          "$ref": "#/$defs/TableNode"
+        },
+        {
+          "$ref": "#/$defs/TableCellNode"
+        },
+        {
+          "$ref": "#/$defs/TableRowNode"
+        },
+        {
+          "$ref": "#/$defs/TimestampNode"
+        },
+        {
+          "$ref": "#/$defs/GenericNode"
+        }
+      ]
+    },
+    "ParagraphNode": {
+      "additionalProperties": true,
+      "properties": {
+        "$$data_type": {
+          "const": "org-node",
+          "default": "org-node",
+          "title": "$$Data Type",
+          "type": "string"
+        },
+        "contents": {
+          "$ref": "#/$defs/Contents"
+        },
+        "properties": {
+          "$ref": "#/$defs/NodeProperties"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ref"
+        },
+        "type": {
+          "const": "paragraph",
+          "default": "paragraph",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "ParagraphNode",
+      "type": "object"
+    },
+    "PlainListNode": {
+      "additionalProperties": true,
+      "properties": {
+        "$$data_type": {
+          "const": "org-node",
+          "default": "org-node",
+          "title": "$$Data Type",
+          "type": "string"
+        },
+        "contents": {
+          "$ref": "#/$defs/Contents"
+        },
+        "properties": {
+          "$ref": "#/$defs/PlainListProperties"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ref"
+        },
+        "type": {
+          "const": "plain-list",
+          "default": "plain-list",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "PlainListNode",
+      "type": "object"
+    },
+    "PlainListProperties": {
+      "additionalProperties": true,
+      "properties": {
+        "mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "post-blank": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Post-Blank"
+        },
+        "secondary": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Secondary"
+        },
+        "type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Type"
+        }
+      },
+      "title": "PlainListProperties",
+      "type": "object"
+    },
+    "PropertyDrawerNode": {
+      "additionalProperties": true,
+      "properties": {
+        "$$data_type": {
+          "const": "org-node",
+          "default": "org-node",
+          "title": "$$Data Type",
+          "type": "string"
+        },
+        "contents": {
+          "$ref": "#/$defs/Contents"
+        },
+        "properties": {
+          "$ref": "#/$defs/NodeProperties"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ref"
+        },
+        "type": {
+          "const": "property-drawer",
+          "default": "property-drawer",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "PropertyDrawerNode",
+      "type": "object"
+    },
+    "QuoteBlockNode": {
+      "additionalProperties": true,
+      "properties": {
+        "$$data_type": {
+          "const": "org-node",
+          "default": "org-node",
+          "title": "$$Data Type",
+          "type": "string"
+        },
+        "contents": {
+          "$ref": "#/$defs/Contents"
+        },
+        "properties": {
+          "$ref": "#/$defs/NodeProperties"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ref"
+        },
+        "type": {
+          "const": "quote-block",
+          "default": "quote-block",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "QuoteBlockNode",
+      "type": "object"
+    },
+    "SectionNode": {
+      "additionalProperties": true,
+      "properties": {
+        "$$data_type": {
+          "const": "org-node",
+          "default": "org-node",
+          "title": "$$Data Type",
+          "type": "string"
+        },
+        "contents": {
+          "$ref": "#/$defs/Contents"
+        },
+        "properties": {
+          "$ref": "#/$defs/NodeProperties"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ref"
+        },
+        "type": {
+          "const": "section",
+          "default": "section",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "SectionNode",
+      "type": "object"
+    },
+    "SrcBlockNode": {
+      "additionalProperties": true,
+      "properties": {
+        "$$data_type": {
+          "const": "org-node",
+          "default": "org-node",
+          "title": "$$Data Type",
+          "type": "string"
+        },
+        "contents": {
+          "$ref": "#/$defs/Contents"
+        },
+        "properties": {
+          "$ref": "#/$defs/SrcBlockProperties"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ref"
+        },
+        "type": {
+          "const": "src-block",
+          "default": "src-block",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "SrcBlockNode",
+      "type": "object"
+    },
+    "SrcBlockProperties": {
+      "additionalProperties": true,
+      "properties": {
+        "label-fmt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label-Fmt"
+        },
+        "language": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Language"
+        },
+        "mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "number-lines": {
+          "default": null,
+          "title": "Number-Lines"
+        },
+        "parameters": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parameters"
+        },
+        "post-blank": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Post-Blank"
+        },
+        "preserve-indent": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Preserve-Indent"
+        },
+        "retain-labels": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Retain-Labels"
+        },
+        "secondary": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Secondary"
+        },
+        "switches": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Switches"
+        },
+        "use-labels": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Use-Labels"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        }
+      },
+      "title": "SrcBlockProperties",
+      "type": "object"
+    },
+    "StatisticsCookieNode": {
+      "additionalProperties": true,
+      "properties": {
+        "$$data_type": {
+          "const": "org-node",
+          "default": "org-node",
+          "title": "$$Data Type",
+          "type": "string"
+        },
+        "contents": {
+          "$ref": "#/$defs/Contents"
+        },
+        "properties": {
+          "$ref": "#/$defs/ValueProperties"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ref"
+        },
+        "type": {
+          "const": "statistics-cookie",
+          "default": "statistics-cookie",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "StatisticsCookieNode",
+      "type": "object"
+    },
+    "TableCellNode": {
+      "additionalProperties": true,
+      "properties": {
+        "$$data_type": {
+          "const": "org-node",
+          "default": "org-node",
+          "title": "$$Data Type",
+          "type": "string"
+        },
+        "contents": {
+          "$ref": "#/$defs/Contents"
+        },
+        "properties": {
+          "$ref": "#/$defs/NodeProperties"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ref"
+        },
+        "type": {
+          "const": "table-cell",
+          "default": "table-cell",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "TableCellNode",
+      "type": "object"
+    },
+    "TableNode": {
+      "additionalProperties": true,
+      "properties": {
+        "$$data_type": {
+          "const": "org-node",
+          "default": "org-node",
+          "title": "$$Data Type",
+          "type": "string"
+        },
+        "contents": {
+          "$ref": "#/$defs/Contents"
+        },
+        "properties": {
+          "$ref": "#/$defs/TableProperties"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ref"
+        },
+        "type": {
+          "const": "table",
+          "default": "table",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "TableNode",
+      "type": "object"
+    },
+    "TableProperties": {
+      "additionalProperties": true,
+      "properties": {
+        "mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "post-blank": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Post-Blank"
+        },
+        "secondary": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Secondary"
+        },
+        "tblfm": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tblfm"
+        },
+        "type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Type"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        }
+      },
+      "title": "TableProperties",
+      "type": "object"
+    },
+    "TableRowNode": {
+      "additionalProperties": true,
+      "properties": {
+        "$$data_type": {
+          "const": "org-node",
+          "default": "org-node",
+          "title": "$$Data Type",
+          "type": "string"
+        },
+        "contents": {
+          "$ref": "#/$defs/Contents"
+        },
+        "properties": {
+          "$ref": "#/$defs/TableRowProperties"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ref"
+        },
+        "type": {
+          "const": "table-row",
+          "default": "table-row",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "TableRowNode",
+      "type": "object"
+    },
+    "TableRowProperties": {
+      "additionalProperties": true,
+      "properties": {
+        "mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "post-blank": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Post-Blank"
+        },
+        "secondary": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Secondary"
+        },
+        "type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Type"
+        }
+      },
+      "title": "TableRowProperties",
+      "type": "object"
+    },
+    "Timestamp": {
+      "additionalProperties": true,
+      "description": "An org timestamp, as ``ox-json`` renders one.\n\nThis is a value object rather than a node: it appears *inside*\n``properties`` (a headline's ``scheduled``/``deadline``/``closed``),\ntagged ``$$data_type: timestamp``, not in ``contents``.",
+      "properties": {
+        "$$data_type": {
+          "const": "timestamp",
+          "default": "timestamp",
+          "title": "$$Data Type",
+          "type": "string"
+        },
+        "end": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "End"
+        },
+        "raw-value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Raw-Value"
+        },
+        "repeater": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TimestampRepeat"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "start": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Start"
+        },
+        "type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Type"
+        },
+        "warning": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TimestampRepeat"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "Timestamp",
+      "type": "object"
+    },
+    "TimestampNode": {
+      "additionalProperties": true,
+      "description": "A timestamp appearing as content rather than as a planning value.\n\nNote the split: the resolved ``start``/``end`` sit on the node, the way\na headline's ``tags-all`` does, while the kind and the source text sit\nin ``properties``.  A planning timestamp is shaped differently again --\nsee :class:`Timestamp`, which is a value object with no node around it.",
+      "properties": {
+        "$$data_type": {
+          "const": "org-node",
+          "default": "org-node",
+          "title": "$$Data Type",
+          "type": "string"
+        },
+        "contents": {
+          "$ref": "#/$defs/Contents"
+        },
+        "end": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "End"
+        },
+        "properties": {
+          "$ref": "#/$defs/TimestampNodeProperties"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ref"
+        },
+        "start": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Start"
+        },
+        "type": {
+          "const": "timestamp",
+          "default": "timestamp",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "TimestampNode",
+      "type": "object"
+    },
+    "TimestampNodeProperties": {
+      "additionalProperties": true,
+      "properties": {
+        "mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "post-blank": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Post-Blank"
+        },
+        "range-type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Range-Type"
+        },
+        "raw-value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Raw-Value"
+        },
+        "secondary": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Secondary"
+        },
+        "type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Type"
+        }
+      },
+      "title": "TimestampNodeProperties",
+      "type": "object"
+    },
+    "TimestampRepeat": {
+      "additionalProperties": true,
+      "description": "A timestamp's repeater or warning period.\n\nAll three fields are null when the timestamp carries neither, which is\nhow ``ox-json`` represents \"absent\" here.",
+      "properties": {
+        "type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Type"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        }
+      },
+      "title": "TimestampRepeat",
+      "type": "object"
+    },
+    "ValueProperties": {
+      "additionalProperties": true,
+      "description": "For nodes whose whole content is one verbatim string.\n\nexample-block, fixed-width, code, verbatim, statistics-cookie.",
+      "properties": {
+        "mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "post-blank": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Post-Blank"
+        },
+        "secondary": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Secondary"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        }
+      },
+      "title": "ValueProperties",
+      "type": "object"
+    }
+  },
+  "$id": "https://brettviren.github.io/org-cli-helper/schema/v1/org-document.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "description": "A whole org document: the root of the canonical representation.",
+  "properties": {
+    "$$data_type": {
+      "const": "org-document",
+      "default": "org-document",
+      "title": "$$Data Type",
+      "type": "string"
+    },
+    "contents": {
+      "$ref": "#/$defs/Contents"
+    },
+    "properties": {
+      "$ref": "#/$defs/DocumentProperties"
+    },
+    "schema-version": {
+      "default": 1,
+      "title": "Schema-Version",
+      "type": "integer"
+    }
+  },
+  "title": "OrgDocument",
+  "type": "object"
+}

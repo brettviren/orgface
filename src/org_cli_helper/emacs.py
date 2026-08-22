@@ -183,6 +183,29 @@ class Emacs:
         """Locate the org-roam node titled TITLE; ``file`` is None if absent."""
         return self.eval_json(elisp.call("org-cli-helper-topic", title))
 
+    # -- the org store ------------------------------------------------------
+
+    def export_json(self, path: Path) -> dict[str, Any]:
+        """Export the org file at PATH through ox-json.
+
+        The whole integration with ox-json is this one call: the daemon
+        hands back the exporter's JSON over the base64 channel every other
+        command already uses, so there is no second bridge to maintain.
+        """
+        return self.eval_json(
+            elisp.call("org-cli-helper-export-json", str(path))
+        )
+
+    def buffer_state(self, path: Path) -> dict[str, Any]:
+        """Whether Emacs holds PATH, and whether it has unsaved changes."""
+        return self.eval_json(
+            elisp.call("org-cli-helper-buffer-state", str(path))
+        )
+
+    def revert(self, path: Path) -> dict[str, Any]:
+        """Reload PATH into its Emacs buffer, if there is one."""
+        return self.eval_json(elisp.call("org-cli-helper-revert", str(path)))
+
     def status(self) -> dict[str, Any]:
         """Liveness and identity of the daemon, without starting one."""
         if not self.is_running():

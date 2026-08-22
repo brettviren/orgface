@@ -11,8 +11,12 @@
 
 (require 'org-capture)
 
-(defconst org-cli-helper-version "1"
-  "Protocol version, probed by the CLI to detect a bootstrapped daemon.")
+(defconst org-cli-helper-version "2"
+  "Protocol version, probed by the CLI to detect a bootstrapped daemon.
+
+Bumped when functions are added: a daemon started before the change has
+the old definitions loaded and will not gain the new ones until it is
+restarted.")
 
 (defvar org-cli-helper--expiry-timer nil
   "Timer that shuts this daemon down once it has been idle long enough.")
@@ -263,6 +267,77 @@ top level entry when its target is not an entry."
      (list :topic topic
            :id (or (and node (org-roam-node-id node)) :null)
            :file (or (and node (org-roam-node-file node)) :null)))))
+
+;;; The org store
+;;
+;; Reading org through Emacs rather than through a standalone parser is
+;; worth the round trip for one reason: org-element is the definition of
+;; what org means, and it is reading the person's own configuration --
+;; their link types, their TODO keywords, their in-buffer settings.  No
+;; independent parser can promise that.
+
+(defun org-cli-helper--raw-payload (json)
+  "Encode JSON, already a JSON string, for the CLI to decode.
+
+Distinct from `org-cli-helper--payload', which serialises an Elisp
+object; passing an exported document through that would encode the JSON
+as a JSON string rather than sending it as itself."
+  (base64-encode-string (encode-coding-string json 'utf-8) t))
+
+(defun org-cli-helper--visiting (path)
+  "The live buffer visiting PATH, or nil."
+  (find-buffer-visiting (expand-file-name path)))
+
+(defun org-cli-helper-export-json (path)
+  "Export the org file at PATH as ox-json JSON.
+
+A buffer already visiting PATH is used in preference to re-reading the
+file, so what comes back is what Emacs currently has -- including edits
+not yet saved.  That is the point of asking Emacs at all; a caller
+wanting the file as stored should read the file.
+
+A buffer opened here is killed again, so that repeated exports do not
+accumulate buffers in a long-lived daemon."
+  (org-cli-helper--require 'ox-json)
+  (let* ((file (expand-file-name path))
+         (existing (org-cli-helper--visiting file))
+         (buffer (or existing (find-file-noselect file t))))
+    (unwind-protect
+        (with-current-buffer buffer
+          (let ((org-export-with-broken-links t))
+            (org-cli-helper--raw-payload
+             ;; Deterministic refs, so that exporting the same document
+             ;; twice compares equal.  The CLI recomputes its own refs
+             ;; regardless, but a payload that changed every call would
+             ;; defeat any caching or diffing on the way.
+             (org-export-as 'json nil nil nil
+                            (list :json-deterministic-refs t)))))
+      (unless existing (kill-buffer buffer)))))
+
+(defun org-cli-helper-buffer-state (path)
+  "Report whether Emacs holds PATH, and whether it has unsaved changes.
+
+Asked before writing a file, so that unsaved work is never silently
+overwritten by a store that is only one of several writers."
+  (let* ((file (expand-file-name path))
+         (buffer (org-cli-helper--visiting file)))
+    (org-cli-helper--payload
+     (list :path file
+           :visiting (if buffer t :false)
+           :modified (if (and buffer (buffer-modified-p buffer)) t :false)))))
+
+(defun org-cli-helper-revert (path)
+  "Reload PATH into its buffer, if Emacs has one.
+
+Called after writing the file from outside, so Emacs is not left showing
+content that is no longer what is on disk."
+  (let* ((file (expand-file-name path))
+         (buffer (org-cli-helper--visiting file)))
+    (when buffer
+      (with-current-buffer buffer
+        (revert-buffer :ignore-auto :noconfirm :preserve-modes)))
+    (org-cli-helper--payload
+     (list :path file :reverted (if buffer t :false)))))
 
 (provide 'org-cli-helper-bootstrap)
 ;;; bootstrap.el ends here
