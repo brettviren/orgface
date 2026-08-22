@@ -15,6 +15,12 @@ from . import HELP, colour_option, opened_store
 @click.command(context_settings=HELP, no_args_is_help=True)
 @click.argument("words", nargs=-1, metavar="TEXT...")
 @click.option(
+    "-s",
+    "--semantic",
+    is_flag=True,
+    help="Search by meaning, using embeddings, rather than by word.",
+)
+@click.option(
     "--scope",
     type=click.Choice(["all", "heading", "body"]),
     default="all",
@@ -68,6 +74,7 @@ from . import HELP, colour_option, opened_store
 def search(
     ctx: Context,
     words: tuple[str, ...],
+    semantic: bool,
     scope: str,
     tags: tuple[str, ...],
     node_types: tuple[str, ...],
@@ -84,11 +91,17 @@ def search(
 
     Tag and property filters are inherited the way org inherits them: a
     paragraph under a heading tagged :urgent: counts as urgent.
+
+    With -s/--semantic the words are matched by meaning instead, against
+    embeddings built by `org store embed`. That needs the model running,
+    and only finds what has been embedded. --scope does not apply: a
+    vector is of the whole node, not of its heading or its body.
     """
     from org_store.search import SearchQuery
 
     query = SearchQuery(
         text=" ".join(words),
+        semantic=semantic,
         scope=scope,
         tags=list(tags) or None,
         node_types=list(node_types) or None,

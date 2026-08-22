@@ -39,6 +39,7 @@ from ..model import (
     OrgDocument,
     OrgNodeBase,
     Timestamp,
+    TimestampRepeat,
 )
 
 # Inline maths, in the four spellings org recognises.  Ordered longest
@@ -579,11 +580,35 @@ def _timestamp(stamp: Any) -> Timestamp | None:
     body = f"{date}{_dayname(stamp, 'start')}"
     if clock:
         body += f" {clock[:5]}"
+    # A repeater and a warning delay are part of what the timestamp says,
+    # and org writes them inside the brackets.
+    for marker in (getattr(stamp, "repeater", None), getattr(stamp, "delay", None)):
+        if marker is not None:
+            body += f" {marker.mark}{marker.value}{marker.unit}"
     return Timestamp(
         start=start,
         end=_stamp_iso(stamp, "end") or start,
         type="active" if active else "inactive",
         raw_value=f"<{body}>" if active else f"[{body}]",
+        repeater=_repeat(getattr(stamp, "repeater", None), _REPEATER_TYPES),
+        warning=_repeat(getattr(stamp, "delay", None), _WARNING_TYPES),
+    )
+
+
+#: How org spells a repeater or delay, as org-element names it.
+_REPEATER_TYPES = {"+": "cumulate", "++": "catch-up", ".+": "restart"}
+_WARNING_TYPES = {"-": "all", "--": "first"}
+_UNITS = {"h": "hour", "d": "day", "w": "week", "m": "month", "y": "year"}
+
+
+def _repeat(marker: Any, types: dict[str, str]) -> TimestampRepeat | None:
+    """One of org-parser's repeat markers, named the way ox-json names it."""
+    if marker is None:
+        return None
+    return TimestampRepeat(
+        type=types.get(str(marker.mark), str(marker.mark)),
+        unit=_UNITS.get(str(marker.unit), str(marker.unit)),
+        value=marker.value,
     )
 
 

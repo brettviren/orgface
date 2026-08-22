@@ -112,6 +112,15 @@ def parse_str(value: Any) -> str | None:
     return text or None
 
 
+def parse_int(value: Any) -> int | None:
+    if value is None:
+        return None
+    try:
+        return int(str(value).strip())
+    except ValueError as exc:
+        raise ConfigError(f"invalid whole number: {value!r}") from exc
+
+
 def parse_bool(value: Any) -> bool:
     if isinstance(value, bool):
         return value
@@ -240,6 +249,33 @@ SETTINGS: tuple[Setting, ...] = (
         "Sqlite file for the 'sqlite' store; defaults under the XDG state dir.",
     ),
     Setting(
+        "embed_url",
+        "embed",
+        "url",
+        "ORG_CLI_HELPER_EMBED_URL",
+        "http://127.0.0.1:8080",
+        parse_str,
+        "Where llama-server serves the embedding model.",
+    ),
+    Setting(
+        "embed_model",
+        "embed",
+        "model",
+        "ORG_CLI_HELPER_EMBED_MODEL",
+        "nomic-embed-text-v1.5",
+        parse_str,
+        "Which embedding model; recorded with every vector it produces.",
+    ),
+    Setting(
+        "embed_dimensions",
+        "embed",
+        "dimensions",
+        "ORG_CLI_HELPER_EMBED_DIMENSIONS",
+        768,
+        parse_int,
+        "How many numbers the embedding model returns per vector.",
+    ),
+    Setting(
         "store_directory",
         "store",
         "directory",
@@ -269,6 +305,9 @@ class Config:
     store_backend: str = "sqlite"
     store_database: Path | None = None
     store_directory: Path | None = None
+    embed_url: str = "http://127.0.0.1:8080"
+    embed_model: str = "nomic-embed-text-v1.5"
+    embed_dimensions: int = 768
     source: Path | None = None  # config file actually loaded, if any
 
     def describe(self) -> list[tuple[str, str, Any]]:

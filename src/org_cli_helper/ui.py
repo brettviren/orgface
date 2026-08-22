@@ -202,6 +202,31 @@ def format_search_results(results: Sequence, colour: bool = False) -> str:
     return "\n".join(lines)
 
 
+def format_sync_report(report, heading: str, colour: bool = False) -> str:
+    """What a sync did, one line per document that changed."""
+    lines = [style(heading, "yellow", colour)]
+    if report.dry_run:
+        lines[0] += style("  (dry run, nothing written)", "cyan", colour)
+
+    marks = {"created": "+", "updated": "~", "deleted": "-", "failed": "!"}
+    for change in report.changes:
+        outcome = change.outcome.value
+        if outcome == "unchanged":
+            continue
+        line = f"  {marks.get(outcome, ' ')} {change.doc_id}"
+        if change.detail:
+            line += f"  ({change.detail})"
+        lines.append(line)
+
+    counts: dict[str, int] = {}
+    for change in report.changes:
+        counts[change.outcome.value] = counts.get(change.outcome.value, 0) + 1
+    summary = ", ".join(f"{count} {name}" for name, count in sorted(counts.items()))
+    lines.append("")
+    lines.append(f"  {summary or 'nothing to do'}")
+    return "\n".join(lines)
+
+
 def resolve_colour(mode: str, stream=None) -> bool:
     """Interpret --color=auto|always|never."""
     if mode == "always":

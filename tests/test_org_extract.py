@@ -95,8 +95,35 @@ def test_hash_ignores_refs(fixture_json: dict) -> None:
 def test_hash_notices_content(fixture_json: dict) -> None:
     doc = OrgDocument.model_validate(fixture_json)
     changed = doc.model_copy(deep=True)
-    changed.properties.title = ["Something else"]
+    changed.contents.pop()
     assert content_hash(doc) != content_hash(changed)
+
+
+def test_document_properties_are_a_view_of_the_keyword_nodes(
+    fixture_json: dict,
+) -> None:
+    """``properties.title`` reads the ``#+title:`` node; it does not own it.
+
+    Both readers fill in properties *and* keep the keyword nodes, and the
+    nodes are the content.  Changing only the view therefore changes
+    nothing about the document, which is why the hash does not move.
+    """
+    doc = OrgDocument.model_validate(fixture_json)
+    changed = doc.model_copy(deep=True)
+    changed.properties.title = ["Something else"]
+    assert content_hash(doc) == content_hash(changed)
+
+
+def test_a_property_with_no_node_is_still_written() -> None:
+    """A document built in Python has properties and no keyword nodes."""
+    from org_store.render import render_document
+
+    doc = OrgDocument.model_validate(
+        {"properties": {"title": ["Built in Python"], "filetags": ["a"]}}
+    )
+    text = render_document(doc)
+    assert "#+title: Built in Python" in text
+    assert "#+filetags: :a:" in text
 
 
 def test_hash_is_order_independent(fixture_json: dict) -> None:

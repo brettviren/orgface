@@ -77,15 +77,20 @@ class OrgRenderer:
 
     # -- entry points -------------------------------------------------------
 
-    def document(self, doc: OrgDocument) -> str:  # noqa: D401
+    def document(self, doc: OrgDocument) -> str:
         """Render a whole document.
 
-        The file-level keywords are not re-emitted here: they are already
-        ``keyword`` nodes in the document's first section, which is where
-        both ingestion paths put them.  Writing them twice is the obvious
-        way to get a file that grows a second ``#+title`` on every save.
+        A file's keywords are in two places at once: as ``keyword`` nodes
+        in the first section, which is where both readers put them, and
+        again in ``properties``, which is the convenient view of them.
+        Writing both would grow a second ``#+title`` on every save; writing
+        only the nodes would silently drop the title of a document built
+        in Python, which has properties and no nodes.  So the nodes are
+        written, and a property with no node of its own is written too.
         """
-        return _join([(child, self.render(child)) for child in doc.contents])
+        body = _join([(child, self.render(child)) for child in doc.contents])
+        missing = _missing_keywords(doc)
+        return missing + body if missing else body
 
     def render(self, node: OrgNodeBase | str) -> str:
         """Render one node, or pass plain text straight through."""
@@ -193,6 +198,54 @@ def render_node(node: OrgNodeBase | str) -> str:
 
 
 # -- helpers ----------------------------------------------------------------
+
+
+#: Document properties written as ``#+keyword:`` lines when no keyword
+#: node already carries them.
+#:
+#: Only the two the store treats as a document's identity, and only these
+#: two on purpose.  ox-json fills in ``author``, ``email``, ``language``
+#: and ``creator`` from the *exporting Emacs* rather than from anything
+#: in the file, so writing those back would put into a file something it
+#: never said -- and would make the same document hash differently
+#: depending on who read it, which is the one thing the hash must not do.
+DOCUMENT_KEYWORDS = (
+    ("title", "TITLE"),
+    ("filetags", "FILETAGS"),
+)
+
+
+def _missing_keywords(doc: OrgDocument) -> str:
+    """Keyword lines for document properties no node already carries."""
+    from ..text import plain_text
+
+    present = {
+        str(node.properties.get("key") or "").upper()
+        for node in _all_nodes(doc.contents)
+        if node.type == "keyword"
+    }
+    lines = []
+    for name, keyword in DOCUMENT_KEYWORDS:
+        value = getattr(doc.properties, name, None)
+        if not value or keyword in present:
+            continue
+        if name == "filetags":
+            rendered = ":" + ":".join(str(tag) for tag in value) + ":"
+        else:
+            rendered = _oneline(plain_text(value))
+        if rendered:
+            lines.append(f"#+{keyword.lower()}: {rendered}")
+    if not lines:
+        return ""
+    return "\n".join(lines) + "\n\n"
+
+
+def _all_nodes(contents: Any):
+    """Every node under CONTENTS, for finding the keywords among them."""
+    for child in contents:
+        if isinstance(child, OrgNodeBase):
+            yield child
+            yield from _all_nodes(child.contents)
 
 
 def _trailing(child: Any) -> str:

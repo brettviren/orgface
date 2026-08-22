@@ -47,21 +47,25 @@ class Backend:
 BACKENDS: dict[str, Backend] = {
     "sqlite": Backend(
         name="sqlite",
-        open=lambda location, emacs=None: SqliteStore(location),
+        open=lambda location, emacs=None, embedder=None: SqliteStore(
+            location, embedder=embedder
+        ),
         setting="store_database",
         default="store.sqlite",
         summary="one sqlite database, with derived indexes and search",
     ),
     "orgfs": Backend(
         name="orgfs",
-        open=lambda location, emacs=None: _needs_orgfs(OrgDirectoryStore, location),
+        open=lambda location, emacs=None, embedder=None: _needs_orgfs(
+            OrgDirectoryStore, location
+        ),
         setting="store_directory",
         default="org",
         summary="a directory of org files, readable without this tool",
     ),
     "emacs": Backend(
         name="emacs",
-        open=lambda location, emacs=None: _needs_orgfs(
+        open=lambda location, emacs=None, embedder=None: _needs_orgfs(
             EmacsDirectoryStore, location, emacs
         ),
         setting="store_directory",
@@ -98,16 +102,22 @@ def get(name: str) -> Backend:
         raise StoreError(f"unknown store backend {name!r}; known: {known}") from None
 
 
-def open_backend(name: str, location: Path | str, emacs: OrgExporter | None = None):
+def open_backend(
+    name: str,
+    location: Path | str,
+    emacs: OrgExporter | None = None,
+    embedder: Any = None,
+):
     """Open the named backend at LOCATION.
 
-    EMACS is required only by backends that declare ``needs_emacs``; the
-    rest ignore it.
+    EMACS is required only by backends that declare ``needs_emacs``.
+    EMBEDDER is offered to every backend and used by whichever can keep
+    vectors; the rest ignore it.
     """
     chosen = get(name)
     if chosen.needs_emacs and emacs is None:
         raise StoreError(f"the {name!r} backend needs an Emacs to read through")
-    return chosen.open(location, emacs)
+    return chosen.open(location, emacs, embedder)
 
 
 __all__ = [

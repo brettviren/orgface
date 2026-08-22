@@ -155,3 +155,100 @@ def reindex(ctx: Context) -> None:
     with opened_store(ctx) as store_:
         count = store_.reindex()
     click.echo(f"reindexed {count} document(s)")
+
+
+@store.command(context_settings=HELP, no_args_is_help=True)
+@click.argument("target", metavar="BACKEND[:PATH]")
+@click.option(
+    "--pull",
+    is_flag=True,
+    help="Copy from TARGET into the configured store, rather than to it.",
+)
+@click.option(
+    "--prune",
+    is_flag=True,
+    help="Also delete documents the source does not have.",
+)
+@click.option(
+    "-n",
+    "--dry-run",
+    is_flag=True,
+    help="Report what would change and write nothing.",
+)
+@colour_option
+@pass_context
+def sync(
+    ctx: Context, target: str, pull: bool, prune: bool, dry_run: bool, colour: str
+) -> None:
+    """Copy documents between the configured store and another one.
+
+    TARGET names the other store as BACKEND or BACKEND:PATH, for example
+    `orgfs:~/org` or just `sqlite` for that backend's usual location.
+
+    The copy goes one way and the source always wins. Comparing two
+    stores says that a document differs, not which side changed it, so a
+    document edited on the destination is overwritten. Use --dry-run
+    first if that matters.
+    """
+    from org_store.sync import sync as run_sync
+
+    from ..storage import StorageError, describe, open_spec
+
+    try:
+        other = open_spec(ctx.config, target)
+    except StorageError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    try:
+        with opened_store(ctx) as mine:
+            source, destination = (other, mine) if pull else (mine, other)
+            report = run_sync(source, destination, prune=prune, dry_run=dry_run)
+    finally:
+        other.backend.close()
+
+    use_colour = ui.resolve_colour(colour)
+    where = describe(ctx.config)
+    heading = f"{target} -> {where}" if pull else f"{where} -> {target}"
+    ui.write(
+        ui.format_sync_report(report, heading, use_colour) + "\n", colour=use_colour
+    )
+    if report.failed:
+        raise SystemExit(1)
+
+
+@store.command(context_settings=HELP)
+@click.option(
+    "--status",
+    is_flag=True,
+    help="Report how much of the store is embedded and do nothing else.",
+)
+@pass_context
+def embed(ctx: Context, status: bool) -> None:
+    """Build the embeddings that `org search --semantic` needs.
+
+    Only text that changed since it was last embedded is sent to the
+    model, so running this again after an edit is cheap. Changing the
+    model invalidates everything the old one produced: vectors from two
+    models do not mean the same thing.
+
+    This is separate from writing on purpose. Embedding needs a model
+    running, and storing a document should not fail because one is not.
+    """
+    with opened_store(ctx) as store_:
+        if status:
+            counts = store_.embedding_status()
+            click.echo(
+                f"{counts['embedded']} of {counts['nodes']} nodes embedded, "
+                f"{counts['pending']} pending"
+            )
+            return
+        from org_store.embed import EmbeddingError
+
+        try:
+            done = store_.embed()
+        except EmbeddingError as exc:
+            raise click.ClickException(str(exc)) from exc
+    click.echo(
+        f"embedded {done['embedded']} node(s), "
+        f"removed {done['removed']}, {done['nodes']} in the store"
+    )

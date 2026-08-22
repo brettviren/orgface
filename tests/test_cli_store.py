@@ -254,3 +254,74 @@ def test_a_hand_written_file_is_already_in_the_store(
     result = runner.invoke(main, ["store", "list"])
     assert result.exit_code == 0
     assert "Written by hand" in result.output
+
+
+@pytest.fixture
+def paired(runner, tmp_path, monkeypatch, source):
+    """A sqlite store holding one document, and somewhere to sync it."""
+    monkeypatch.setenv("ORG_CLI_HELPER_STORE_DATABASE", str(tmp_path / "s.sqlite"))
+    result = runner.invoke(main, ["store", "add", str(source), "--id", "kept.org"])
+    assert result.exit_code == 0, result.output
+    return tmp_path / "elsewhere"
+
+
+def test_sync_help_without_arguments(runner, env) -> None:
+    result = runner.invoke(main, ["store", "sync"])
+    assert "Copy documents between" in result.output
+
+
+def test_sync_creates_at_the_destination(runner, paired) -> None:
+    result = runner.invoke(main, ["store", "sync", f"orgfs:{paired}"])
+    assert result.exit_code == 0, result.output
+    assert "+ kept.org" in result.output
+    assert (paired / "kept.org").is_file()
+
+
+def test_sync_is_idempotent(runner, paired) -> None:
+    runner.invoke(main, ["store", "sync", f"orgfs:{paired}"])
+    again = runner.invoke(main, ["store", "sync", f"orgfs:{paired}"])
+    assert again.exit_code == 0
+    assert "1 unchanged" in again.output
+
+
+def test_sync_dry_run_writes_nothing(runner, paired) -> None:
+    result = runner.invoke(
+        main, ["store", "sync", f"orgfs:{paired}", "--dry-run"]
+    )
+    assert result.exit_code == 0
+    assert "dry run" in result.output
+    assert not paired.exists() or not list(paired.glob("*.org"))
+
+
+def test_sync_pull_brings_changes_back(runner, paired) -> None:
+    runner.invoke(main, ["store", "sync", f"orgfs:{paired}"])
+    path = paired / "kept.org"
+    path.write_text(path.read_text() + "\n* Edited in the file\n")
+
+    pulled = runner.invoke(main, ["store", "sync", f"orgfs:{paired}", "--pull"])
+    assert pulled.exit_code == 0
+    assert "~ kept.org" in pulled.output
+
+    found = runner.invoke(main, ["search", "Edited in the file"])
+    assert found.exit_code == 0, found.output
+
+
+def test_sync_reports_the_direction(runner, paired) -> None:
+    pushed = runner.invoke(main, ["store", "sync", f"orgfs:{paired}"])
+    assert pushed.output.splitlines()[0].startswith("sqlite:")
+    pulled = runner.invoke(main, ["store", "sync", f"orgfs:{paired}", "--pull"])
+    assert pulled.output.splitlines()[0].startswith("orgfs:")
+
+
+def test_sync_prune(runner, paired) -> None:
+    runner.invoke(main, ["store", "sync", f"orgfs:{paired}"])
+    (paired / "extra.org").write_text("#+title: Extra\n")
+    result = runner.invoke(main, ["store", "sync", f"orgfs:{paired}", "--prune"])
+    assert "- extra.org" in result.output
+    assert not (paired / "extra.org").exists()
+
+
+def test_sync_rejects_an_unknown_backend(runner, paired) -> None:
+    result = runner.invoke(main, ["store", "sync", "postgres:/tmp/x"])
+    assert result.exit_code != 0
+    assert "unknown store backend" in result.output

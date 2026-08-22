@@ -87,7 +87,7 @@ def main(
 
 
 def _register() -> None:
-    from .commands import commit, daemon, log, note, search, store, visit
+    from .commands import commit, daemon, log, note, search, serve, store, visit
     from .commands import config as config_cmd
 
     main.add_command(commit.commit)
@@ -98,6 +98,8 @@ def _register() -> None:
     main.add_command(visit.visit)
     main.add_command(store.store)
     main.add_command(search.search)
+    main.add_command(serve.serve)
+    main.add_command(serve.mcp)
 
 
 _register()

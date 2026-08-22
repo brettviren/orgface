@@ -104,32 +104,27 @@ class Index:
 
 
 def content_hash(doc: OrgDocument) -> str:
-    """A hash of DOC's canonical content, for change detection and sync.
+    """A hash of what DOC *says*, for change detection and sync.
 
-    Deliberately a hash of the canonical JSON rather than of any file the
-    document came from.  Sync compares hashes taken from two different
-    backends, so the two must mean the same thing; a file-digest would be
-    cheaper for a file-backed store but could never equal a hash taken
-    from sqlite, which would make every comparison across backends read as
-    "changed".
+    Taken over the document rendered back to org text, not over its JSON
+    and not over any file it came from.  That is what makes it portable:
+    two stores that read the same file with different engines produce
+    different JSON -- ox-json carries org-element's own bookkeeping that
+    no independent parser can reproduce -- but the same org text.  Sync
+    compares hashes between backends, so the thing hashed has to be the
+    thing they agree on.
 
-    Refs are excluded.  They are a function of the document id, so two
-    stores holding the same content under different ids would otherwise
-    look different when they are not.
+    Rendering rather than reading the file also normalises formatting the
+    model does not record, so a hand-aligned table and a freshly written
+    one hash alike, as they should: they say the same thing.
+
+    Refs are not in the org text at all, so a document held under two
+    different ids hashes the same, which is what lets one be recognised
+    in the other store.
     """
-    return hash_dump(doc.dump())
+    from .render import render_document
 
-
-def hash_dump(payload: dict[str, Any]) -> str:
-    """As :func:`content_hash`, for a caller that already has the dump.
-
-    Writing a document serialises it once for storage; making it dump a
-    second time just to hash it doubles the most expensive part of a
-    write.  PAYLOAD is consumed -- its refs are stripped in place.
-    """
-    _strip_refs(payload)
-    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
-    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    return hashlib.sha256(render_document(doc).encode("utf-8")).hexdigest()
 
 
 def index_document(doc_id: str, doc: OrgDocument) -> Index:
@@ -261,11 +256,3 @@ def _string(value: Any) -> str | None:
     return str(value)
 
 
-def _strip_refs(value: Any) -> None:
-    if isinstance(value, dict):
-        value.pop("ref", None)
-        for item in value.values():
-            _strip_refs(item)
-    elif isinstance(value, list):
-        for item in value:
-            _strip_refs(item)

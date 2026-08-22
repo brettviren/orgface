@@ -67,11 +67,11 @@ def test_replace_updates_content_and_hash(backend: SqliteStore, doc) -> None:
     before = backend.content_hash(doc_id)
 
     changed = doc.model_copy(deep=True)
-    changed.properties.title = ["A new title"]
+    changed.contents.pop()
     backend.replace_document(doc_id, changed)
 
     assert backend.content_hash(doc_id) != before
-    assert backend.read_document(doc_id).properties.title == ["A new title"]
+    assert len(backend.read_document(doc_id).contents) == len(doc.contents) - 1
 
 
 def test_replace_refuses_an_unknown_document(backend: SqliteStore, doc) -> None:

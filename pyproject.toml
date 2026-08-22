@@ -11,6 +11,9 @@ license-files = ["COPYING"]
 requires-python = ">=3.12"
 dependencies = [
     "click>=8.4.2",
+    # Rendering is how a document's content hash is taken, so every
+    # backend needs it, not only the one that writes org files.
+    "jinja2>=3.1.6",
     "pydantic>=2.13.4",
 ]
 
@@ -19,8 +22,14 @@ org-cli-helper = "org_cli_helper:main"
 
 [project.optional-dependencies]
 orgfs = [
-    "jinja2>=3.1.6",
     "org-parser>=0.28.0",
+]
+semantic = [
+    "sqlite-vec>=0.1.9",
+]
+service = [
+    "fastapi>=0.141.1",
+    "fastmcp>=3.4.7",
 ]
 
 [build-system]
@@ -41,4 +50,5 @@ dev = [
 testpaths = ["tests"]
 markers = [
     "emacs: needs a real Emacs with org-roam (deselect with -m 'not emacs')",
+    "embed: needs a running embedding model (deselect with -m 'not embed')",
 ]

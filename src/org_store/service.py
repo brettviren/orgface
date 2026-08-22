@@ -173,14 +173,38 @@ class OrgStore:
         here rather than returning an empty list, which would read as "no
         matches" when it means "never looked".
         """
-        if query.semantic:
-            raise StoreError("semantic search is not available yet")
-        answer = getattr(self.backend, "search", None)
+        kind = "semantic_search" if query.semantic else "search"
+        answer = getattr(self.backend, kind, None)
         if answer is None:
             raise StoreError(
                 f"{type(self.backend).__name__} keeps no search index"
             )
         return answer(query)
+
+    def embed(self, doc_ids: list[DocId] | None = None) -> dict[str, int]:
+        """Bring the store's embeddings up to date with its content.
+
+        Kept out of the write path deliberately.  Embedding costs a call
+        to a model that may not be running, and a write that depended on
+        one would fail for a reason that has nothing to do with storing a
+        document.  So this is asked for, and it is incremental: only text
+        that actually changed is embedded again.
+        """
+        run = getattr(self.backend, "embed", None)
+        if run is None:
+            raise StoreError(
+                f"{type(self.backend).__name__} keeps no embeddings"
+            )
+        return run(doc_ids)
+
+    def embedding_status(self) -> dict[str, int]:
+        """How much of the store has a current vector."""
+        status = getattr(self.backend, "embedding_status", None)
+        if status is None:
+            raise StoreError(
+                f"{type(self.backend).__name__} keeps no embeddings"
+            )
+        return status()
 
     def briefs(self) -> list[DocumentSummary]:
         """A short summary of every document, for listing.

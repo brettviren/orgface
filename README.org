@@ -310,6 +310,41 @@ above a passing mention in prose.
 Search is available for whichever store the content lives in; a backend
 that keeps no index says so rather than quietly returning nothing.
 
+*** Searching by meaning
+
+=-s/--semantic= matches on meaning rather than words, using embeddings:
+
+#+begin_src sh
+org store embed              # build them; only changed text is sent
+org store embed --status     # how much of the store is covered
+org search -s "physics equations"
+#+end_src
+
+Word search finds nothing for "physics equations" in a note that says
+=\begin{equation} \nabla \cdot \mathbf{E}=...= — semantic search finds
+it. The same =-t=, =-T=, =-p= and =-d= qualifiers apply. =--scope= does
+not: a vector is of the whole node, not of its heading or its body.
+
+This needs an embedding model. The default expects [[https://github.com/ggml-org/llama.cpp][llama.cpp]]'s
+=llama-server= on =127.0.0.1:8080= serving nomic-embed-text, and the
+=semantic= extra for the vector index:
+
+#+begin_src sh
+llama-server -m ~/models/nomic-embed-text-v1.5.Q8_0.gguf --embeddings
+uv sync --extra semantic     # or: pip install 'org-cli-helper[semantic]'
+#+end_src
+
+Passages and questions are embedded differently — nomic-embed-text is
+trained that way, and treating them alike measurably worsens retrieval —
+so that is a difference in the interface rather than a flag to forget.
+
+*Embedding is a separate step from writing, on purpose.* It costs a call
+to a model that may not be running, and storing a document should not
+fail for that reason. So =org store embed= is asked for, and it is
+incremental: a node whose text has not changed is not sent again.
+Changing =embed.model= invalidates every vector the old one produced,
+because vectors from two models do not live in the same space.
+
 ** Store backends
 
 Three, chosen with =store.backend=. All answer the same commands.
@@ -341,15 +376,17 @@ blank-line runs and table column alignment come back normalised, the way
 org itself normalises them on save. Rendering is idempotent, so a file
 settles after the first write rather than drifting on each one.
 
-*Content hashes mean the same thing in both file backends*, because both
-hash the canonical content rather than their own storage.
+*A document's content hash is the same in every backend.* It is taken
+over the document rendered back to org text — not over its JSON, and not
+over the bytes of any file it came from. That is what makes it portable:
+ox-json carries org-element's own bookkeeping (=mode=, =true-level=, a
+=post-blank= on everything) that no independent parser can reproduce, so
+the two readers never agree on JSON. They do agree on the org text, which
+is what the document actually says.
 
-The =emacs= backend is the exception, and deliberately so: ox-json
-carries org-element's own bookkeeping — =mode=, =true-level=, a
-=post-blank= on everything — which no independent parser can reproduce.
-The documents mean the same thing, and the conformance tests assert that
-they do, but they are not the same JSON and so do not hash alike. A
-hash is comparable between stores that read the same way.
+Hashing the rendering rather than the file also normalises formatting the
+model does not record, so a hand-aligned table and a freshly written one
+hash alike — as they should, since they say the same thing.
 
 *The =emacs= backend will not overwrite unsaved work.* It is one writer
 among several, and the others include you with the file open. If Emacs
@@ -357,6 +394,68 @@ has unsaved changes to a file, writing to it or deleting it is refused
 rather than resolved — a merge invented here would be a worse answer
 than a clear stop. An unmodified buffer is written under and then
 reverted, so Emacs is never left showing content the file no longer has.
+
+** org store sync
+
+Copy documents from one store to another. The commonest use is keeping a
+sqlite store, for its search, alongside the org files you actually edit.
+
+#+begin_src sh
+org store sync orgfs:~/org              # configured store -> those files
+org store sync orgfs:~/org --pull       # those files -> configured store
+org store sync orgfs:~/org --dry-run    # say what would change
+org store sync orgfs:~/org --prune      # also delete what the source lacks
+org store sync sqlite                   # that backend's usual location
+#+end_src
+
+Only documents whose content actually differs are written, so a second
+run reports everything unchanged. That works across backends because a
+content hash means the same thing in all of them.
+
+*This is a copy, not a merge, and the source always wins.* Comparing two
+stores tells you a document differs — not which side changed it. So an
+edit made at the destination is overwritten, and no amount of care here
+could avoid that: knowing who changed what needs a record of the last
+sync and a three-way merge, and neither exists yet. Run =--dry-run= first
+when it matters. The one-line summary always names the direction.
+
+A document that cannot be read is reported and the run carries on, so one
+unreadable file does not leave the rest half-copied. The command exits
+non-zero if anything failed.
+
+** org serve and org mcp
+
+The same operations again, over HTTP and as [[https://modelcontextprotocol.io][MCP]] tools, so that an agent or
+another program can use the store without shelling out.
+
+#+begin_src sh
+uv sync --extra service      # or: pip install 'org-cli-helper[service]'
+
+org serve                    # http://127.0.0.1:8765
+org serve --schema           # print the OpenAPI document, serve nothing
+org mcp                      # speak MCP on stdin/stdout
+org mcp --list-tools         # what an agent would see
+#+end_src
+
+*The MCP tools are generated from the HTTP API*, not written a second
+time: each tool's name, arguments and result come from the operation's
+OpenAPI description, so adding a route adds a tool and the two cannot
+drift apart. The MCP server calls the API in process, over an ASGI
+transport — no socket, no port, nothing else can reach it.
+
+Point an MCP client at the =org mcp= command:
+
+#+begin_src json
+{"command": "org-cli-helper", "args": ["mcp"]}
+#+end_src
+
+Twelve tools come out: =list_documents=, =read_document=,
+=read_document_text=, =summarise_document=, =create_document=,
+=replace_document=, =delete_document=, =read_node=, =update_node=,
+=delete_node=, =search= and =embed=.
+
+=org serve= binds to localhost and has *no authentication*. It is for
+local tools; it is not something to expose to a network.
 
 * Configuration
 
@@ -387,6 +486,11 @@ topic = "Context Notes"           # ORG_CLI_HELPER_NOTE_TOPIC
 
 [log]
 pager = "less"                    # ORG_CLI_HELPER_PAGER
+
+[embed]
+url        = "http://127.0.0.1:8080"   # ORG_CLI_HELPER_EMBED_URL
+model      = "nomic-embed-text-v1.5"   # ORG_CLI_HELPER_EMBED_MODEL
+dimensions = 768                       # ORG_CLI_HELPER_EMBED_DIMENSIONS
 
 [store]
 backend   = "sqlite"       # ORG_CLI_HELPER_STORE_BACKEND: sqlite or orgfs

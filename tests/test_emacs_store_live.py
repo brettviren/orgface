@@ -121,31 +121,60 @@ def test_nodes_are_addressable(store: OrgStore) -> None:
     )
 
 
-def test_the_two_engines_hash_differently(store: OrgStore) -> None:
-    """A content hash is only comparable between stores reading alike.
+def test_the_two_engines_agree_on_the_hash(emacs: Emacs, tmp_path) -> None:
+    """Reading through Emacs or not must give the same content hash.
 
-    ox-json carries org-element's own bookkeeping -- ``mode``,
-    ``true-level``, ``post-blank`` on everything -- which the standalone
-    walker has no way to reproduce and no reason to.  The documents mean
-    the same thing, as the conformance suite asserts, but they are not
-    the same JSON, so their hashes differ.
+    This is what sync between backends rests on.  It works because the
+    hash is taken over the document rendered back to org text: the two
+    engines produce very different JSON -- ox-json carries org-element's
+    own bookkeeping that no independent parser can reproduce -- but the
+    same text.
+    """
+    from org_store.adapters.orgparser import parse_file
+    from org_store.backends import OrgDirectoryStore
 
-    Recorded rather than worked around, because sync compares hashes
-    across backends: two stores of the same files, one read through
-    Emacs and one not, would see every document as changed.  Deciding
-    what sync should compare instead is a Phase 6 question.
+    root = tmp_path / "org"
+    root.mkdir()
+    name = "fixture-timestamps.org"
+    (root / name).write_text((DATA / name).read_text())
+
+    through_emacs = OrgStore(EmacsDirectoryStore(root, emacs))
+    plain = OrgStore(OrgDirectoryStore(root))
+    assert through_emacs.hash(name) == plain.hash(name)
+    # And the JSON really is different, so this is not agreeing by accident.
+    assert through_emacs.read(name).dump() != plain.read(name).dump()
+    del parse_file
+
+
+def test_a_reader_that_reports_different_content_hashes_differently(
+    emacs: Emacs, store: OrgStore
+) -> None:
+    """The hash is portable across readers, not across disagreements.
+
+    Org's own reading of a source block's header arguments has changed
+    between versions: an Org that reports ``:parameters`` as something
+    other than what the file says is describing a different document, and
+    the hash correctly says so.  Recorded because it will look like a
+    portability failure when it is the opposite -- the hash noticing a
+    real difference in what was read.
     """
     from org_store.backends import OrgDirectoryStore
 
     plain = OrgStore(OrgDirectoryStore(store.backend.root))
-    assert store.hash("fixture.org") != plain.hash("fixture.org")
-
-    # What does agree is the text, which is what "the same document" means.
-    from org_store.text import plain_text
-
-    assert plain_text(store.read("fixture.org").contents).split() == plain_text(
-        plain.read("fixture.org").contents
-    ).split()
+    blocks = [
+        node.properties.get("parameters")
+        for node in walk(store.read("fixture.org"))
+        if node.type == "src-block"
+    ]
+    theirs = [
+        node.properties.get("parameters")
+        for node in walk(plain.read("fixture.org"))
+        if node.type == "src-block"
+    ]
+    if blocks == theirs:
+        assert store.hash("fixture.org") == plain.hash("fixture.org")
+    else:
+        assert store.hash("fixture.org") != plain.hash("fixture.org")
 
 
 def test_writing_reverts_the_emacs_buffer(store: OrgStore, emacs: Emacs) -> None:
