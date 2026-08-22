@@ -796,6 +796,7 @@ service = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "org-cli-helper", extra = ["orgfs", "semantic", "service"] },
     { name = "pytest" },
 ]
 
@@ -812,7 +813,10 @@ requires-dist = [
 provides-extras = ["orgfs", "semantic", "service"]
 
 [package.metadata.requires-dev]
-dev = [{ name = "pytest", specifier = ">=8" }]
+dev = [
+    { name = "org-cli-helper", extras = ["orgfs", "semantic", "service"] },
+    { name = "pytest", specifier = ">=8" },
+]
 
 [[package]]
 name = "org-parser"

@@ -44,6 +44,9 @@ org_store = ["schemas/*.json", "render/templates/*.j2"]
 [dependency-groups]
 dev = [
     "pytest>=8",
+    # The tests cover every backend and both service front ends, so a
+    # development area needs the extras a user picks and chooses.
+    "org-cli-helper[orgfs,semantic,service]",
 ]
 
 [tool.pytest.ini_options]
