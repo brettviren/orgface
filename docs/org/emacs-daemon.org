@@ -37,9 +37,10 @@ function there rather than a second channel.
 
 * Which commands need it
 
-- Need it :: =commit=, =note=, =visit -T=, and the =emacs= store backend.
-- Do not :: =log= and =visit= by date read org files straight from disk;
-  the whole [[file:content-store.org][store]] half needs no Emacs at all.
+- Need it :: =commit=, =note=, =visit -T=, =render -m emacs=, and the
+  =emacs= store backend.
+- Do not :: =log= and =visit= by date read org files straight from disk,
+  and the [[file:content-store.org][store]] half runs without Emacs unless it is asked for.
 
 * Taking charge
 

@@ -304,6 +304,43 @@ def test_a_big_document_does_not_take_the_process_with_it() -> None:
     assert len(by_type(parse(text), "headline")) == 400
 
 
+def test_a_description_item_keeps_its_tag() -> None:
+    doc = parse("- term :: what it means\n")
+    (item,) = by_type(doc, "item")
+    assert item.properties.get("tag") == ["term"]
+
+
+def test_a_description_list_after_a_paragraph_keeps_its_tag() -> None:
+    """Which is where org-parser stops reporting one, and where they live."""
+    doc = parse("Some prose.\n\n- term :: what it means\n- second :: another\n")
+    first, second = by_type(doc, "item")
+    assert first.properties.get("tag") == ["term"]
+    assert second.properties.get("tag") == ["second"]
+
+
+def test_a_plain_item_has_no_tag() -> None:
+    doc = parse("Some prose.\n\n- an item with no tag in it\n")
+    (item,) = by_type(doc, "item")
+    assert item.properties.get("tag") is None
+
+
+def test_an_items_wrapped_line_is_one_paragraph() -> None:
+    """org-parser reports a line per paragraph; org sees one paragraph."""
+    doc = parse("Some prose.\n\n- term :: text that runs\n  onto a second line\n")
+    assert len(by_type(doc, "paragraph")) == 2  # the prose, and the item's own
+
+
+def test_wrapped_lines_are_not_spaced_apart() -> None:
+    """A separator where there is already a line break makes a blank line."""
+    doc = parse("- term :: \n  first line,\n  second line\n")
+    (paragraph,) = [
+        node for node in by_type(doc, "paragraph") if node.contents
+    ]
+    assert "\n\n" not in "".join(
+        part for part in paragraph.contents if isinstance(part, str)
+    )
+
+
 def test_item_continuation_lines_drop_the_bullet_indent() -> None:
     """The indent puts a line under the bullet; it is not what the item says."""
     doc = parse("- Item :: first line\n  second line\n  third line\n")

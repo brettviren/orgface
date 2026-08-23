@@ -57,6 +57,7 @@ plain inventory.
 - [[file:command-search.org][org search]] :: find nodes by their words.
 - [[file:semantic-search.org][Semantic search]] :: find them by meaning.
 - [[file:command-sync.org][org store sync]] :: copy between stores.
+- [[file:command-render.org][org render]] :: write documents out as HTML.
 - [[file:command-serve.org][org serve]] :: the store over HTTP.
 - [[file:command-mcp.org][org mcp]] :: the store as tools for an agent.
 
@@ -72,6 +73,7 @@ plain inventory.
 - [[file:backend-orgfs.org][The org file backend]] :: files as the storage.
 - [[file:backend-emacs.org][The Emacs backend]] :: the same files, through org-element.
 - [[file:embeddings.org][Embeddings in the store]] :: vectors, and why they are asked for.
+- [[file:render-methods.org][Render methods]] :: two ways out, and how a format is added.
 
 ** Working on the code
 

@@ -1,0 +1,71 @@
+#+title: org render
+#+filetags: :command:user:store:
+#+summary: Write stored documents out as HTML, or as whatever else a template says.
+#+audience: user
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_cli_helper/commands/render.py
+#+source: src/org_cli_helper/rendering.py
+
+Render documents from the store as some other kind of text.
+
+#+begin_src sh
+org render notes.org                  # -> notes.html
+org render notes.org -o -             # -> standard output
+org render -a -o site/                # every document -> site/*.html
+org render notes.org -m emacs         # org-export, inside Emacs
+org render notes.org -t mine.j2       # a template of your own
+#+end_src
+
+* Which documents
+
+Name them, or pass =-a/--all= for every document in the store. With
+neither, the command prints its help: rendering nothing is never what was
+meant, so it asks rather than exiting quietly.
+
+A name that leaves off =.org= still finds the document, since a store id
+and a file name are the same thing in the [[file:backend-orgfs.org][org file store]] and nobody
+should have to remember which form was used. A name that matches nothing
+is reported *before* anything is written — half a rendered site is worse
+than none.
+
+* Where the text goes
+
+Follows from what was asked for.
+
+- One named document :: to the file =-o= names, or to =-= for standard
+  output, or to its own name in the current directory.
+- Several, or =-a= :: to the directory =-o= names, or to =output/=.
+
+=-a= means a directory however many documents the store happens to hold
+today: where a rendering lands should follow from what was asked for, not
+from how much of it there turned out to be.
+
+An =-o= that is already a directory holds the file rather than being
+overwritten by it. Anything contradictory is refused: several documents
+down =-o -=, or into an =-o= that is an existing file.
+
+Documents keep their layout. A store with =deep/three.org= in it renders
+to =site/deep/three.html=, rather than collapsing subdirectories into one
+heap of colliding names.
+
+* How it renders
+
+=-m/--method= chooses; see [[file:render-methods.org][Render methods]] for what each one is good for.
+
+- =template= :: the default. A Jinja2 template applied to the document's
+  canonical JSON. Needs no Emacs.
+- =emacs= :: org-export, run in the [[file:emacs-daemon.org][daemon]]. Org's own exporter, with
+  your configuration.
+
+=-f/--format= says what is being produced — =html= to begin with. It picks
+the packaged template for the template method, the org-export backend for
+the Emacs method, and the extension either way. =-t/--template= renders
+with a template of your own instead, which only the template method has
+any use for.
+
+* Related
+
+- [[file:render-methods.org][Render methods]] :: the two methods, and writing a template.
+- [[file:command-store.org][org store]] :: what is being rendered.
+- [[file:backend-orgfs.org][The org file backend]] :: where document ids come from.

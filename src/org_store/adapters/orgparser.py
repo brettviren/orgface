@@ -662,21 +662,88 @@ def _item(item: Any) -> OrgNodeBase:
     checkbox = getattr(item, "checkbox", None)
     if checkbox is not None:
         properties["checkbox"] = _CHECKBOX.get(str(checkbox), "off")
-    tag = getattr(item, "item_tag", None)
-    if tag:
-        properties["tag"] = _rich(tag)
 
     # An item's own text is its first line; anything blockier beneath it
     # arrives separately in body.
     contents: list[Any] = []
-    first = getattr(item, "first_line", None)
-    if first is not None and str(first).strip():
-        contents.append(_node("paragraph", {}, _rich(first)))
+    tag, first = _described(item)
+    if tag is not None:
+        properties["tag"] = tag
+    if first:
+        contents.append(_node("paragraph", {}, first))
     for child in _elements(item.body):
         if isinstance(child, OrgNodeBase) and child.type == "paragraph":
             _dedent(child)
         contents.append(child)
-    return _node("item", properties, contents)
+    return _node("item", properties, _joined(item, contents))
+
+
+def _joined(item: Any, contents: list[Any]) -> list[Any]:
+    """Put an item's wrapped first line back together.
+
+    org-parser reports an item's own line and the lines continuing it as
+    two paragraphs, where org-element -- and anyone reading the source --
+    sees one.  The two are the same paragraph unless a blank line comes
+    between them, and org-parser does report that blank line, so which it
+    is can be told from what it hands back.
+    """
+    if len(contents) < 2:
+        return contents
+    head, following = contents[0], contents[1]
+    separated = type(next(iter(item.body or ()), None)).__name__ == "BlankLine"
+    if separated or not _is_paragraph(head) or not _is_paragraph(following):
+        return contents
+    # The line break between them is what the source had there, and the
+    # renderer turns it back into the indent under the bullet.  One is
+    # added only where the first part does not already end in one, or the
+    # two would be separated by a blank line that nobody wrote.
+    if not _ends_a_line(head.contents):
+        head.contents.append("\n")
+    head.contents.extend(following.contents)
+    head.properties.post_blank = following.properties.get("post_blank")
+    return [head, *contents[2:]]
+
+
+def _is_paragraph(node: Any) -> bool:
+    return isinstance(node, OrgNodeBase) and node.type == "paragraph"
+
+
+def _ends_a_line(contents: list[Any]) -> bool:
+    """Whether what is in CONTENTS already finishes with a line break."""
+    last = contents[-1] if contents else ""
+    return isinstance(last, str) and last.endswith("\n")
+
+
+#: What separates a description list item's tag from what it describes.
+_DESCRIPTION = " :: "
+
+
+def _described(item: Any) -> tuple[list[Any] | None, list[Any]]:
+    """An item's tag, if it has one, and the rest of its own line.
+
+    org reads ``- term :: text`` as a description item wherever it
+    appears.  org-parser reports the tag for the first item of a list
+    that opens a section and not for one whose list follows a paragraph,
+    which is most of them -- so where it does not, the tag is taken from
+    the line itself.  Otherwise the tag reads as part of the text, and
+    every description list in a real document comes out untagged.
+    """
+    first = getattr(item, "first_line", None)
+    text = "" if first is None else str(first)
+    tag = getattr(item, "item_tag", None)
+    if tag:
+        return _rich(tag), _rich(first) if text.strip() else []
+
+    label, separator, rest = text.partition(_DESCRIPTION)
+    if separator and label.strip():
+        # A tag with nothing after it on its own line keeps whatever
+        # follows as the separate paragraph org-parser made of it.
+        # Folding an empty first line into that would move the text up a
+        # line, which is a change to the document rather than a repair.
+        return _inline_from_source(label), (
+            _inline_from_source(rest) if rest.strip() else []
+        )
+    return None, _rich(first) if text.strip() else []
 
 
 def _bullet(item: Any) -> str:

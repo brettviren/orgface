@@ -439,6 +439,53 @@ A document that cannot be read is reported and the run carries on, so one
 unreadable file does not leave the rest half-copied. The command exits
 non-zero if anything failed.
 
+** org render
+
+Write documents from the store out as some other kind of text.
+
+#+begin_src sh
+org render notes.org                # -> notes.html
+org render notes.org -o -           # -> standard output
+org render -a -o site/              # every document -> site/*.html
+org render notes.org -m emacs       # org-export, inside Emacs
+org render notes.org -t mine.j2     # a template of your own
+#+end_src
+
+Name the documents, or pass =-a/--all= for all of them; with neither, the
+command prints its help rather than guessing. A name that leaves off
+=.org= still finds the document, and a name that matches nothing is
+reported before anything is written.
+
+*Where the text goes follows from what was asked for.* One named document
+goes to the file =-o= names, to =-= for standard output, or to its own
+name in the current directory. Several, or =-a=, go to the directory =-o=
+names, or to =output/=, keeping whatever subdirectory layout the store
+has. An =-o=
+that is already a directory holds the file; anything contradictory — many
+documents down =-o -=, or into an existing file — is refused.
+
+*Two methods, chosen with =-m/--method=.*
+
+- =template= (the default) applies a Jinja2 template to the document's
+  canonical JSON. It needs no Emacs, and a different rendering is a
+  template rather than a patch. =-t/--template= names your own.
+- =emacs= runs org-export in the daemon, so the exporter is org's own,
+  with your backends, filters and in-buffer settings. A document that is
+  already a file is exported where it lies, so relative links and
+  includes resolve as they would for you.
+
+=-f/--format= says what is being produced — =html= to begin with. It
+picks the packaged template, the org-export backend, and the file
+extension. Adding a format is an entry in =org_store.export.FORMATS= and
+a template beside it.
+
+Links between org files become links between renderings, so a wiki
+rendered whole is browsable:
+
+#+begin_src sh
+org render -a -o site/ && xdg-open site/index.html
+#+end_src
+
 ** org serve and org mcp
 
 The same operations again, over HTTP and as [[https://modelcontextprotocol.io][MCP]] tools, so that an agent or

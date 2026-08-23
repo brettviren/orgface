@@ -37,7 +37,7 @@ and you know what the tool does; read the second and you can run it.
 - Third, the capture half :: [[file:command-commit.org][org commit]], [[file:command-note.org][org note]], [[file:command-log.org][org log]],
   [[file:command-visit.org][org visit]].
 - Third, the store half :: [[file:content-store.org][The content store]], [[file:command-store.org][org store]],
-  [[file:command-search.org][org search]].
+  [[file:command-search.org][org search]], [[file:command-render.org][org render]].
 - Fourth, the detail :: everything under the outline below — what a
   template does, what a date may say, which backend to keep your notes in.
 
@@ -77,6 +77,8 @@ Each topic followed by everything beneath it.
       - [[file:backend-emacs.org][The Emacs backend]]
     - [[file:command-sync.org][org store sync]]
       - [[file:content-hash.org][Content hash]]
+    - [[file:command-render.org][org render]]
+      - [[file:render-methods.org][Render methods]]
   - Serving it to other programs
     - [[file:command-serve.org][org serve]]
     - [[file:command-mcp.org][org mcp]]

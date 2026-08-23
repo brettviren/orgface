@@ -19,7 +19,8 @@ imports =org_cli_helper=.
   paging.
 - =config.py= :: the [[file:configuration.org][layered settings]], declared once in =SETTINGS=.
 - =xdgpaths.py=, =cache.py= :: [[file:xdg-locations.org][XDG locations]] and the location cache.
-- =storage.py= :: turning configuration into an open store.
+- =storage.py= :: turning configuration into an open store;
+  =rendering.py= where a [[file:command-render.org][rendering]] is written.
 - =emacs.py=, =elisp.py=, =bootstrap.el= :: the [[file:emacs-daemon.org][daemon]] and the JSON bridge.
 - =templates.py= :: [[file:capture-templates.org][capture template]] selection, filling and escaping.
 - =context.py= :: the [[file:note-context.org][context]] a note records.
@@ -40,6 +41,7 @@ imports =org_cli_helper=.
 - =render/= :: [[file:org-renderer.org][canonical model back to org text]], one template per node type.
 - =search.py=, =embed.py= :: query shapes and the
   [[file:embeddings.org][embedder protocol]].
+- =export/= :: [[file:render-methods.org][rendering a document]] as HTML or another format.
 - =sync.py= :: [[file:command-sync.org][copying between stores]].
 - =api.py=, =mcp.py= :: the [[file:http-api.org][HTTP API]] and the [[file:mcp-tools.org][MCP tools]] derived from it.
 

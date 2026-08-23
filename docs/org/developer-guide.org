@@ -31,7 +31,8 @@ depends on.
 - Third :: [[file:backend-protocol.org][The backend protocol]], [[file:node-refs.org][Node refs]], [[file:derived-index.org][The derived index]],
   [[file:content-hash.org][Content hash]].
 - Fourth :: the engines and the front ends — [[file:org-parser-adapter.org][the adapter]],
-  [[file:org-renderer.org][the renderer]], [[file:http-api.org][the HTTP API]], [[file:mcp-tools.org][the MCP tools]].
+  [[file:org-renderer.org][the renderer]], [[file:render-methods.org][the render methods]], [[file:http-api.org][the HTTP API]],
+  [[file:mcp-tools.org][the MCP tools]].
 - Throughout :: [[file:testing.org][Testing]], and [[file:roadmap.org][Roadmap]] for what is deliberately not
   there.
 
@@ -60,6 +61,8 @@ depends on.
     - [[file:command-store.org][org store]]
     - [[file:command-search.org][org search]] and [[file:semantic-search.org][Semantic search]]
     - [[file:command-sync.org][org store sync]]
+    - [[file:command-render.org][org render]]
+      - [[file:render-methods.org][Render methods]]
 - Front ends
   - [[file:http-api.org][The HTTP API]]
     - [[file:mcp-tools.org][The MCP tools]]

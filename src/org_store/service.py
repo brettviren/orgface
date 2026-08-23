@@ -147,6 +147,16 @@ class OrgStore:
 
     # -- derived views ------------------------------------------------------
 
+    def source(self, doc_id: DocId) -> Any:
+        """The file a document is stored in, if it is stored in one.
+
+        None for a backend that keeps documents anywhere else, which is
+        not a failure: a caller that wants a file makes one.  Asked of
+        the backend rather than assumed, the way search and embedding are.
+        """
+        locate = getattr(self.backend, "location", None)
+        return None if locate is None else locate(doc_id)
+
     def index(self, doc_id: DocId) -> Index:
         """The index rows a document currently yields.
 

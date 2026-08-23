@@ -29,6 +29,10 @@
   extraction rules change.
 - Embedding :: a vector standing for a node's meaning, used by
   [[file:semantic-search.org][semantic search]].
+- Render method :: how a document becomes other text — a Jinja2
+  template, or org-export. See [[file:render-methods.org][Render methods]].
+- Format :: what that text is: =html= to begin with. It names the
+  template, the exporter and the file extension.
 - Entry :: one top level heading in a daily note — the unit
   [[file:command-commit.org][org commit]] writes and [[file:command-log.org][org log]] reports.
 - Topic :: an org-roam node, named by title, that [[file:command-note.org][org note]] files

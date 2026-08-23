@@ -1,0 +1,65 @@
+#+title: Render methods
+#+filetags: :concept:user:developer:store:
+#+summary: The two ways a document becomes other text, and how to add a format.
+#+audience: both
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_store/export/__init__.py
+#+source: src/org_store/export/templates/html.j2
+
+Rendering a document as HTML is a different job from writing it back as
+org, which is what [[file:org-renderer.org][the org renderer]] does for the file store. This is the
+one a person asks for: give me this document as something else.
+
+Two methods answer that, and a *format* says what the answer is.
+
+* template
+
+A Jinja2 template applied to the document's [[file:canonical-document.org][canonical JSON]] — exactly what
+=org store show --json= prints. The template walks it and writes the
+markup, so a different HTML, or a format nobody has thought of, is a
+template rather than a patch.
+
+It needs nothing but the template, so it renders wherever the store runs.
+
+What a template is given:
+
+- =document= :: the canonical JSON of the document.
+- =title=, =doc_id=, =filetags= :: the things every page needs at hand.
+- =extension= :: what a file of this format is called, so a link to a
+  sibling document can point at the sibling's *rendering*.
+
+Autoescaping is off, because a template here is writing markup. Every
+packaged template escapes what came out of the document with =|e= and
+escapes nothing else.
+
+* emacs
+
+org-export, run inside the [[file:emacs-daemon.org][daemon]]. The exporter is org's own, so what
+comes out is what =C-c C-e= would give: your backends, your filters, your
+in-buffer settings. Nothing here reimplements any of it.
+
+A document that is already a file is exported *where it lies*, so
+relative links, includes and images resolve as they do for a person
+opening it. One that lives in a database is written to a temporary file
+first, which is the only reason this method needs the org renderer.
+
+The daemon loads =ox-html= for =html=, and the same for any other backend
+by name, so this reaches every exporter installed rather than a list
+fixed in the code.
+
+* Formats
+
+A format is an entry naming four things: the extension a file of it gets,
+the packaged template that renders it, the org-export backend that
+produces it, and a summary. =html= is the first.
+
+Adding one is that entry and a template beside it. Neither method has to
+learn anything, and =-f= gains a choice.
+
+* Related
+
+- [[file:command-render.org][org render]] :: the command that drives all this.
+- [[file:org-renderer.org][The org renderer]] :: the other direction, and a different job.
+- [[file:canonical-document.org][The canonical document]] :: what a template is handed.
+- [[file:documentation-wiki.org][This documentation wiki]] :: a corpus these methods are exercised on.

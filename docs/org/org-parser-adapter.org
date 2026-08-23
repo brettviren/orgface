@@ -1,6 +1,6 @@
 #+title: The org-parser adapter
 #+filetags: :concept:developer:store:
-#+summary: Reading org text into the canonical model without Emacs, and the two repairs.
+#+summary: Reading org text into the canonical model without Emacs, and what it repairs.
 #+audience: developer
 #+status: current
 #+updated: 2026-08-23
@@ -35,6 +35,8 @@ that came from Emacs are untouched — they were already right.
   its property drawer as a mapping, both without their elements.
 - Indentation :: a list item's continuation lines keep the indent that
   put them under the bullet, and indented content arrives wrapped.
+- Description lists :: an item's tag is reported for a list that opens a
+  section and not for one that follows a paragraph.
 - Dying :: the parser can take the process down rather than raise, so a
   file is read in a child process.
 
@@ -72,9 +74,18 @@ order they were written in.
 
 The indent under a bullet is structure rather than text: left in the
 paragraph it would be added to on every write, so a three-line item would
-never settle. Content indented under a heading arrives wrapped in an
-element org-element has no equivalent for, so what is *inside* it is kept
-and the width recorded, which is enough to write the file back as it was.
+never settle. An item's own line and the lines wrapping it come back as
+separate paragraphs, and are put together again, since org and anyone
+reading the source see one.
+
+Content indented under a heading arrives wrapped in an element
+org-element has no equivalent for, so what is *inside* it is kept and the
+width recorded, which is enough to write the file back as it was.
+
+A description item's tag is taken from the line when the parser does not
+report one: org reads =- term :: text= as a description item wherever it
+appears, and a tag left in the text is a tag that no longer describes
+anything.
 
 ** Dying rather than failing
 

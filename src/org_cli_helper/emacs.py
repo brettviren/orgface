@@ -196,6 +196,17 @@ class Emacs:
             elisp.call("org-cli-helper-export-json", str(path))
         )
 
+    def export(self, path: Path, backend: str) -> str:
+        """Export the org file at PATH with an org-export BACKEND.
+
+        BACKEND is org's own name for one -- ``html``, ``latex`` -- and
+        the daemon loads the matching ``ox-`` library, so this reaches
+        every exporter the person has rather than a list fixed here.
+        """
+        return self.eval_json(
+            elisp.call("org-cli-helper-export", str(path), backend)
+        )
+
     def buffer_state(self, path: Path) -> dict[str, Any]:
         """Whether Emacs holds PATH, and whether it has unsaved changes."""
         return self.eval_json(

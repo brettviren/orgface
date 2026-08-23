@@ -163,6 +163,14 @@ def format_store_list(summaries: Sequence, colour: bool = False) -> str:
     return "\n".join(lines)
 
 
+def format_rendered(paths: Sequence, colour: bool = False) -> str:
+    """What ``org render`` wrote, one file per line."""
+    written = "\n".join(str(path) for path in paths)
+    if len(paths) == 1:
+        return f"wrote {written}"
+    return f"wrote {len(paths)} files:\n{written}"
+
+
 def format_store_summary(summary, colour: bool = False) -> str:
     """The detail ``store show`` prints for one document."""
     lines = [

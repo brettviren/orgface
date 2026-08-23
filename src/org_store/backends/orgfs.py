@@ -130,6 +130,16 @@ class OrgDirectoryStore:
         """The org text this backend would write for DOC."""
         return render_document(doc)
 
+    def location(self, doc_id: DocId) -> Path:
+        """The file a document is stored in.
+
+        Here because a document that *is* a file can be handed to
+        something that wants one -- org-export inside Emacs, say -- rather
+        than a copy of it, so that relative links and includes resolve as
+        they would for a person opening it.
+        """
+        return self._existing(doc_id)
+
     # -- internals ----------------------------------------------------------
 
     def _path(self, doc_id: DocId) -> Path:

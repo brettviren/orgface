@@ -11,7 +11,7 @@
 
 (require 'org-capture)
 
-(defconst org-cli-helper-version "2"
+(defconst org-cli-helper-version "3"
   "Protocol version, probed by the CLI to detect a bootstrapped daemon.
 
 Bumped when functions are added: a daemon started before the change has
@@ -287,6 +287,32 @@ as a JSON string rather than sending it as itself."
 (defun org-cli-helper--visiting (path)
   "The live buffer visiting PATH, or nil."
   (find-buffer-visiting (expand-file-name path)))
+
+(defun org-cli-helper-export (path backend)
+  "Export the org file at PATH with the org-export BACKEND, as text.
+
+BACKEND is named as org names it -- \"html\", \"latex\", \"ascii\" -- and
+the matching `ox-BACKEND' library is loaded if it is not already, so this
+works for any exporter the person has installed rather than a list fixed
+here.
+
+The text comes back rather than being written: where a rendering belongs
+is the CLI's question, and answering it here would need this function to
+know about output directories it has no business knowing about.
+
+A buffer already visiting PATH is used in preference to re-reading the
+file, and one opened here is killed again, exactly as
+`org-cli-helper-export-json' does."
+  (org-cli-helper--require (intern (concat "ox-" backend)))
+  (let* ((file (expand-file-name path))
+         (existing (org-cli-helper--visiting file))
+         (buffer (or existing (find-file-noselect file t))))
+    (unwind-protect
+        (with-current-buffer buffer
+          (let ((org-export-with-broken-links t))
+            (org-cli-helper--payload
+             (org-export-as (intern backend)))))
+      (unless existing (kill-buffer buffer)))))
 
 (defun org-cli-helper-export-json (path)
   "Export the org file at PATH as ox-json JSON.

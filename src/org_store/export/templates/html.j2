@@ -1,0 +1,217 @@
+{#
+  SPDX-FileCopyrightText: 2026 Brett Viren <brett.viren@gmail.com>
+  SPDX-License-Identifier: GPL-3.0-or-later
+
+  A standalone HTML page from the canonical document.
+
+  The template walks the JSON itself: `document` is exactly what
+  `org store show --json` prints, so anything true of the schema is true
+  here.  Autoescaping is off -- this file writes markup -- so every piece
+  of text out of the document is escaped with `|e` and nothing else is.
+
+  A node type with no case of its own falls through to its children, so
+  an unrecognised construct comes out as its text rather than vanishing.
+#}
+{% macro children(items) %}{% for item in items %}{{ node(item) }}{% endfor %}{% endmacro %}
+{% macro node(item) %}
+{%- if item is string -%}
+{{- item|e -}}
+{%- else -%}
+{%- set kind = item.type -%}
+{%- set props = item.properties or {} -%}
+{%- set kids = item.contents or [] -%}
+{%- if kind in SKIP -%}
+{%- elif kind == 'headline' -%}
+{#- The page's own title is the h1, so a top level heading is an h2. -#}
+{%- set level = [(props.get('level') or 1) + 1, 6]|min -%}
+{%- set custom = (item.get('drawer') or {}).get('CUSTOM_ID') %}
+<h{{ level }}{% if custom %} id="{{ custom|e }}"{% endif %}>{{ children(props.get('title') or []) }}
+{%- for tag in props.get('tags') or [] %} <span class="tag">{{ tag|e }}</span>{% endfor %}</h{{ level }}>
+{{ children(kids) }}
+{%- elif kind == 'section' -%}
+{{ children(kids) }}
+{%- elif kind == 'paragraph' -%}
+<p>{{ children(kids) }}</p>{{ "\n" }}
+{%- elif kind == 'plain-list' -%}
+{{ list(item, props, kids) }}{{ "\n" }}
+{%- elif kind == 'item' -%}
+{{ item_(props, kids) }}
+{%- elif kind == 'table' -%}
+{{ table(kids) }}{{ "\n" }}
+{%- elif kind == 'table-row' -%}
+<tr>{{ children(kids) }}</tr>
+{%- elif kind == 'table-cell' -%}
+<td>{{ children(kids) }}</td>
+{%- elif kind == 'quote-block' -%}
+<blockquote>
+{{ children(kids) }}
+</blockquote>{{ "\n" }}
+{%- elif kind == 'center-block' -%}
+<div class="center">
+{{ children(kids) }}
+</div>{{ "\n" }}
+{%- elif kind == 'verse-block' -%}
+<p class="verse">{{ children(kids) }}</p>{{ "\n" }}
+{%- elif kind == 'special-block' -%}
+<div class="{{ (props.get('type') or 'special')|e }}">
+{{ children(kids) }}
+</div>{{ "\n" }}
+{%- elif kind == 'src-block' -%}
+<pre class="src"><code{% if props.get('language') %} class="language-{{ props.get('language')|e }}"{% endif %}>{{ (props.get('value') or '')|e }}</code></pre>{{ "\n" }}
+{%- elif kind in ('example-block', 'export-block', 'fixed-width') -%}
+<pre class="{{ kind }}">{{ (props.get('value') or '')|e }}</pre>{{ "\n" }}
+{%- elif kind == 'horizontal-rule' -%}
+<hr />{{ "\n" }}
+{%- elif kind == 'link' -%}
+{{ link(props, kids) }}
+{%- elif kind == 'bold' -%}
+<strong>{{ children(kids) }}</strong>
+{%- elif kind == 'italic' -%}
+<em>{{ children(kids) }}</em>
+{%- elif kind == 'underline' -%}
+<span class="underline">{{ children(kids) }}</span>
+{%- elif kind == 'strike-through' -%}
+<del>{{ children(kids) }}</del>
+{%- elif kind in ('code', 'verbatim') -%}
+<code>{{ (props.get('value') or '')|e }}</code>
+{%- elif kind == 'subscript' -%}
+<sub>{{ children(kids) }}</sub>
+{%- elif kind == 'superscript' -%}
+<sup>{{ children(kids) }}</sup>
+{%- elif kind == 'entity' -%}
+&{{ props.get('name')|e }};
+{%- elif kind == 'latex-fragment' -%}
+<span class="latex">{{ (props.get('value') or '')|e }}</span>
+{%- elif kind == 'latex-environment' -%}
+<div class="latex">{{ (props.get('value') or '')|e }}</div>{{ "\n" }}
+{%- elif kind == 'timestamp' -%}
+<time>{{ (props.get('raw_value') or props.get('raw-value') or '')|e }}</time>
+{%- elif kind == 'statistics-cookie' -%}
+<span class="cookie">{{ (props.get('value') or '')|e }}</span>
+{%- elif kind == 'line-break' -%}
+<br />
+{%- elif kind == 'footnote-reference' -%}
+<sup class="footnote"><a href="#fn-{{ (props.get('label') or '')|e }}">{{ (props.get('label') or '')|e }}</a></sup>
+{%- elif kind == 'footnote-definition' -%}
+<div class="footdef" id="fn-{{ (props.get('label') or '')|e }}">
+<span class="label">{{ (props.get('label') or '')|e }}</span>
+{{ children(kids) }}
+</div>{{ "\n" }}
+{%- else -%}
+{{ children(kids) }}
+{%- endif -%}
+{%- endif -%}
+{% endmacro %}
+{% macro link(props, kids) %}
+{%- set raw = props.get('raw_link') or props.get('raw-link') or props.get('path') or '' -%}
+{#- A link to a sibling org file means the sibling *rendering*: a wiki
+    exported whole should be browsable, not a page of dead links. -#}
+{%- if raw.startswith('file:') and raw.endswith('.org') -%}
+{%- set target = raw[5:-4] ~ extension -%}
+{%- else -%}
+{%- set target = raw -%}
+{%- endif -%}
+<a href="{{ target|e }}">{% if kids %}{{ children(kids) }}{% else %}{{ raw|e }}{% endif %}</a>
+{%- endmacro %}
+{% macro list(item, props, kids) %}
+{#- A list whose items carry a tag -- `- term :: text` -- is a
+    description list, which is what org's own exporter makes of one. -#}
+{%- set ns = namespace(tagged=false) -%}
+{%- for kid in kids -%}
+{%- if (kid.properties or {}).get('tag') -%}
+{%- set ns.tagged = true -%}
+{%- endif -%}
+{%- endfor -%}
+{%- if ns.tagged -%}
+<dl>
+{% for kid in kids %}{{ described(kid.properties or {}, kid.contents or []) }}
+{% endfor %}
+</dl>
+{%- elif props.get('type') == 'ordered' -%}
+<ol>
+{{ children(kids) }}
+</ol>
+{%- else -%}
+<ul>
+{{ children(kids) }}
+</ul>
+{%- endif -%}
+{%- endmacro %}
+{% macro described(props, kids) %}
+<dt>{{ children(props.get('tag') or []) }}</dt>
+<dd>{{ body(kids) }}</dd>
+{%- endmacro %}
+{% macro item_(props, kids) %}
+<li>
+{%- if props.get('checkbox') %}<input type="checkbox" disabled{% if props.get('checkbox') == 'on' %} checked{% endif %} /> {% endif -%}
+{{ body(kids) }}</li>
+{%- endmacro %}
+{% macro body(kids) %}
+{#- An item that is one paragraph is just its text: the paragraph is how
+    org holds it, not something to put a <p> around. -#}
+{%- if kids|length == 1 and kids[0] is not string and kids[0].type == 'paragraph' -%}
+{{ children(kids[0].contents or []) }}
+{%- else -%}
+{{ children(kids) }}
+{%- endif -%}
+{%- endmacro %}
+{% macro table(rows) %}
+{%- set ns = namespace(ruled=false, heading=true) -%}
+{%- for row in rows -%}
+{%- if (row.properties or {}).get('type') == 'rule' -%}
+{%- set ns.ruled = true -%}
+{%- endif -%}
+{%- endfor -%}
+<table>
+{% for row in rows %}
+{% if (row.properties or {}).get('type') == 'rule' %}
+{% set ns.heading = false %}
+{% elif ns.ruled and ns.heading %}
+<tr>{% for cell in row.contents or [] %}<th>{{ children(cell.contents or []) }}</th>{% endfor %}</tr>
+{% else %}
+{{ node(row) }}
+{% endif %}
+{% endfor %}
+</table>
+{%- endmacro %}
+{% set SKIP = ('keyword', 'property-drawer', 'node-property', 'drawer', 'comment-block', 'planning', 'target', 'radio-target') %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>{{ title|e }}</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">{{ title|e }}</h1>
+{% if filetags %}
+<p class="filetags">{% for tag in filetags %}<span class="tag">{{ tag|e }}</span> {% endfor %}</p>
+{% endif %}
+{{ children(document.contents or []) }}
+</main>
+</body>
+</html>

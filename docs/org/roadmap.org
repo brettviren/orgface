@@ -58,6 +58,9 @@ always match, and the [[file:testing.org][conformance tests]] name each one.
 - Affiliated keywords :: =#+name:= and =#+caption:= stay keyword nodes of
   their own, where org-element makes them properties of the element they
   name. They keep their position, so the file reads the same.
+- A wrapped description tag :: an item whose =::= falls on a continuation
+  line rather than on the item's own line comes back untagged, since the
+  tag is taken from that line.
 
 * Still losing content
 
@@ -84,6 +87,6 @@ parser actually reports, and put it right at the one boundary.
 
 * Related
 
-- [[file:org-parser-adapter.org][The org-parser adapter]] :: where three of the four gaps live.
-- [[file:org-renderer.org][The org renderer]] :: where the fourth would be fixed.
+- [[file:org-parser-adapter.org][The org-parser adapter]] :: where most of these are put right.
+- [[file:org-renderer.org][The org renderer]] :: where a normalisation is decided.
 - [[file:testing.org][Testing]] :: how a fix would be pinned down.

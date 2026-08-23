@@ -14,8 +14,8 @@ document in an [[file:backend-orgfs.org][org file store]]: one concept per file,
 Because the pages are a store, everything the store does can be done to
 them — listed, summarised, searched, copied into
 [[file:backend-sqlite.org][sqlite]], served over [[file:http-api.org][HTTP]], read by an agent over
-[[file:mcp-tools.org][MCP]] — which makes this documentation the natural fixture for tests of all
-of those, and the natural content for a future web view.
+[[file:mcp-tools.org][MCP]], [[file:command-render.org][rendered]] as a browsable HTML site — which makes this
+documentation the natural fixture for tests of all of those.
 
 * The shape of a page
 

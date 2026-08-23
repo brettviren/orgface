@@ -13,8 +13,9 @@ protocol is small on purpose.
 - =allocate_id(path_hint)= :: choose the id a document *would* get, without
   storing it.
 - =create_document(doc, path_hint)= :: store a new document, return its id.
-- =read_document(doc_id)=, =replace_document(doc_id, doc)=,
-  =delete_document(doc_id)=, =list_documents()= :: the rest of CRUD.
+- The rest of CRUD :: =read_document(doc_id)=,
+  =replace_document(doc_id, doc)=, =delete_document(doc_id)=,
+  =list_documents()=.
 - =content_hash(doc_id)= :: the [[file:content-hash.org][digest]] sync compares.
 
 =allocate_id= is separate from =create_document= because

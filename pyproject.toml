@@ -39,7 +39,11 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.package-data]
 org_cli_helper = ["*.el"]
-org_store = ["schemas/*.json", "render/templates/*.j2"]
+org_store = [
+    "schemas/*.json",
+    "render/templates/*.j2",
+    "export/templates/*.j2",
+]
 
 [dependency-groups]
 dev = [
