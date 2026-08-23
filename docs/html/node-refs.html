@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Node refs</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">Node refs</h1>
+<p class="filetags"><span class="tag">concept</span> <span class="tag">user</span> <span class="tag">developer</span> <span class="tag">store</span> </p>
+<p>A ref names one node so that operations can address part of a document
+rather than the whole of it. It is a hash of the document id and the node&#39;s
+structural path, prefixed <code>org</code>, and it is computed in Python — never taken
+from whichever engine parsed the document.
+</p>
+<pre class="fixed-width">org search deadline
+notes.org:org1a2b3c4d5e6f0987  headline  Review the deadline</pre>
+<h2>Why computed here</h2>
+<p><code>ox-json</code> can emit its own refs, and with <code>:json-deterministic-refs t</code> they
+are stable across exports. But they would still only ever agree with
+themselves: the <a href="org-parser-adapter.html">Emacs-free path</a> has no way to reproduce Emacs&#39;
+scheme. Computing refs on this side means both paths yield the same ref for
+the same node of the same document, by construction — which is what lets a
+document be <a href="command-sync.html">synced</a> between backends and stay addressable the same way.
+</p>
+<p>The digest is kept to sixteen hex digits. Refs are the key across a whole
+corpus rather than one document, so the width is sized against the birthday
+bound; <code>ox-json</code>&#39;s own seven digits would not do.
+</p>
+<h2>Refs name positions, not objects</h2>
+<p>Inserting or deleting a node changes the refs of its later siblings and
+their descendants. Anything holding a ref across an edit must re-read the
+document. The service layer reassigns refs after every write for exactly
+this reason, and <code>update_node</code> <strong>returns</strong> the ref the node has afterwards,
+because the one passed in may no longer name it.
+</p>
+<p>The identifier that does survive an edit is the one org already has: the
+<code>ID</code> property, which lives in the node&#39;s own properties.
+</p>
+<h2>Where they come from on a read</h2>
+<p>Refs are assigned on the way in and again on the way out. A backend that
+persists them — sqlite does — is merely caching what would have been worked
+out anyway, and it is what makes the <a href="backend-orgfs.html">org file store</a> addressable at all,
+since org text has nowhere to keep a ref.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="canonical-document.html">The canonical document</a></dt>
+<dd>the tree a path indexes into.</dd>
+<dt><a href="command-store.html">org store</a></dt>
+<dd><code>node</code> and <code>rm-node</code>, which take a ref.</dd>
+<dt><a href="service-layer.html">The service layer</a></dt>
+<dd>where refs are assigned and reassigned.</dd>
+</dl>
+
+</main>
+</body>
+</html>

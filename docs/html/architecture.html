@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Architecture</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">Architecture</h1>
+<p class="filetags"><span class="tag">concept</span> <span class="tag">developer</span> </p>
+<p>The store half is ports and adapters. One canonical model at the centre,
+several kinds of storage below it, several front ends above it, and exactly
+one layer that knows what an operation <strong>means</strong>.
+</p>
+<pre class="example-block">        CLI          HTTP API         MCP tools        &lt;- adapters
+          \             |               /
+           \            |              /
+            +---- service layer (CRUDS) ----+          &lt;- the only decisions
+                        |
+       +----------------+----------------+
+    sqlite           org files        via Emacs        &lt;- backends
+       +----------------+----------------+
+                        |
+              canonical document model                 &lt;- one shape
+</pre>
+<h2>The rule</h2>
+<p>The service layer is the only thing that knows CRUDS semantics. Adapters
+are thin and call it. Backends are the only things that know about sqlite,
+org-parser, Jinja2 or Emacs. <a href="command-sync.html">Sync</a> talks to stores exclusively through the
+service layer, never by reaching into one backend&#39;s internals to shortcut
+into another&#39;s.
+</p>
+<p>State that rule and most design questions answer themselves: where does
+validation go (service), where does &#34;what is a tag&#34; go (the
+<a href="derived-index.html">extraction rules</a>, beside the model), where does &#34;which backend is active&#34;
+go (configuration, resolved once).
+</p>
+<h2>Two packages</h2>
+<dl>
+<dt><code>org_store</code></dt>
+<dd>the library — model, backends, service, search, sync,
+renderer, HTTP and MCP. It never imports <code>org_cli_helper</code>.
+</dd>
+<dt><code>org_cli_helper</code></dt>
+<dd>the CLI. Argument parsing, presentation, Emacs daemon
+management, configuration, and the capture commands.
+</dd>
+</dl>
+<p>The dependency runs one way, which is what lets the store be used without
+the CLI — and what forces the <a href="backend-emacs.html">Emacs backend</a> to declare a <strong>port</strong> for the
+Emacs it needs rather than importing one.
+</p>
+<h2>Where the capture half sits</h2>
+<p>It is older and simpler: commands over data modules, with <code>emacs.py</code> as the
+one channel to Emacs. It shares <a href="configuration.html">configuration</a>, the XDG conventions and the
+<code>ui</code> module with the store half, and nothing else.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="layering.html">The layering rule</a></dt>
+<dd>the constraint every module is written under.</dd>
+<dt><a href="service-layer.html">The service layer</a></dt>
+<dd>the middle of the diagram.</dd>
+<dt><a href="module-map.html">Module map</a></dt>
+<dd>which file is which.</dd>
+<dt><a href="roadmap.html">Roadmap</a></dt>
+<dd>what the design leaves for later.</dd>
+</dl>
+
+</main>
+</body>
+</html>

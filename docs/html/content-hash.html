@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Content hash</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">Content hash</h1>
+<p class="filetags"><span class="tag">concept</span> <span class="tag">developer</span> <span class="tag">store</span> </p>
+<p>A document&#39;s content hash is taken over the document *rendered back to org
+text* — not over its JSON, and not over the bytes of any file it came from.
+It is the same in every backend, which is the only reason it exists.
+</p>
+<h2>Why not the JSON</h2>
+<p>Because the two readers never agree on it. <code>ox-json</code> carries org-element&#39;s
+own bookkeeping — <code>mode</code>, <code>true-level</code>, a <code>post-blank</code> on everything — that
+no independent parser can reproduce. Hashing JSON would report every
+document as differing the moment it crossed between the
+<a href="backend-emacs.html">Emacs</a> and <a href="backend-orgfs.html">Emacs-free</a> readers.
+</p>
+<p>They do agree on the org text, which is what the document actually says.
+</p>
+<h2>Why not the file</h2>
+<p>A file digest is far cheaper, and meaningless across backends: a hash of
+bytes on disk could never equal one computed from rows in sqlite, so every
+document would read as changed and <a href="command-sync.html">sync</a> would copy the world on every run.
+</p>
+<h2>What it deliberately ignores</h2>
+<p>Hashing the rendering also normalises formatting the model does not
+record. A hand-aligned table and a freshly written one hash alike — as they
+should, since they say the same thing. Blank-line runs are normalised the
+same way.
+</p>
+<p>Refs are not in the org text at all, so a document held under two different
+ids hashes the same. That is what lets one store recognise the other&#39;s copy
+of it.
+</p>
+<h2>What it costs</h2>
+<p>The org file store has to parse a file and render it again to answer
+<code>content_hash</code>, where reading its bytes would have done. That is the price
+of the property that makes the number worth having.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="command-sync.html">org store sync</a></dt>
+<dd>the one consumer.</dd>
+<dt><a href="org-renderer.html">The org renderer</a></dt>
+<dd>what the hash is taken over.</dd>
+<dt><a href="store-backends.html">Store backends</a></dt>
+<dd>which must all compute it the same way.</dd>
+</dl>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>org config</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">org config</h1>
+<p class="filetags"><span class="tag">command</span> <span class="tag">user</span> <span class="tag">config</span> </p>
+<p>Inspect configuration and cached state. Three subcommands, none of which
+change anything except the cache.
+</p>
+<pre class="src"><code class="language-sh">org config show          # the resolved configuration
+org config show --env    # also name each environment variable
+org config paths         # the XDG locations in use
+org config clear-cache   # forget the cached org-roam locations
+</code></pre>
+<h2>show</h2>
+<p>Prints the config file actually loaded — or the XDG path it looked at and
+did not find — then every setting as <code>section.key = value</code>, in the order
+they are declared. With <code>--env</code> each line also carries the environment
+variable that would set it.
+</p>
+<p>This is the fastest answer to &#34;why is it using <strong>that</strong> store&#34;: the value
+printed is the one the command would use, after all
+<a href="configuration.html">layers</a> have been applied.
+</p>
+<h2>paths</h2>
+<p>Prints the configuration file, state directory and cache directory in use.
+See <a href="xdg-locations.html">XDG locations</a> for what belongs in each.
+</p>
+<h2>clear-cache</h2>
+<p>Removes the cached org-roam locations, so the next command that needs them
+asks the <a href="emacs-daemon.html">daemon</a> again. Use it after moving your org-roam directory. It
+says whether there was anything to remove.
+</p>
+<p>Only locations are cached, and a warm cache is an optimisation rather than
+a requirement: if the cache cannot be written, nothing fails.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="configuration.html">Configuration</a></dt>
+<dd>what the settings mean.</dd>
+<dt><a href="xdg-locations.html">XDG locations</a></dt>
+<dd>the three directories.</dd>
+<dt><a href="command-daemon.html">org daemon</a></dt>
+<dd>where the cached values come from.</dd>
+</dl>
+
+</main>
+</body>
+</html>

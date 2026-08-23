@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Note context</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">Note context</h1>
+<p class="filetags"><span class="tag">concept</span> <span class="tag">user</span> <span class="tag">capture</span> </p>
+<p><a href="command-note.html">org note</a> records not only what was written but where and when. Four facts
+are gathered and turned into an ordinary capture template body, so a note
+is selected, filled and escaped by the same route as a commit.
+</p>
+<ul>
+<li>An <strong>inactive</strong> org timestamp, to the second.</li><li><code>DIRECTORY</code>, <code>HOST</code> and <code>USER</code> as properties on the headline.</li><li>Headline tags saying where that was.</li>
+</ul>
+<p>The timestamp is inactive on purpose: a record of when something was
+written is not something to be done, and has no business in your agenda.
+</p>
+<h2>The tags</h2>
+<dl>
+<dt><code>home</code></dt>
+<dd>when the working directory is your <code>$HOME</code>.</dd>
+<dt>The repository</dt>
+<dd>the name of the enclosing git working tree, if the
+directory or any above it holds a <code>.git</code>.
+</dd>
+</dl>
+<p>A <code>.git</code> <strong>file</strong> counts as well as a directory, so worktrees and submodules
+are tagged too.
+</p>
+<p>Org accepts only alphanumerics and <code>_@#</code> in a tag, so a repository named
+<code>org-cli-helper</code> is tagged <code>org_cli_helper</code>: runs of anything else collapse
+to a single underscore, and a name with nothing usable left in it is not
+tagged at all.
+</p>
+<h2>Reproducible by construction</h2>
+<p>Nothing in the context module reads a clock or an environment on its own
+behalf. <code>gather()</code> takes every fact as an argument and falls back to the
+running process only for the ones it was not given, which is what lets a
+test pin the time, the host and the directory and assert on the exact text.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="command-note.html">org note</a></dt>
+<dd>the command that gathers it.</dd>
+<dt><a href="capture-safety.html">Capture safety</a></dt>
+<dd>why even a directory name cannot be expanded.</dd>
+<dt><a href="command-search.html">org search</a></dt>
+<dd>finding notes later by their tags or properties.</dd>
+</dl>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Note topics</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">Note topics</h1>
+<p class="filetags"><span class="tag">concept</span> <span class="tag">user</span> <span class="tag">capture</span> </p>
+<p>A topic is an org-roam node that <a href="command-note.html">org note</a> files entries under, in place of
+a date. The default is one titled <code>Context Notes</code>; <code>-T/--topic</code> names
+another, and <code>note.topic</code> changes the default.
+</p>
+<pre class="src"><code class="language-sh">org note -T &#34;Work Log&#34; -m &#34;Fixed the thing&#34;
+org visit -T &#34;Work Log&#34;
+</code></pre>
+<h2>Found by title, not by file</h2>
+<p>Because the topic is looked up by <strong>title</strong>, the note joins whatever node
+already carries that title, wherever it lives. Only when there is none is a
+new file made — in your <code>org-roam-directory</code>, in the same form org-roam
+itself would use.
+</p>
+<p>That is why <code>visit -T</code> needs the daemon: only org-roam&#39;s database knows
+which file holds a given title. Visiting a daily note does not.
+</p>
+<h2>Why not the dailies</h2>
+<p>A daily note answers &#34;what did I do on this day&#34;. A topic answers &#34;what do
+I know about this thing&#34;. Entries whose value is the subject rather than
+the date belong in the second, and <a href="command-log.html">org log</a> deliberately does not report
+them, since a log is a chronology.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="command-note.html">org note</a></dt>
+<dd>writing into a topic.</dd>
+<dt><a href="command-visit.html">org visit</a></dt>
+<dd>opening one.</dd>
+<dt><a href="daily-notes.html">Daily notes</a></dt>
+<dd>the other place entries go.</dd>
+<dt><a href="configuration.html">Configuration</a></dt>
+<dd><code>note.topic</code>.</dd>
+</dl>
+
+</main>
+</body>
+</html>

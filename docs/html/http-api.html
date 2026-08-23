@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The HTTP API</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">The HTTP API</h1>
+<p class="filetags"><span class="tag">reference</span> <span class="tag">developer</span> <span class="tag">service</span> </p>
+<p>The store as a FastAPI application. This is one definition serving two
+purposes: describing the operations once, with typed requests and
+responses, gives an OpenAPI document for free — and the
+<a href="mcp-tools.html">MCP server</a> is derived from that document rather than hand-written.
+</p>
+<p>Every handler is a single call into <a href="service-layer.html">the service layer</a>. Nothing here
+decides anything, which is the same rule the <a href="command-store.html">CLI</a> follows and what lets a
+third adapter be added without a fourth copy of the logic.
+</p>
+<h2>The operations</h2>
+<table>
+<tr><th>Method</th><th>Path</th><th>Operation id</th></tr>
+<tr><td>GET</td><td><code>/documents</code></td><td><code>list_documents</code></td></tr>
+<tr><td>POST</td><td><code>/documents</code></td><td><code>create_document</code></td></tr>
+<tr><td>GET</td><td><code>/documents/{id}</code></td><td><code>read_document</code></td></tr>
+<tr><td>PUT</td><td><code>/documents/{id}</code></td><td><code>replace_document</code></td></tr>
+<tr><td>DELETE</td><td><code>/documents/{id}</code></td><td><code>delete_document</code></td></tr>
+<tr><td>GET</td><td><code>/documents/{id}/summary</code></td><td><code>summarise_document</code></td></tr>
+<tr><td>GET</td><td><code>/documents/{id}/text</code></td><td><code>read_document_text</code></td></tr>
+<tr><td>GET</td><td><code>/documents/{id}/nodes/{ref}</code></td><td><code>read_node</code></td></tr>
+<tr><td>PUT</td><td><code>/documents/{id}/nodes/{ref}</code></td><td><code>update_node</code></td></tr>
+<tr><td>DELETE</td><td><code>/documents/{id}/nodes/{ref}</code></td><td><code>delete_node</code></td></tr>
+<tr><td>POST</td><td><code>/search</code></td><td><code>search</code></td></tr>
+<tr><td>POST</td><td><code>/embed</code></td><td><code>embed</code></td></tr>
+</table>
+<p><code>read_document_text</code> returns the document as org text, which is what a
+person would read; <code>read_document</code> returns the
+<a href="canonical-document.html">canonical JSON</a>, which is what a program should.
+</p>
+<p><code>update_node</code> returns the <a href="node-refs.html">ref</a> the node has <strong>after</strong> the edit, because refs
+name positions and the one sent may no longer name anything.
+</p>
+<h2>Failures carry meaning</h2>
+<p>A store error becomes the status code that means it: 404 for a document or
+node that is not there, 409 for an id that already exists, 400 for anything
+else, each with the store&#39;s own message as the detail.
+</p>
+<h2>No configuration in here</h2>
+<p>The store is opened per request through a callable given at construction,
+so this module knows nothing about configuration — which is what keeps
+<code>org_store</code> free of any dependency on the CLI that configures it.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="command-serve.html">org serve</a></dt>
+<dd>running it.</dd>
+<dt><a href="mcp-tools.html">The MCP tools</a></dt>
+<dd>what is generated from it.</dd>
+<dt><a href="service-layer.html">The service layer</a></dt>
+<dd>what each handler calls.</dd>
+</dl>
+
+</main>
+</body>
+</html>

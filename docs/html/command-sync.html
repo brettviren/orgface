@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>org store sync</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">org store sync</h1>
+<p class="filetags"><span class="tag">command</span> <span class="tag">concept</span> <span class="tag">user</span> <span class="tag">store</span> </p>
+<p>Copy documents between the configured store and another one. The commonest
+use is keeping a <a href="backend-sqlite.html">sqlite store</a>, for its search, alongside the
+<a href="backend-orgfs.html">org files</a> you actually edit.
+</p>
+<pre class="src"><code class="language-sh">org store sync orgfs:~/org              # configured store -&gt; those files
+org store sync orgfs:~/org --pull       # those files -&gt; configured store
+org store sync orgfs:~/org --dry-run    # say what would change
+org store sync orgfs:~/org --prune      # also delete what the source lacks
+org store sync sqlite                   # that backend&#39;s usual location
+</code></pre>
+<p><code>TARGET</code> is <code>BACKEND</code> or <code>BACKEND:PATH</code>. Left off, the path is that
+backend&#39;s usual location, which is what makes <code>sqlite</code> on its own mean &#34;the
+store I normally use&#34;.
+</p>
+<h2>Only what differs is written</h2>
+<p>Documents are compared by <a href="content-hash.html">content hash</a>, so a second run reports everything
+unchanged. That works <strong>across</strong> backends because a content hash means the
+same thing in all of them — it is taken over the org text a document
+renders to, not over any file or any JSON.
+</p>
+<h2>A copy, not a merge</h2>
+<p>The source always wins. Comparing two stores tells you that a document
+differs, not which side changed it, so an edit made at the destination is
+overwritten. No amount of care here could avoid that: knowing who changed
+what needs a record of the last sync and a three-way merge, and neither
+exists yet.
+</p>
+<p>Run <code>--dry-run</code> first when it matters. The one-line summary always names
+the direction.
+</p>
+<h2>Failure does not strand a run</h2>
+<p>A document that cannot be read is reported and the run carries on, so one
+unreadable file does not leave the rest half-copied. The command exits
+non-zero if anything failed.
+</p>
+<p><code>--prune</code> is off by default and is ignored for a partial run: with a subset
+named, &#34;not in the source&#34; cannot be told from &#34;not asked about&#34;.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="content-hash.html">Content hash</a></dt>
+<dd>what makes cross-backend comparison meaningful.</dd>
+<dt><a href="store-backends.html">Store backends</a></dt>
+<dd>what can be at either end.</dd>
+<dt><a href="roadmap.html">Roadmap</a></dt>
+<dd>what a two-way sync would need.</dd>
+</dl>
+
+</main>
+</body>
+</html>

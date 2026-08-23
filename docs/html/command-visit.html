@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>org visit</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">org visit</h1>
+<p class="filetags"><span class="tag">command</span> <span class="tag">user</span> <span class="tag">capture</span> </p>
+<p>Open a note in Emacs, in a frame of its own, without waiting for you to
+close it.
+</p>
+<pre class="src"><code class="language-sh">org visit                # today&#39;s daily note
+org visit yesterday      # a daily note by date
+org visit 3 days ago     # dates need no quoting
+org visit -T             # the topic &#39;note&#39; captures into
+org visit -T &#34;Work Log&#34;  # a topic by title
+</code></pre>
+<p>Without <code>-T</code> the arguments are a date, in the same free-form spelling
+<a href="command-log.html">org log</a> takes. With <code>-T</code> they are an org-roam <a href="note-topics.html">topic</a> title instead, taken
+as <code>note -T</code> takes it, defaulting to <code>note.topic</code>.
+</p>
+<h2>A note that does not exist is reported</h2>
+<p>Either way, a missing note is reported rather than created. Visiting is
+reading; creating is <a href="command-commit.html">commit</a>&#39;s or <a href="command-note.html">note</a>&#39;s job, and quietly conflating the
+two would make a typo in a date into a new file.
+</p>
+<h2>What needs the daemon</h2>
+<p>Finding a topic means asking org-roam&#39;s database, so <code>visit -T</code> needs the
+<a href="emacs-daemon.html">daemon</a>. Visiting a daily note does not need it to <strong>find</strong> the file — only
+to open it.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="date-spellings.html">Date spellings</a></dt>
+<dd>what a date argument may look like.</dd>
+<dt><a href="note-topics.html">Note topics</a></dt>
+<dd>what <code>-T</code> names.</dd>
+<dt><a href="emacs-daemon.html">The Emacs daemon</a></dt>
+<dd>what opens the frame.</dd>
+</dl>
+
+</main>
+</body>
+</html>

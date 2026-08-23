@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Installation</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">Installation</h1>
+<p class="filetags"><span class="tag">reference</span> <span class="tag">user</span> <span class="tag">developer</span> </p>
+<p>org-cli-helper uses <a href="https://docs.astral.sh/uv/">uv</a> for development.
+</p>
+<pre class="src"><code class="language-sh">uv sync                # set up the development area
+uv run pytest          # run the tests
+uv run org-cli-helper  # run the CLI
+</code></pre>
+<h2>Extras</h2>
+<p>The base install is deliberately small: <code>click</code>, <code>jinja2</code> and <code>pydantic</code>.
+Anything that only some users need is an optional extra.
+</p>
+<dl>
+<dt><code>orgfs</code></dt>
+<dd>adds <code>org-parser</code>, the standalone tree-sitter parser. Needed by
+the <a href="backend-orgfs.html">org file backend</a> and by <code>org store add</code> on an <code>.org</code> file.
+</dd>
+<dt><code>semantic</code></dt>
+<dd>adds <code>sqlite-vec</code>, the vector index behind
+<a href="semantic-search.html">semantic search</a>.
+</dd>
+<dt><code>service</code></dt>
+<dd>adds <code>fastapi</code> and <code>fastmcp</code>, behind <a href="command-serve.html">org serve</a> and
+<a href="command-mcp.html">org mcp</a>.
+</dd>
+</dl>
+<pre class="src"><code class="language-sh">uv sync --extra orgfs            # one extra
+pip install &#39;org-cli-helper[orgfs,semantic,service]&#39;
+</code></pre>
+<p>A command needing an extra that is not installed says which one supplies
+it, rather than failing with an import error.
+</p>
+<h2>The development area</h2>
+<p>The <code>dev</code> dependency group pulls in every extra, because the test suite
+covers every backend and both service front ends. A plain <code>uv sync</code> is
+therefore enough to run the whole suite; see <a href="testing.html">Testing</a>.
+</p>
+<h2>Emacs</h2>
+<p>Only the capture half needs Emacs, and it needs <code>org-roam</code> in it. The store
+half runs with no Emacs installed at all — except the
+<a href="backend-emacs.html">Emacs backend</a>, which also wants <code>ox-json</code>.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="configuration.html">Configuration</a></dt>
+<dd>what to set once it is installed.</dd>
+<dt><a href="testing.html">Testing</a></dt>
+<dd>running the suite, including the live Emacs tests.</dd>
+<dt><a href="store-backends.html">Store backends</a></dt>
+<dd>which extra each backend needs.</dd>
+</dl>
+
+</main>
+</body>
+</html>

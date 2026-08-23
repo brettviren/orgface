@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The org file backend</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">The org file backend</h1>
+<p class="filetags"><span class="tag">concept</span> <span class="tag">user</span> <span class="tag">developer</span> <span class="tag">store</span> </p>
+<p>The <code>orgfs</code> backend keeps documents as ordinary org files under one
+directory. The files <strong>are</strong> the storage: there is no database and no derived
+state, so anything else editing them — Emacs, git, a text editor — is a
+first-class writer rather than something to be reconciled with.
+</p>
+<p>A file you wrote by hand is already in the store. Nothing has to be
+imported.
+</p>
+<pre class="src"><code class="language-sh">export ORG_CLI_HELPER_STORE_BACKEND=orgfs
+export ORG_CLI_HELPER_STORE_DIRECTORY=~/org/wiki
+org store list
+</code></pre>
+<p>Reading uses the <a href="org-parser-adapter.html">standalone parser</a> and writing the
+<a href="org-renderer.html">Jinja2 renderer</a>; neither needs Emacs. Both come from the <code>orgfs</code> extra.
+</p>
+<p>A file is read in a child process, because the parser can die on one
+rather than raise. One unreadable file is then reported as such, and a
+listing still says what else is there.
+</p>
+<h2>Document ids are paths</h2>
+<p>A document id is a path relative to the root, so it is stable, readable,
+and means the same thing to a person as to the store. Ids never escape the
+root: a caller cannot address <code>../../etc/passwd</code> by asking for it.
+</p>
+<p>A <code>--id</code> hint is turned into a safe file name — anything outside letters,
+digits, dot, dash and underscore collapses to a dash — and a hint that
+would collide gets a number appended rather than overwriting.
+</p>
+<h2>Writing re-renders the whole file</h2>
+<p>Everything the model records survives; formatting it does not record comes
+back normalised, the way org itself normalises on save. Blank-line runs and
+table column alignment are the two you will notice, and a line inside a
+block that would read as a heading is written with org&#39;s comma escape.
+Text already in the form the renderer produces is written back byte for
+byte, so a file settles rather than drifting. <a href="roadmap.html">Roadmap</a> lists every
+normalisation.
+</p>
+<h2>No search index</h2>
+<p>There is nowhere to keep one, and saying so is better than returning an
+empty result that reads as &#34;no matches&#34; when it means &#34;never looked&#34;. The
+usual arrangement is to <a href="command-sync.html">sync</a> into a <a href="backend-sqlite.html">sqlite store</a> and search that.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="backend-emacs.html">The Emacs backend</a></dt>
+<dd>the same files, read through Emacs.</dd>
+<dt><a href="org-renderer.html">The org renderer</a></dt>
+<dd>what writing goes through.</dd>
+<dt><a href="documentation-wiki.html">This documentation wiki</a></dt>
+<dd>a store of exactly this kind.</dd>
+</dl>
+
+</main>
+</body>
+</html>

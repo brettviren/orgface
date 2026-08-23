@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>org render</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">org render</h1>
+<p class="filetags"><span class="tag">command</span> <span class="tag">user</span> <span class="tag">store</span> </p>
+<p>Render documents from the store as some other kind of text.
+</p>
+<pre class="src"><code class="language-sh">org render notes.org                  # -&gt; notes.html
+org render notes.org -o -             # -&gt; standard output
+org render -a -o site/                # every document -&gt; site/*.html
+org render notes.org -m emacs         # org-export, inside Emacs
+org render notes.org -t mine.j2       # a template of your own
+</code></pre>
+<h2>Which documents</h2>
+<p>Name them, or pass <code>-a/--all</code> for every document in the store. With
+neither, the command prints its help: rendering nothing is never what was
+meant, so it asks rather than exiting quietly.
+</p>
+<p>A name that leaves off <code>.org</code> still finds the document, since a store id
+and a file name are the same thing in the <a href="backend-orgfs.html">org file store</a> and nobody
+should have to remember which form was used. A name that matches nothing
+is reported <strong>before</strong> anything is written — half a rendered site is worse
+than none.
+</p>
+<h2>Where the text goes</h2>
+<p>Follows from what was asked for.
+</p>
+<dl>
+<dt>One named document</dt>
+<dd>to the file <code>-o</code> names, or to <code>-</code> for standard
+output, or to its own name in the current directory.
+</dd>
+<dt>Several, or <code>-a</code></dt>
+<dd>to the directory <code>-o</code> names, or to <code>output/</code>.</dd>
+</dl>
+<p><code>-a</code> means a directory however many documents the store happens to hold
+today: where a rendering lands should follow from what was asked for, not
+from how much of it there turned out to be.
+</p>
+<p>An <code>-o</code> that is already a directory holds the file rather than being
+overwritten by it. Anything contradictory is refused: several documents
+down <code>-o -</code>, or into an <code>-o</code> that is an existing file.
+</p>
+<p>Documents keep their layout. A store with <code>deep/three.org</code> in it renders
+to <code>site/deep/three.html</code>, rather than collapsing subdirectories into one
+heap of colliding names.
+</p>
+<h2>How it renders</h2>
+<p><code>-m/--method</code> chooses; see <a href="render-methods.html">Render methods</a> for what each one is good for.
+</p>
+<dl>
+<dt><code>template</code></dt>
+<dd>the default. A Jinja2 template applied to the document&#39;s
+canonical JSON. Needs no Emacs.
+</dd>
+<dt><code>emacs</code></dt>
+<dd>org-export, run in the <a href="emacs-daemon.html">daemon</a>. Org&#39;s own exporter, with
+your configuration.
+</dd>
+</dl>
+<p><code>-f/--format</code> says what is being produced — <code>html</code> to begin with. It picks
+the packaged template for the template method, the org-export backend for
+the Emacs method, and the extension either way. <code>-t/--template</code> renders
+with a template of your own instead, which only the template method has
+any use for.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="render-methods.html">Render methods</a></dt>
+<dd>the two methods, and writing a template.</dd>
+<dt><a href="command-store.html">org store</a></dt>
+<dd>what is being rendered.</dd>
+<dt><a href="backend-orgfs.html">The org file backend</a></dt>
+<dd>where document ids come from.</dd>
+</dl>
+
+</main>
+</body>
+</html>

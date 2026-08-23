@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>org log</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">org log</h1>
+<p class="filetags"><span class="tag">command</span> <span class="tag">user</span> <span class="tag">capture</span> </p>
+<p>Show recent <a href="daily-notes.html">daily note</a> entries, newest first, through your pager. Each top
+level heading in a daily note is one entry, which makes this the analogue
+of <code>git log</code>.
+</p>
+<p>Daily notes are read straight from disk, so this works whether or not Emacs
+is running.
+</p>
+<pre class="src"><code class="language-sh">org log --today
+org log --since &#34;2 weeks ago&#34; --oneline
+org log -n 5 --reverse
+</code></pre>
+<h2>Options</h2>
+<table>
+<tr><th>Option</th><th>Meaning</th></tr>
+<tr><td><code>--today</code></td><td>Only entries written today</td></tr>
+<tr><td><code>--since</code>, <code>--after</code></td><td>At or after a date</td></tr>
+<tr><td><code>--until</code>, <code>--before</code></td><td>At or before a date</td></tr>
+<tr><td><code>-n</code>, <code>--max-count</code></td><td>Limit to the N most recent entries</td></tr>
+<tr><td><code>--oneline</code></td><td>One compact line per entry</td></tr>
+<tr><td><code>--reverse</code></td><td>Oldest first</td></tr>
+<tr><td><code>--color</code></td><td><code>auto</code> (default), <code>always</code>, <code>never</code></td></tr>
+<tr><td><code>--no-pager</code></td><td>Write straight to stdout</td></tr>
+<tr><td><code>--refresh</code></td><td>Re-read org-roam locations from Emacs</td></tr>
+</table>
+<p><code>--today</code> cannot be combined with <code>--since</code> or <code>--until</code>; saying both is a
+question about which was meant, so it is reported rather than resolved.
+</p>
+<p>An upper bound named as a bare day covers that whole day, so
+<code>--until 2026-07-30</code> includes everything written on the 30th. Date
+spellings are their own subject: see <a href="date-spellings.html">Date spellings</a>.
+</p>
+<h2>What it does not show</h2>
+<p>Notes written by <a href="command-note.html">org note</a> live in a <a href="note-topics.html">topic</a> rather than the dailies, so
+they are not reported here. A log is a chronology; read a topic with
+<code>org visit -T</code>.
+</p>
+<p>Finding nothing is reported on standard error and exits non-zero, so a
+shell loop can tell &#34;no entries&#34; from &#34;entries printed&#34;.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="daily-notes.html">Daily notes</a></dt>
+<dd>what is being read.</dd>
+<dt><a href="date-spellings.html">Date spellings</a></dt>
+<dd>what <code>--since</code> accepts.</dd>
+<dt><a href="command-search.html">org search</a></dt>
+<dd>searching content rather than listing it by date.</dd>
+</dl>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>This documentation wiki</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">This documentation wiki</h1>
+<p class="filetags"><span class="tag">concept</span> <span class="tag">reference</span> <span class="tag">developer</span> </p>
+<p><code>docs/org/</code> is the package documentation <strong>and</strong> a corpus. Every page is one
+document in an <a href="backend-orgfs.html">org file store</a>: one concept per file, linked liberally, with
+<a href="index.html">index pages</a> giving a reading order.
+</p>
+<p>Because the pages are a store, everything the store does can be done to
+them — listed, summarised, searched, copied into
+<a href="backend-sqlite.html">sqlite</a>, served over <a href="http-api.html">HTTP</a>, read by an agent over
+<a href="mcp-tools.html">MCP</a>, <a href="command-render.html">rendered</a> as a browsable HTML site — which makes this
+documentation the natural fixture for tests of all of those.
+</p>
+<h2>The shape of a page</h2>
+<pre class="src"><code class="language-org">#+title: Node refs
+#+filetags: :concept:user:developer:store:
+#+summary: How one node is addressed, and why refs move.
+#+audience: both
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_store/refs.py
+#+source: tests/test_org_refs.py
+
+An opening paragraph that answers &#34;what is this&#34; without ceremony.
+
+* Sections, one idea each
+
+* Related
+
+- [[file:canonical-document.org][The canonical document]] :: why this page links to that one.
+</code></pre>
+<dl>
+<dt><code>title</code></dt>
+<dd>what the page is called, and what <code>org store list</code> shows.</dd>
+<dt><code>filetags</code></dt>
+<dd>audience, kind and area. They are indexed and inherited,
+so <code>org search -t command</code> finds every command page.
+</dd>
+<dt><code>summary</code></dt>
+<dd>one line, for an index or a listing to show.</dd>
+<dt><code>audience</code></dt>
+<dd>=user=, <code>developer</code> or <code>both</code>, in prose form.</dd>
+<dt><code>status</code></dt>
+<dd>=current=, or <code>draft</code> for a page written ahead of the code.</dd>
+<dt><code>updated</code></dt>
+<dd>the date the content was last checked against the code.</dd>
+<dt><code>source</code></dt>
+<dd>repeatable. The files this page describes.</dd>
+</dl>
+<p>The tag vocabulary is small on purpose: audience is <code>user</code> or <code>developer</code>;
+kind is <code>guide</code>, <code>concept</code>, <code>command</code> or <code>reference</code>; area is <code>capture</code>,
+<code>store</code>, <code>search</code>, <code>service</code>, <code>config</code> or <code>emacs</code>.
+</p>
+<h2>The metadata is for co-evolution</h2>
+<p><code>source</code> is the load-bearing one. It is the anchor that says *which page to
+suspect when a file changes*: touching <code>src/org_store/refs.py</code> should
+prompt a look at every page naming it. <code>updated</code> says when that was last
+done, and <code>status</code> admits when a page is ahead of or behind the code.
+</p>
+<p>Three checks fall out of that, each cheap to write as a test:
+</p>
+<ul>
+<li>Every <code>source</code> path still exists in the tree.</li><li>Every <code>file:</code> link resolves to a document in this store.</li><li>Adding every page again produces byte-identical files. The corpus is
+already canonical, so a page that stops round-tripping is a regression.
+</li>
+</ul>
+<p>That last one is the valuable check: it exercises the parser and the
+renderer on real prose rather than on a fixture written to please them.
+</p>
+<h2>How pages are written</h2>
+<p>Through the store, not with an editor writing into <code>docs/org/</code> directly —
+though that works too, since the files <strong>are</strong> the storage.
+</p>
+<pre class="src"><code class="language-sh">export ORG_CLI_HELPER_STORE_BACKEND=orgfs
+export ORG_CLI_HELPER_STORE_DIRECTORY=docs/org
+org store add newpage.org --id newpage.org
+org store list
+org store show node-refs.org
+</code></pre>
+<p>Writing goes through the <a href="org-renderer.html">renderer</a>, so what lands is the canonical
+rendering of what was written. Since rendering is idempotent, an edited
+page re-added is stable.
+</p>
+<h2>The org these pages use</h2>
+<p>The <a href="org-parser-adapter.html">Emacs-free reader</a> and the <a href="org-renderer.html">renderer</a> are the round trip these pages must
+survive, and everything an ordinary documentation page needs comes back
+unchanged: headings with tags and property drawers, paragraphs, emphasis
+and verbatim, links of every spelling, lists numbered and not, source and
+example and quote blocks, tables, footnotes, maths, and <code>#+keyword:</code> lines.
+</p>
+<p>What does change is formatting the model does not record — blank-line runs,
+table alignment, the indent under a bullet — and block content is written
+with org&#39;s comma escape, <code>,*</code>, exactly as org writes it. <a href="roadmap.html">Roadmap</a> lists each
+normalisation. None of them loses anything a page says, which is why the
+round-trip check above can be an equality rather than a comparison of
+meanings.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="index.html">Documentation index</a></dt>
+<dd>the way in.</dd>
+<dt><a href="testing.html">Testing</a></dt>
+<dd>where the checks above would live.</dd>
+<dt><a href="backend-orgfs.html">The org file backend</a></dt>
+<dd>what this directory is.</dd>
+<dt><a href="roadmap.html">Roadmap</a></dt>
+<dd>every normalisation, and what is deferred.</dd>
+</dl>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Embeddings in the store</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">Embeddings in the store</h1>
+<p class="filetags"><span class="tag">concept</span> <span class="tag">developer</span> <span class="tag">search</span> </p>
+<p>A vector stands for a node&#39;s meaning, and is what
+<a href="semantic-search.html">semantic search</a> compares. The <code>embeddings</code> table records, per node, which
+model produced its vector, a hash of the text that was embedded, and the
+row id of the vector itself in a <code>sqlite-vec</code> virtual table.
+</p>
+<p>That table cannot be created with the rest of the schema: its width is the
+model&#39;s dimension count, which is not known until one is configured.
+</p>
+<h2>Not a derived table</h2>
+<p>Everything else the store derives — tags, links, full text — is recomputed
+on every write. Embeddings are not, because they are not free: they cost a
+call to a model that may not even be running. A write that depended on one
+would fail for a reason having nothing to do with storing a document.
+</p>
+<p>So embedding is asked for, by <code>org store embed</code>, and the store keeps enough
+bookkeeping to make that cheap.
+</p>
+<h2>Incremental by text hash</h2>
+<p>A node whose text has not changed since it was embedded is left alone. Most
+of a document is unchanged on most writes, so this is the difference
+between an edit costing one call and costing hundreds.
+</p>
+<p>Vectors for nodes that no longer exist are dropped in the same pass, so the
+index does not accumulate orphans.
+</p>
+<h2>Changing the model invalidates everything</h2>
+<p>Vectors from two models do not live in the same space, and comparing them
+would silently return nonsense. The model name is stored beside every
+vector, so a different <code>embed.model</code> means the old ones no longer count
+rather than quietly mixing two spaces.
+</p>
+<h2>Filtering after the search</h2>
+<p>Nearest-neighbour search knows nothing about tags, properties or document
+ids, so it is asked for more rows than the query wants and the qualifiers
+are applied afterwards. That is why <code>top_k</code> is a request rather than a
+promise when qualifiers are in play.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="semantic-search.html">Semantic search</a></dt>
+<dd>the user-facing half.</dd>
+<dt><a href="backend-sqlite.html">The sqlite backend</a></dt>
+<dd>where the tables live.</dd>
+<dt><a href="derived-index.html">The derived index</a></dt>
+<dd>everything that <strong>is</strong> recomputed on write.</dd>
+</dl>
+
+</main>
+</body>
+</html>

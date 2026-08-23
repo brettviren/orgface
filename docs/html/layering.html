@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The layering rule</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">The layering rule</h1>
+<p class="filetags"><span class="tag">concept</span> <span class="tag">developer</span> </p>
+<p>The rule, from <code>CLAUDE.md</code> and non-negotiable: *CLI and UI modules contain
+no data processing logic.* Commands parse arguments and call into data
+modules; <code>ui.py</code> renders what they return; every decision lives somewhere
+neither of them.
+</p>
+<p>It is not aesthetic. It is what makes the <a href="http-api.html">HTTP API</a> and the
+<a href="mcp-tools.html">MCP tools</a> possible without a second implementation: if a rule had been
+written inside a click command, every other front end would need its own
+copy, and the copies would diverge.
+</p>
+<h2>How to tell you are breaking it</h2>
+<ul>
+<li>A command module computing something it then prints.</li><li>A Jinja2 template reaching into the model to work out a headline&#39;s
+stars. Templates decide <strong>layout</strong> and nothing else.
+</li><li>A backend deciding what a ref means, or validating a document.</li><li>A rule about org — what counts as a tag, what a node&#39;s text is — living
+in a backend rather than beside the model.
+</li>
+</ul>
+<h2>Where things go instead</h2>
+<dl>
+<dt>Argument shapes shared by commands</dt>
+<dd>=commands/__init__.py=, declared
+once so commands stay consistent by construction.
+</dd>
+<dt>Rendering for people</dt>
+<dd>=ui.py=.</dd>
+<dt>Decisions about documents</dt>
+<dd><a href="service-layer.html">the service layer</a>.</dd>
+<dt>Decisions about org</dt>
+<dd>beside the model — <code>text.py</code>, <code>extract.py</code>,
+<code>refs.py</code>, <code>tree.py</code>.
+</dd>
+<dt>Decisions about storage</dt>
+<dd>the <a href="backend-protocol.html">backend</a>.</dd>
+</dl>
+<h2>DRY as it is meant here</h2>
+<p>As functionality is reused across commands, it is factored out rather than
+copied. The test that a factoring is right is usually whether a <strong>second</strong>
+adapter would have had to reimplement it: if so, it belongs lower down.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="architecture.html">Architecture</a></dt>
+<dd>the shape this rule produces.</dd>
+<dt><a href="module-map.html">Module map</a></dt>
+<dd>where each layer lives.</dd>
+<dt><a href="testing.html">Testing</a></dt>
+<dd>which tests exercise which layer.</dd>
+</dl>
+
+</main>
+</body>
+</html>

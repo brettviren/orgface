@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Capture templates</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">Capture templates</h1>
+<p class="filetags"><span class="tag">concept</span> <span class="tag">user</span> <span class="tag">capture</span> </p>
+<p><a href="command-commit.html">org commit</a> writes through <code>org-roam-dailies-capture-today</code>, so the
+templates on offer are the ones in your own
+<code>org-roam-dailies-capture-templates</code>. Nothing about them is configured
+here; they are read from the running daemon.
+</p>
+<h2>Selection</h2>
+<p><code>-t/--template</code> selects one by <strong>key</strong>, then by <strong>0-based index</strong>, then by
+<strong>description</strong>, in that order of precedence — so a template keyed <code>1</code> still
+wins over the template at index 1. Descriptions match case-insensitively
+and may be abbreviated to an unambiguous prefix.
+</p>
+<p>Without <code>-t</code> the first template is used. If you define none at all,
+org-roam&#39;s own default applies.
+</p>
+<pre class="src"><code class="language-sh">org commit --list-templates
+</code></pre>
+<h2>Filling</h2>
+<p>Your title replaces the template&#39;s first <code>%^{...}</code> prompt and your body
+goes exactly where <code>%?</code> sits.
+</p>
+<p><strong>Whitespace follows your template literally.</strong> With the common
+<code>* %^{Title}\n%T\n%?</code> there is no blank line between the timestamp and the
+body. If you would rather have one, put it in the template:
+</p>
+<pre class="src"><code class="language-elisp">(setq org-roam-dailies-capture-templates
+      &#39;((&#34;d&#34; &#34;default&#34; entry &#34;* %^{Title}\n%T\n\n%?&#34;
+         :target (file+head &#34;%&lt;%Y-%m-%d&gt;.org&#34; &#34;#+title: %&lt;%Y-%m-%d&gt;\n&#34;))))
+</code></pre>
+<h2>Templates that need a person</h2>
+<p>Interactive escapes with no non-interactive answer — <code>%^t</code>, <code>%^{Prop}p</code> and
+similar — cause <code>commit -m</code> to stop and suggest capturing interactively. A
+second plain <code>%^{...}</code> prompt is filled empty with a warning, since the
+first one takes the title.
+</p>
+<p>A template with no body at all falls back to org&#39;s own default for its
+type: <code>* %?\n  %a</code> for an entry, <code>- %?</code> for an item, and so on.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="capture-safety.html">Capture safety</a></dt>
+<dd>the escaping that protects your text.</dd>
+<dt><a href="command-commit.html">org commit</a></dt>
+<dd>the command that uses these.</dd>
+<dt><a href="command-note.html">org note</a></dt>
+<dd>which builds its own template instead.</dd>
+</dl>
+
+</main>
+</body>
+</html>

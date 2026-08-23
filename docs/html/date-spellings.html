@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Date spellings</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">Date spellings</h1>
+<p class="filetags"><span class="tag">reference</span> <span class="tag">user</span> <span class="tag">capture</span> </p>
+<p><a href="command-log.html">org log</a> and <a href="command-visit.html">org visit</a> take dates in the forms people actually type at
+<code>git log</code>. This is a <strong>documented subset</strong> of git&#39;s <code>approxidate</code>, not a
+reimplementation of it: anything unrecognised is reported rather than
+guessed at.
+</p>
+<h2>Forms</h2>
+<dl>
+<dt>Absolute</dt>
+<dd>=2026-07-30=, <code>2026/07/30</code>, <code>20260730</code>, <code>260730</code>, each
+optionally with a time — <code>2026-07-30 14:05</code> or <code>2026-07-30T14:05:00</code>.
+</dd>
+<dt>Named</dt>
+<dd>=today=, <code>yesterday</code>, <code>now</code>.</dd>
+<dt>Relative</dt>
+<dd>=3 days ago=, <code>2 weeks ago</code>, <code>1 month ago</code>, and git&#39;s
+dotted <code>2.weeks.ago</code>. Units may be plural and <code>ago</code> may be left off.
+</dd>
+<dt>Last</dt>
+<dd>=last week=, <code>last month</code>, <code>last year</code>.</dd>
+</dl>
+<p>Units run from <code>second</code> through <code>minute</code>, <code>hour</code>, <code>day</code>, <code>week</code>,
+<code>fortnight</code>, <code>month</code> and <code>year</code>, with the short spellings <code>s</code>, <code>min</code>, <code>h</code>,
+<code>d</code> and <code>w</code>.
+</p>
+<h2>Whole-day bounds</h2>
+<p>An upper bound named as a bare day covers that whole day: =--until
+2026-07-30= includes everything written on the 30th, rather than everything
+before midnight at its start. A lower bound named the same way starts at
+midnight, which is the same rule read from the other end.
+</p>
+<h2>Why a subset</h2>
+<p>git&#39;s <code>approxidate</code> accepts a great deal and guesses at the rest. Guessing
+is fine for a tool you are watching interactively and bad for one whose
+output you might act on: <code>org log --since &#34;next tuesdya&#34;</code> should say it
+does not understand rather than quietly report the wrong fortnight.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="command-log.html">org log</a></dt>
+<dd>=--since=, <code>--until</code>, <code>--today</code>.</dd>
+<dt><a href="command-visit.html">org visit</a></dt>
+<dd>a date as its argument.</dd>
+<dt><a href="configuration.html">Configuration</a></dt>
+<dd>durations, which are spelled differently on purpose.</dd>
+</dl>
+
+</main>
+</body>
+</html>

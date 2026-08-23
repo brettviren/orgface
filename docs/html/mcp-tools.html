@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The MCP tools</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">The MCP tools</h1>
+<p class="filetags"><span class="tag">reference</span> <span class="tag">developer</span> <span class="tag">service</span> </p>
+<p>Nothing in the MCP module describes a tool. The tools come from the
+<a href="http-api.html">HTTP API</a>&#39;s OpenAPI document, so each one&#39;s name, arguments and result are
+the operation&#39;s own. There is no second description to keep in step with
+the first, and adding a route adds a tool.
+</p>
+<p>That is the whole reason the FastAPI layer is real rather than a schema
+exercise. The MCP server calls it <strong>in process</strong>, over an ASGI transport,
+with no socket and no port.
+</p>
+<h2>What the server tells an agent</h2>
+<p>Instructions travel with the server, because the things an agent gets wrong
+here are not guessable from a tool signature:
+</p>
+<ul>
+<li>A document is addressed by its id, which <code>list_documents</code> reports.</li><li>Each node has a <a href="node-refs.html">ref</a>, which <code>search</code> returns and <code>read_node</code> takes.</li><li>Refs name <strong>positions</strong>: an insert or a delete changes the refs of
+everything after it, so re-read a document before reusing an old ref.
+</li><li>The identifier that survives editing is org&#39;s own <code>ID</code> property.</li><li><a href="command-search.html">Search</a> matches words literally, so punctuation and maths need no
+escaping; <code>semantic</code> matches by meaning and only finds what is embedded.
+</li>
+</ul>
+<h2>Naming</h2>
+<p>Tool names are the operation ids, so the HTTP operation and the tool are
+unmistakably the same thing. <code>org mcp --list-tools</code> prints them with the
+first line of each description.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="command-mcp.html">org mcp</a></dt>
+<dd>running it, and configuring a client.</dd>
+<dt><a href="http-api.html">The HTTP API</a></dt>
+<dd>the definition they come from.</dd>
+<dt><a href="node-refs.html">Node refs</a></dt>
+<dd>the rule that most needs explaining to a caller.</dd>
+</dl>
+
+</main>
+</body>
+</html>

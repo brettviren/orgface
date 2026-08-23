@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Render methods</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">Render methods</h1>
+<p class="filetags"><span class="tag">concept</span> <span class="tag">user</span> <span class="tag">developer</span> <span class="tag">store</span> </p>
+<p>Rendering a document as HTML is a different job from writing it back as
+org, which is what <a href="org-renderer.html">the org renderer</a> does for the file store. This is the
+one a person asks for: give me this document as something else.
+</p>
+<p>Two methods answer that, and a <strong>format</strong> says what the answer is.
+</p>
+<h2>template</h2>
+<p>A Jinja2 template applied to the document&#39;s <a href="canonical-document.html">canonical JSON</a> — exactly what
+<code>org store show --json</code> prints. The template walks it and writes the
+markup, so a different HTML, or a format nobody has thought of, is a
+template rather than a patch.
+</p>
+<p>It needs nothing but the template, so it renders wherever the store runs.
+</p>
+<p>What a template is given:
+</p>
+<dl>
+<dt><code>document</code></dt>
+<dd>the canonical JSON of the document.</dd>
+<dt><code>title</code>, <code>doc_id</code>, <code>filetags</code></dt>
+<dd>the things every page needs at hand.</dd>
+<dt><code>extension</code></dt>
+<dd>what a file of this format is called, so a link to a
+sibling document can point at the sibling&#39;s <strong>rendering</strong>.
+</dd>
+</dl>
+<p>Autoescaping is off, because a template here is writing markup. Every
+packaged template escapes what came out of the document with <code>|e</code> and
+escapes nothing else.
+</p>
+<h2>emacs</h2>
+<p>org-export, run inside the <a href="emacs-daemon.html">daemon</a>. The exporter is org&#39;s own, so what
+comes out is what <code>C-c C-e</code> would give: your backends, your filters, your
+in-buffer settings. Nothing here reimplements any of it.
+</p>
+<p>A document that is already a file is exported <strong>where it lies</strong>, so
+relative links, includes and images resolve as they do for a person
+opening it. One that lives in a database is written to a temporary file
+first, which is the only reason this method needs the org renderer.
+</p>
+<p>The daemon loads <code>ox-html</code> for <code>html</code>, and the same for any other backend
+by name, so this reaches every exporter installed rather than a list
+fixed in the code.
+</p>
+<h2>Formats</h2>
+<p>A format is an entry naming four things: the extension a file of it gets,
+the packaged template that renders it, the org-export backend that
+produces it, and a summary. <code>html</code> is the first.
+</p>
+<p>Adding one is that entry and a template beside it. Neither method has to
+learn anything, and <code>-f</code> gains a choice.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="command-render.html">org render</a></dt>
+<dd>the command that drives all this.</dd>
+<dt><a href="org-renderer.html">The org renderer</a></dt>
+<dd>the other direction, and a different job.</dd>
+<dt><a href="canonical-document.html">The canonical document</a></dt>
+<dd>what a template is handed.</dd>
+<dt><a href="documentation-wiki.html">This documentation wiki</a></dt>
+<dd>a corpus these methods are exercised on.</dd>
+</dl>
+
+</main>
+</body>
+</html>

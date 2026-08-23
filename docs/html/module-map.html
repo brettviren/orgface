@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Module map</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">Module map</h1>
+<p class="filetags"><span class="tag">reference</span> <span class="tag">developer</span> </p>
+<p>Two packages under <code>src/</code>. The dependency runs one way: <code>org_store</code> never
+imports <code>org_cli_helper</code>.
+</p>
+<h2>org_cli_helper — the CLI</h2>
+<dl>
+<dt><code>cli.py</code></dt>
+<dd>the click group, the shared context, command registration.</dd>
+<dt><code>commands/</code></dt>
+<dd>one module per command group, doing parsing and
+presentation only.
+</dd>
+<dt><code>ui.py</code></dt>
+<dd>all rendering for people, including colour resolution and
+paging.
+</dd>
+<dt><code>config.py</code></dt>
+<dd>the <a href="configuration.html">layered settings</a>, declared once in <code>SETTINGS</code>.</dd>
+<dt><code>xdgpaths.py</code>, <code>cache.py</code></dt>
+<dd><a href="xdg-locations.html">XDG locations</a> and the location cache.</dd>
+<dt><code>storage.py</code></dt>
+<dd>turning configuration into an open store;
+<code>rendering.py</code> where a <a href="command-render.html">rendering</a> is written.
+</dd>
+<dt><code>emacs.py</code>, <code>elisp.py</code>, <code>bootstrap.el</code></dt>
+<dd>the <a href="emacs-daemon.html">daemon</a> and the JSON bridge.</dd>
+<dt><code>templates.py</code></dt>
+<dd><a href="capture-templates.html">capture template</a> selection, filling and escaping.</dd>
+<dt><code>context.py</code></dt>
+<dd>the <a href="note-context.html">context</a> a note records.</dd>
+<dt><code>dailies.py</code>, <code>dates.py</code>, <code>locations.py</code></dt>
+<dd>reading
+<a href="daily-notes.html">daily notes</a>, <a href="date-spellings.html">date spellings</a>, and where org-roam keeps things.
+</dd>
+</dl>
+<h2>org_store — the library</h2>
+<dl>
+<dt><code>model.py</code></dt>
+<dd>the <a href="canonical-document.html">canonical document</a>; <code>schema.py</code> renders it to
+<a href="json-schema.html">JSON Schema</a>.
+</dd>
+<dt><code>refs.py</code></dt>
+<dd><a href="node-refs.html">ref</a> computation; <code>tree.py</code> walks and locates nodes.</dd>
+<dt><code>text.py</code></dt>
+<dd>what the text of a node is; <code>extract.py</code> the
+<a href="derived-index.html">index rows</a> and the <a href="content-hash.html">content hash</a>.
+</dd>
+<dt><code>service.py</code></dt>
+<dd><a href="service-layer.html">CRUDS</a>; <code>store.py</code> the
+<a href="backend-protocol.html">backend protocol</a> and the error types.
+</dd>
+<dt><code>backends/</code></dt>
+<dd><a href="backend-sqlite.html">sqlite</a>, <a href="backend-orgfs.html">orgfs</a>, <a href="backend-emacs.html">emacsfs</a>, and the table that names them.</dd>
+<dt><code>adapters/orgparser.py</code></dt>
+<dd><a href="org-parser-adapter.html">org text to canonical model</a>, no Emacs.</dd>
+<dt><code>render/</code></dt>
+<dd><a href="org-renderer.html">canonical model back to org text</a>, one template per node type.</dd>
+<dt><code>search.py</code>, <code>embed.py</code></dt>
+<dd>query shapes and the
+<a href="embeddings.html">embedder protocol</a>.
+</dd>
+<dt><code>export/</code></dt>
+<dd><a href="render-methods.html">rendering a document</a> as HTML or another format.</dd>
+<dt><code>sync.py</code></dt>
+<dd><a href="command-sync.html">copying between stores</a>.</dd>
+<dt><code>api.py</code>, <code>mcp.py</code></dt>
+<dd>the <a href="http-api.html">HTTP API</a> and the <a href="mcp-tools.html">MCP tools</a> derived from it.</dd>
+</dl>
+<h2>Related</h2>
+<dl>
+<dt><a href="architecture.html">Architecture</a></dt>
+<dd>why the split falls this way.</dd>
+<dt><a href="layering.html">The layering rule</a></dt>
+<dd>what may live where.</dd>
+<dt><a href="testing.html">Testing</a></dt>
+<dd>the test file per module.</dd>
+</dl>
+
+</main>
+</body>
+</html>

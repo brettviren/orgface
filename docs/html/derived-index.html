@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The derived index</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">The derived index</h1>
+<p class="filetags"><span class="tag">concept</span> <span class="tag">developer</span> <span class="tag">store</span> <span class="tag">search</span> </p>
+<p>The canonical JSON is the source of truth. Everything else the store keeps
+about a document is a <strong>view</strong> onto it, computed fresh on every write.
+</p>
+<dl>
+<dt><code>nodes</code></dt>
+<dd>one row per node — its type, parent, structural path, heading
+level, TODO keyword, priority.
+</dd>
+<dt><code>tags</code></dt>
+<dd>a headline&#39;s effective tags.</dd>
+<dt><code>properties</code></dt>
+<dd>property drawers, and standalone node-properties.</dd>
+<dt><code>links</code></dt>
+<dd>link targets and their types, which is a backlink graph
+waiting for a consumer.
+</dd>
+<dt><code>timestamps</code></dt>
+<dd>planning timestamps (scheduled, deadline, closed) and
+standalone timestamp nodes.
+</dd>
+<dt><code>fts_nodes</code></dt>
+<dd>heading text and body text, in separate columns.</dd>
+</dl>
+<p>Because no row here is ever edited independently, a change to the
+extraction rules is repaired by <code>org store reindex</code> rather than by a
+migration.
+</p>
+<h2>Tags are the inherited ones</h2>
+<p><code>tags-all</code> is preferred over <code>tags</code> because it includes what a headline
+inherits from its ancestors and from <code>#+filetags</code>, which is what somebody
+searching for a tag means by it. A document whose source engine does not
+compute inheritance falls back to the local tags.
+</p>
+<h2>Each word belongs to exactly one row</h2>
+<p>Full-text indexing gives every node a row, so a node contributes only the
+strings sitting directly in its own contents — plus a verbatim <code>value</code> when
+it has none, which is how source blocks, examples and LaTeX carry their
+text. Flattening the whole subtree instead would index a sentence against
+its paragraph, its section and its headline, and one search would return
+four hits on the same words.
+</p>
+<p>The cost is that a phrase running through markup — <code>very *loud* noise</code> — is
+split across two rows, so it matches as words but not as a phrase.
+Emphasis mid-phrase is rare enough to accept that.
+</p>
+<h2>Kept out of the backend on purpose</h2>
+<p>What counts as a tag, a property or a link is a fact about <strong>org</strong>, not about
+how rows are stored. So the rules live in one module and any future backend
+that wants the same indexes gets them from there rather than reimplementing
+them.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="backend-sqlite.html">The sqlite backend</a></dt>
+<dd>the tables these rows fill.</dd>
+<dt><a href="command-search.html">org search</a></dt>
+<dd>what the index is for.</dd>
+<dt><a href="canonical-document.html">The canonical document</a></dt>
+<dd>what the rows are derived from.</dd>
+</dl>
+
+</main>
+</body>
+</html>

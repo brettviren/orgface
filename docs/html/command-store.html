@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>org store</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">org store</h1>
+<p class="filetags"><span class="tag">command</span> <span class="tag">user</span> <span class="tag">store</span> </p>
+<p>The command surface of <a href="content-store.html">the content store</a>.
+</p>
+<pre class="src"><code class="language-sh">org store add notes.org                     # an org file, no Emacs needed
+org store add exported.json --id notes.org  # or canonical JSON from ox-json
+org store list                              # one line per document
+org store show notes.org                    # summary
+org store show notes.org --json             # the canonical document
+org store node notes.org org1a2b3c4d5e6f    # one node, addressed by ref
+org store rm-node notes.org org1a2b3c4d5e6f
+org store rm notes.org
+org store reindex                           # rebuild the derived tables
+org store sync orgfs:~/org                  # copy to another store
+org store embed                             # build embedding vectors
+</code></pre>
+<h2>add</h2>
+<p><code>SOURCE</code> is either an org file, read by the standalone tree-sitter parser
+and so needing no Emacs, or a JSON file in the canonical schema such as
+<a href="backend-emacs.html">ox-json</a> exports. Both land on the same document.
+</p>
+<p><code>--id</code> stores it under a chosen id; without one, the source&#39;s file name is
+the hint. A backend may adjust a hint — the <a href="backend-orgfs.html">org file store</a> makes it a
+safe file name and avoids clobbering an existing document — so the id
+actually used is printed.
+</p>
+<p>Refs are recomputed on the way in, so whatever produced the file, the nodes
+end up addressable the same way.
+</p>
+<h2>list and show</h2>
+<p><code>list</code> prints one line per document: id, title, file tags. A document it
+cannot read is listed with the reason instead of a title, rather than the
+listing failing over one file. <code>show</code> adds the
+<a href="content-hash.html">content hash</a>, the schema version, and counts of nodes, headings, links and
+timestamps. <code>--json</code> prints the canonical document itself, which is what
+another program should read.
+</p>
+<h2>node and rm-node</h2>
+<p><code>node</code> shows one node, addressed by the ref that <a href="command-search.html">search</a> returns; <code>--json</code>
+prints it in canonical form. <code>rm-node</code> deletes one.
+</p>
+<p>Refs name positions, so deleting a node changes the refs of everything
+after it, and <code>rm-node</code> says so. Re-read a document before using a ref
+taken before an edit. See <a href="node-refs.html">Node refs</a>.
+</p>
+<h2>reindex</h2>
+<p>Rebuilds the derived tables from the stored documents. The indexes are
+computed from the canonical JSON, so this restores them exactly after the
+extraction rules change — no migration, no data loss. A backend that keeps
+no tables says so rather than pretending to work.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="command-sync.html">org store sync</a></dt>
+<dd>copying between stores.</dd>
+<dt><a href="semantic-search.html">Semantic search</a></dt>
+<dd>what <code>org store embed</code> is for.</dd>
+<dt><a href="node-refs.html">Node refs</a></dt>
+<dd>what an address means.</dd>
+<dt><a href="canonical-document.html">The canonical document</a></dt>
+<dd>what <code>--json</code> prints.</dd>
+</dl>
+
+</main>
+</body>
+</html>

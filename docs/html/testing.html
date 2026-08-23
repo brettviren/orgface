@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Testing</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">Testing</h1>
+<p class="filetags"><span class="tag">reference</span> <span class="tag">developer</span> </p>
+<p>Tests live in <code>tests/</code> and run with <code>uv run pytest</code>. A plain <code>uv sync</code>
+installs every extra, so the whole suite is runnable from a fresh checkout.
+</p>
+<pre class="src"><code class="language-sh">uv run pytest                          # everything
+uv run pytest -m &#34;not emacs&#34;           # skip the live Emacs tests
+uv run pytest -m &#34;not emacs and not embed&#34;
+uv run pytest tests/test_org_refs.py   # one module
+</code></pre>
+<h2>Real things, not mocks</h2>
+<p>Real exporter output in <code>tests/data</code>, a real sqlite file in a temporary
+directory, a real click runner, a real Emacs daemon under the marker.
+Internals are not mocked: a test that mocks the thing it is testing passes
+when the thing is broken.
+</p>
+<h2>Markers</h2>
+<dl>
+<dt><code>emacs</code></dt>
+<dd>needs a real Emacs with org-roam, and skips when it cannot
+find one. Slow: each test spawns a daemon.
+</dd>
+<dt><code>embed</code></dt>
+<dd>needs an embedding model answering on <code>embed.url</code>. Skipped
+when nothing is listening.
+</dd>
+</dl>
+<p>The <code>emacs</code> tests build a throwaway org-roam directory and an init file of
+their own, then drive a private daemon against them, so your notes and your
+configuration are untouched.
+</p>
+<h2>Isolation</h2>
+<p>An autouse fixture points <code>XDG_CONFIG_HOME</code>, <code>XDG_STATE_HOME</code> and
+<code>XDG_CACHE_HOME</code> at a scratch tree and drops any ambient
+<code>ORG_CLI_HELPER_*</code> variable, so a test reads only what it sets. Without it,
+a real <code>~/.config/org-cli-helper/config.toml</code> would beat the environment
+variables a test sets — <a href="configuration.html">configuration</a> is layered that way on purpose —
+and the suite would run against the developer&#39;s own notes.
+</p>
+<h2>The three kinds of check worth knowing about</h2>
+<dl>
+<dt>Round trip</dt>
+<dd>whatever the <a href="org-renderer.html">renderer</a> emits must parse back into the
+same document, over the whole fixture corpus.
+</dd>
+<dt>Conformance</dt>
+<dd>the same fixtures through both reading engines, with
+<code>ox-json</code> as the oracle and the <a href="org-parser-adapter.html">walker</a> as the thing under test.
+</dd>
+<dt>Schema drift</dt>
+<dd>the committed <a href="json-schema.html">JSON schema</a> must still match the model.</dd>
+</dl>
+<p>Round-tripping matters because otherwise the org file store loses content
+every time it writes.
+</p>
+<p>Conformance divergences are not failures by default: the two engines will
+never agree on everything, and a walker contorted to match Emacs&#39; internals
+would be worse than one that differs knowingly. Each structural difference
+is named and asserted instead, so a <strong>new</strong> one fails rather than passing
+unnoticed.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="documentation-wiki.html">This documentation wiki</a></dt>
+<dd>itself a corpus these checks can run against.</dd>
+<dt><a href="installation.html">Installation</a></dt>
+<dd>what a development area needs.</dd>
+<dt><a href="layering.html">The layering rule</a></dt>
+<dd>which layer a given test belongs to.</dd>
+</dl>
+
+</main>
+</body>
+</html>

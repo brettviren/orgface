@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>XDG locations</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">XDG locations</h1>
+<p class="filetags"><span class="tag">reference</span> <span class="tag">user</span> <span class="tag">config</span> </p>
+<p>org-cli-helper follows the freedesktop XDG base directory convention. Each
+of the three kinds of file has one home, and the distinction between them
+is not cosmetic: it says what is safe to delete.
+</p>
+<dl>
+<dt>Configuration</dt>
+<dd><code>$XDG_CONFIG_HOME/org-cli-helper/</code> (<code>~/.config/…</code>), holding
+<code>config.toml</code>. Written by you, never by the tool.
+</dd>
+<dt>State</dt>
+<dd>=$XDG_STATE_HOME/org-cli-helper/= (<code>~/.local/state/…</code>), holding
+a store with nowhere else to live. Deleting it loses content.
+</dd>
+<dt>Cache</dt>
+<dd>=$XDG_CACHE_HOME/org-cli-helper/= (<code>~/.cache/…</code>), holding
+org-roam locations. Deleting it costs one round trip to the daemon.
+</dd>
+</dl>
+<p>What lives in state is the default sqlite database and the default org
+directory; what lives in cache is only what can be asked for again.
+</p>
+<p>A variable is honoured only when it holds an absolute path; otherwise the
+<code>~</code>-relative default applies.
+</p>
+<p><code>$XDG_RUNTIME_DIR</code>, when set, is where the daemon&#39;s socket is looked for.
+</p>
+<h2>Why the store defaults to state and not cache</h2>
+<p>A store holds content. If the sqlite store were treated as a cache, then
+clearing caches would silently destroy documents that exist nowhere else —
+which is exactly the mistake the XDG split exists to prevent. Only the
+org-roam locations are cached, because they can always be asked for again.
+</p>
+<h2>Seeing them</h2>
+<pre class="src"><code class="language-sh">org config paths        # the directories in use
+org config clear-cache  # forget the cached org-roam locations
+</code></pre>
+<h2>Related</h2>
+<dl>
+<dt><a href="configuration.html">Configuration</a></dt>
+<dd>the settings that override these defaults.</dd>
+<dt><a href="command-config.html">org config</a></dt>
+<dd>the command that prints them.</dd>
+<dt><a href="backend-sqlite.html">The sqlite backend</a></dt>
+<dd>the main occupant of the state directory.</dd>
+</dl>
+
+</main>
+</body>
+</html>

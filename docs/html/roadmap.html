@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Roadmap</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">Roadmap</h1>
+<p class="filetags"><span class="tag">reference</span> <span class="tag">developer</span> </p>
+<p>Two lists: decisions taken to defer something, and defects found by using
+the thing. Both are here so that a page describing current behaviour does
+not have to apologise for it in passing.
+</p>
+<h2>Deferred by design</h2>
+<dl>
+<dt>Two-way sync</dt>
+<dd><a href="command-sync.html">sync</a> goes one way and the source wins. Detecting
+that <strong>both</strong> sides moved needs a last-sync record and a three-way merge.
+</dd>
+<dt>Partial writes through Emacs</dt>
+<dd>the <a href="backend-emacs.html">Emacs backend</a> reads through
+org-element but writes with the renderer.
+</dd>
+<dt>Node splicing</dt>
+<dd>a node update re-renders the whole document rather
+than splicing the changed span back into the original source.
+</dd>
+<dt>A backlink view</dt>
+<dd>=links= rows are populated and nothing yet consumes
+them. A web view of this wiki is the obvious candidate.
+</dd>
+<dt>Structured maths</dt>
+<dd>LaTeX is captured verbatim and deliberately not
+parsed.
+</dd>
+</dl>
+<p>A targeted Emacs-side edit — keeping its undo history and buffer-local
+state coherent — needs a new bootstrap entry point and real design time.
+Splicing would preserve formatting the model does not record. If structured
+maths is ever needed it belongs as an optional derived representation,
+never as a required schema field.
+</p>
+<h2>What the reader normalises</h2>
+<p>These are not losses. A document says the same thing after a write, but
+not always in the same characters, because the model records what a
+document <strong>says</strong> rather than how it was typed.
+</p>
+<dl>
+<dt>Whitespace</dt>
+<dd>runs of blank lines come back as one, and a list item&#39;s
+continuation lines are re-indented to the width of its bullet.
+</dd>
+<dt>Table alignment</dt>
+<dd>column padding is presentation, so it is rewritten
+rather than preserved. Org realigns a table on the next edit anyway.
+</dd>
+<dt>Block content</dt>
+<dd>a line inside a block that would read as a heading or
+a keyword is written with org&#39;s comma escape, whether or not the file
+already had one. That is what org itself writes.
+</dd>
+<dt>A file-level property drawer</dt>
+<dd>it keeps its place among the file&#39;s
+keywords, but any blank line between the two is closed up, since org
+reads such a drawer only at the top of the file.
+</dd>
+</dl>
+<h2>Known divergences from org-element</h2>
+<p>Places where the <a href="org-parser-adapter.html">Emacs-free reader</a> and <code>ox-json</code> describe the same
+document differently. Content survives either way; the structure does not
+always match, and the <a href="testing.html">conformance tests</a> name each one.
+</p>
+<dl>
+<dt>A keyword under a heading</dt>
+<dd>=#+options:= below a headline comes back
+as a paragraph rather than as a keyword node.
+</dd>
+<dt>Affiliated keywords</dt>
+<dd>=#+name:= and <code>#+caption:</code> stay keyword nodes of
+their own, where org-element makes them properties of the element they
+name. They keep their position, so the file reads the same.
+</dd>
+<dt>A wrapped description tag</dt>
+<dd>an item whose <code>::</code> falls on a continuation
+line rather than on the item&#39;s own line comes back untagged, since the
+tag is taken from that line.
+</dd>
+</dl>
+<h2>Still losing content</h2>
+<p>Measured on a corpus of 942 real org files: 854 survive a round trip
+unchanged, 87 do not, and one cannot be read at all. What the 87 have in
+common, in order of how often it appears:
+</p>
+<ul>
+<li>Heading property drawers and <code>LOGBOOK</code> drawers, which come back
+differently or not at all.
+</li><li>Headings that arrive as something else, usually where a drawer above
+them was mis-read.
+</li><li>Dynamic blocks, which have no mapping yet.</li>
+</ul>
+<p>Each is worth the same treatment the repairs above got: find what the
+parser actually reports, and put it right at the one boundary.
+</p>
+<h2>Open questions from the design</h2>
+<ul>
+<li>Which side tables earn their keep, once real query patterns exist.</li><li>Whether the LaTeX and footnote repairs stay local or become an upstream
+contribution to the parser.
+</li><li>What an Emacs partial write should do about a modified buffer beyond
+refusing it.
+</li>
+</ul>
+<h2>Related</h2>
+<dl>
+<dt><a href="org-parser-adapter.html">The org-parser adapter</a></dt>
+<dd>where most of these are put right.</dd>
+<dt><a href="org-renderer.html">The org renderer</a></dt>
+<dd>where a normalisation is decided.</dd>
+<dt><a href="testing.html">Testing</a></dt>
+<dd>how a fix would be pinned down.</dd>
+</dl>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The service layer</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">The service layer</h1>
+<p class="filetags"><span class="tag">concept</span> <span class="tag">developer</span> <span class="tag">store</span> </p>
+<p><code>OrgStore</code> wraps one <a href="backend-protocol.html">backend</a> and offers CRUDS over it. It is the only
+layer that knows what an operation <strong>means</strong>: which refs a document ends up
+with, what has to be re-derived after a write, and what a caller may
+address.
+</p>
+<p>Anything a second adapter would otherwise have to reimplement belongs here.
+That is why the views it returns — <code>DocumentSummary</code>, <code>NodeSummary</code> — are
+already-computed facts rather than models an adapter would have to walk.
+</p>
+<h2>Create settles the id first</h2>
+<p>Refs are a function of the document id, so the id has to be known <strong>before</strong>
+refs can be assigned. The backend is therefore asked to allocate an id, the
+document gets its refs, and then it is written — once. Folding the two
+together would store the document twice and leave it briefly persisted
+under refs nobody can address.
+</p>
+<h2>Read reassigns refs too</h2>
+<p>Refs are recomputed on read rather than trusted from the backend. They are
+a pure function of the id and each node&#39;s structural path, so recomputing
+is cheap and always right — and it is the only thing that makes the
+<a href="backend-orgfs.html">org file store</a> addressable at all, since org text has nowhere to keep a
+ref. A backend that persists them is caching what this would have worked
+out anyway.
+</p>
+<h2>Node operations live here, not in backends</h2>
+<p>Addressing a node means walking the canonical tree, and <strong>writing</strong> one means
+reassigning the refs of everything after it. A backend offering
+<code>update_node</code> would either duplicate that walk or write a node and leave
+the document&#39;s refs stale. Both are expressed once here, over
+<code>read_document</code> and <code>replace_document</code>.
+</p>
+<h2>Capabilities are asked for, not assumed</h2>
+<p>Search, reindex and embed are not on the backend protocol. The service asks
+whether the active backend can do them and, when it cannot, says so — an
+empty result would read as &#34;no matches&#34; when it means &#34;never looked&#34;.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="backend-protocol.html">The backend protocol</a></dt>
+<dd>what is deliberately not in it.</dd>
+<dt><a href="node-refs.html">Node refs</a></dt>
+<dd>the rule this layer enforces.</dd>
+<dt><a href="http-api.html">The HTTP API</a></dt>
+<dd>one of the thin things above it.</dd>
+</dl>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The org renderer</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">The org renderer</h1>
+<p class="filetags"><span class="tag">concept</span> <span class="tag">developer</span> <span class="tag">store</span> </p>
+<p>Writing goes through one Jinja2 template per node type, dispatched by the
+node&#39;s <code>type</code>. A type with no template of its own falls back to one that
+prints whatever text the node holds, so an unrecognised construct comes out
+looking like itself rather than disappearing.
+</p>
+<h2>The split with the templates</h2>
+<p>The same rule as everywhere else: everything that has to be <strong>worked out</strong> —
+a headline&#39;s stars, its tag column, which children are blocks, a list
+item&#39;s bullet and indent — is computed in Python and handed over. Templates
+decide layout only. A template reaching into the model would be a data
+processing module in disguise.
+</p>
+<h2>The whitespace rule</h2>
+<p>Every template obeys one rule: *a block&#39;s rendering ends with exactly one
+newline, and an inline&#39;s ends with none.* Blank lines between blocks are
+inserted by whatever contains them, so no template has to guess what
+follows it.
+</p>
+<p>Two exceptions are deliberate. A run of one-line blocks — a stack of
+<code>#+keyword:</code> lines, a drawer&#39;s properties — is packed with no blank lines,
+because a blank line between them would end the run. And inside a <strong>tight</strong>
+container — a list item, a table, a drawer — children are not spaced apart
+at all, since a blank line there breaks the construct rather than
+formatting it.
+</p>
+<p>Org moves the whitespace that followed an inline node out of the tree into
+a <code>post-blank</code> count. A renderer ignoring that writes <code>\alphaand</code>, which
+reads back as an entity nobody wrote.
+</p>
+<h2>Keywords are written from two places</h2>
+<p>A file&#39;s keywords live both as <code>keyword</code> nodes in the first section, which
+is where both readers put them, and again in the document&#39;s properties,
+which is the convenient view. Writing both would grow a second <code>#+title</code> on
+every save; writing only the nodes would drop the title of a document built
+in Python. So the nodes are written, and a property with no node of its own
+is written too.
+</p>
+<p>Only <code>title</code> and <code>filetags</code> are treated that way. <code>ox-json</code> fills in
+<code>author</code>, <code>email</code>, <code>language</code> and <code>creator</code> from the <strong>exporting Emacs</strong>
+rather than from the file, so writing those back would put into a file
+something it never said — and would make the same document
+<a href="content-hash.html">hash</a> differently depending on who read it.
+</p>
+<h2>Idempotent, not byte-preserving</h2>
+<p>Everything the model records survives; what it does not record — blank-line
+runs, table column alignment — comes back normalised. Rendering the result
+again changes nothing, so a file settles after one write rather than
+drifting.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="org-parser-adapter.html">The org-parser adapter</a></dt>
+<dd>the other half of the round trip.</dd>
+<dt><a href="content-hash.html">Content hash</a></dt>
+<dd>taken over this output.</dd>
+<dt><a href="documentation-wiki.html">This documentation wiki</a></dt>
+<dd>written through it, and shaped by its limits.</dd>
+</dl>
+
+</main>
+</body>
+</html>

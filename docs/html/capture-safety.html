@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Capture safety</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">Capture safety</h1>
+<p class="filetags"><span class="tag">concept</span> <span class="tag">user</span> <span class="tag">developer</span> <span class="tag">capture</span> </p>
+<p>Filling a template means splicing your text into a string that Emacs will
+afterwards expand. Left alone, Emacs would interpret <code>%t</code>, <code>%(sexp)</code>,
+<code>%^{...}</code> and friends in whatever you wrote — and <code>%(shell)</code> would
+genuinely start a shell. So your text is escaped, and the escaping is
+exact rather than approximate.
+</p>
+<h2>How org escapes, and how often</h2>
+<p>Org escapes a placeholder with a <strong>preceding backslash</strong>, counted so that for
+a run of n backslashes it deletes (n+1)/2 of them and treats the
+placeholder as escaped when n is odd.
+</p>
+<p>An org-roam capture body is expanded <strong>twice</strong>: org-roam fills the template
+and hands the result back to org-capture, which fills it again. One round
+of escaping is consumed by the first pass, so text must be escaped for both
+rounds.
+</p>
+<p>The escape only applies where org actually recognises a placeholder. A <code>%</code>
+followed by anything else is left alone, since a backslash added there
+would survive into the captured text. That is why the code matches org&#39;s
+own placeholder patterns precisely rather than escaping every <code>%</code>.
+</p>
+<p>Because this is arithmetic about somebody else&#39;s implementation, it is
+checked against a real Emacs in the live tests rather than trusted — see
+<a href="testing.html">Testing</a>.
+</p>
+<h2>The two things that are refused</h2>
+<dl>
+<dt><code>${...}</code></dt>
+<dd>org-roam expands it by calling a same-named function or
+prompting, and offers no escape mechanism at all.
+</dd>
+<dt><code>%?</code> in a title</dt>
+<dd>Emacs finds the capture point with a plain search
+for <code>%?</code>, which honours no escaping.
+</dd>
+</dl>
+<p>Rather than execute or hang, <code>org commit -m</code> refuses a message containing
+<code>${...}</code> and says so; capture interactively if you need that text.
+<code>org note</code> refuses it in the <a href="note-context.html">context</a> too, on the vanishing chance of a
+directory named that way.
+</p>
+<p>A <code>%?</code> in the body is safe, since it sits after the capture point. One
+ahead of it cannot be protected, so a warning is printed rather than
+pretending otherwise.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="capture-templates.html">Capture templates</a></dt>
+<dd>what the escaping is applied to.</dd>
+<dt><a href="command-commit.html">org commit</a></dt>
+<dd>where you meet it.</dd>
+<dt><a href="testing.html">Testing</a></dt>
+<dd>the live Emacs tests that confirm it.</dd>
+</dl>
+
+</main>
+</body>
+</html>

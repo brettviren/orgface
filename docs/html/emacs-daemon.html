@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Emacs daemon</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">The Emacs daemon</h1>
+<p class="filetags"><span class="tag">concept</span> <span class="tag">user</span> <span class="tag">emacs</span> </p>
+<p>Commands that need Emacs talk to a daemon under a private server name,
+<code>org-cli-helper</code> by default, so your interactive Emacs is never touched. It
+is managed the way <code>ssh</code> manages a master control connection: started on
+first use, reused by everything after, and shut down by itself once it has
+been idle long enough.
+</p>
+<ul>
+<li>The first command needing Emacs starts it. Cold start costs a few
+seconds; everything afterwards is a few tens of milliseconds.
+</li><li>Every request resets an idle timer <strong>inside</strong> Emacs. After
+<code>daemon.lifetime</code> of quiet the daemon saves modified buffers and exits.
+</li><li>No supervising process is involved. The countdown lives in the daemon, so
+nothing is left behind if the CLI is interrupted or killed.
+</li>
+</ul>
+<p>To share one Emacs rather than run a private one, point <code>daemon.server_name</code>
+at it.
+</p>
+<h2>The elisp bridge</h2>
+<p><code>emacsclient --eval</code> prints Elisp&#39;s <code>prin1</code> representation, which is
+painful to parse faithfully. Rather than reverse-engineer it, the
+daemon-side code base64-encodes a UTF-8 JSON payload and prints <strong>that</strong> as a
+quoted string, which <code>elisp.decode_payload</code> unwraps.
+</p>
+<p><code>bootstrap.el</code> is the daemon-side half, loaded on demand. Every feature
+needing Emacs — capture, org-roam lookups, <a href="backend-emacs.html">ox-json export</a> — adds a
+function there rather than a second channel.
+</p>
+<h2>Which commands need it</h2>
+<dl>
+<dt>Need it</dt>
+<dd>=commit=, <code>note</code>, <code>visit -T</code>, <code>render -m emacs</code>, and the
+<code>emacs</code> store backend.
+</dd>
+<dt>Do not</dt>
+<dd>=log= and <code>visit</code> by date read org files straight from disk,
+and the <a href="content-store.html">store</a> half runs without Emacs unless it is asked for.
+</dd>
+</dl>
+<h2>Taking charge</h2>
+<pre class="src"><code class="language-sh">org daemon status    # running or not, and since when
+org daemon start
+org daemon stop
+org daemon restart
+org daemon info      # what it reports about your org-roam setup
+</code></pre>
+<h2>Related</h2>
+<dl>
+<dt><a href="command-daemon.html">org daemon</a></dt>
+<dd>the command in detail.</dd>
+<dt><a href="configuration.html">Configuration</a></dt>
+<dd><code>daemon.lifetime</code>, <code>daemon.server_name</code> and friends.</dd>
+<dt><a href="backend-emacs.html">The Emacs backend</a></dt>
+<dd>reading org files through this daemon.</dd>
+</dl>
+
+</main>
+</body>
+</html>

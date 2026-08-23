@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Daily notes</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">Daily notes</h1>
+<p class="filetags"><span class="tag">concept</span> <span class="tag">user</span> <span class="tag">capture</span> </p>
+<p>A daily note is the org-roam file for one date, named <code>YYYY-MM-DD.org</code> by
+the stock dailies target and living under <code>org-roam-dailies-directory</code>.
+</p>
+<p>Each <strong>top level heading</strong> in that file is one entry — the unit
+<a href="command-commit.html">org commit</a> writes and <a href="command-log.html">org log</a> reports. That is what makes an
+entry the natural analogue of a commit: a titled, timestamped thing you
+added, in a file that accumulates them.
+</p>
+<p>Content ahead of the first heading becomes a preamble entry rather than
+being dropped, so a hand-edited file still reports everything it holds.
+</p>
+<h2>Read from disk, not from Emacs</h2>
+<p>Daily notes are plain files, so <code>org log</code> reads them directly and works
+whether or not the daemon is running. Only the <strong>locations</strong> of the notes
+come from Emacs, and those are cached — see <a href="xdg-locations.html">XDG locations</a>.
+</p>
+<p>Set <code>roam.directory</code> and <code>roam.dailies_directory</code> explicitly and <code>org log</code>
+never consults Emacs at all.
+</p>
+<h2>What an entry looks like</h2>
+<pre class="src"><code class="language-org">* Fixed the thing
+[2026-08-04 Tue 13:45]
+
+Took all day.
+</code></pre>
+<p>A line holding nothing but a timestamp — what the stock template&#39;s <code>%T</code>
+produces — is the entry&#39;s date rather than part of what was written, so it
+is reported as the date instead of twice.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="command-commit.html">org commit</a></dt>
+<dd>writing an entry.</dd>
+<dt><a href="command-log.html">org log</a></dt>
+<dd>reading them back.</dd>
+<dt><a href="command-visit.html">org visit</a></dt>
+<dd>opening one in Emacs.</dd>
+<dt><a href="note-topics.html">Note topics</a></dt>
+<dd>where <code>org note</code> files entries instead.</dd>
+</dl>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>org note</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">org note</h1>
+<p class="filetags"><span class="tag">command</span> <span class="tag">user</span> <span class="tag">capture</span> </p>
+<p>Record an entry the way <a href="command-commit.html">org commit</a> does, but keep the context it was
+written in and file it under a topic rather than under today&#39;s date.
+</p>
+<pre class="src"><code class="language-sh">org note -m &#34;Fixed the thing&#34; -m &#34;Took all day.&#34;
+org note -T &#34;Work Log&#34; -m &#34;Fixed the thing&#34;
+</code></pre>
+<p>The first <code>-m</code> is the title and any further <code>-m</code> options become body
+paragraphs. With no <code>-m</code> an interactive capture opens with the context
+already in place and Emacs asking for the title; <code>--gui</code> puts it in a frame
+of its own.
+</p>
+<ul>
+<li>=--dry-run= prints what would be handed to Emacs.</li><li><code>-q/--quiet</code> suppresses the summary.</li>
+</ul>
+<p>Unlike <code>commit</code>, the capture template is built by this tool, so
+<code>org-roam-dailies-capture-templates</code> and <code>-t</code> play no part.
+</p>
+<h2>What is added</h2>
+<p>Where and when the command ran becomes part of the entry — see
+<a href="note-context.html">Note context</a> for the whole of it:
+</p>
+<pre class="src"><code class="language-org">* Fixed the thing :home:org_cli_helper:
+:PROPERTIES:
+:DIRECTORY: /home/you/dev/org-cli-helper
+:HOST: yourhost
+:USER: you
+:END:
+[2026-08-04 Tue 13:45:02]
+
+Took all day.
+</code></pre>
+<h2>Where it goes</h2>
+<p>To an org-roam <a href="note-topics.html">topic</a>, by default one titled <code>Context Notes</code>, created on
+first use like any other org-roam node.
+</p>
+<p>Notes live outside the dailies, so <a href="command-log.html">org log</a> does not report them; read a
+topic with <code>org visit -T</code> instead. The entry is shaped like a daily entry
+all the same — heading, properties, timestamp, then the text — so nothing
+about it is peculiar to this tool.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="note-context.html">Note context</a></dt>
+<dd>the timestamp, properties and tags it records.</dd>
+<dt><a href="note-topics.html">Note topics</a></dt>
+<dd>how a topic is found or created.</dd>
+<dt><a href="capture-safety.html">Capture safety</a></dt>
+<dd>why your text cannot be expanded by Emacs.</dd>
+</dl>
+
+</main>
+</body>
+</html>

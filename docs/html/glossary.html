@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Glossary</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">Glossary</h1>
+<p class="filetags"><span class="tag">reference</span> <span class="tag">user</span> <span class="tag">developer</span> </p>
+<dl>
+<dt>Document</dt>
+<dd>one org file&#39;s worth of content, in the
+<a href="canonical-document.html">canonical form</a>. What <code>org store</code> creates, reads and deletes.
+</dd>
+<dt>Document id</dt>
+<dd>how a store names a document, opaque above the backend
+that issued it. A file store uses a path relative to its root.
+</dd>
+<dt>Node</dt>
+<dd>one element inside a document — a heading, a paragraph, a source
+block, a link, a timestamp. Documents are trees of nodes.
+</dd>
+<dt>Ref</dt>
+<dd>the address of one node within one document. A
+<a href="node-refs.html">ref</a> names a position, not an identity, so editing moves it.
+</dd>
+<dt>Content hash</dt>
+<dd>a digest of what a document <strong>says</strong>, taken over its
+rendering. Comparable between backends; see <a href="content-hash.html">Content hash</a>.
+</dd>
+<dt>Backend</dt>
+<dd>storage for documents — sqlite, a directory of org files, an
+Emacs session. See <a href="store-backends.html">Store backends</a>.
+</dd>
+<dt>Service layer</dt>
+<dd>the one place that knows what a create or an update
+means. See <a href="service-layer.html">The service layer</a>.
+</dd>
+<dt>Adapter</dt>
+<dd>a thin front end onto the service layer: the CLI, the
+<a href="http-api.html">HTTP API</a>, the <a href="mcp-tools.html">MCP tools</a>.
+</dd>
+<dt>Index</dt>
+<dd>rows derived from a document — nodes, tags, properties, links,
+timestamps, full text. Always rebuildable; see <a href="derived-index.html">The derived index</a>.
+</dd>
+<dt>Reindex</dt>
+<dd>rebuilding those rows from the stored documents, after the
+extraction rules change.
+</dd>
+<dt>Embedding</dt>
+<dd>a vector standing for a node&#39;s meaning, used by
+<a href="semantic-search.html">semantic search</a>.
+</dd>
+<dt>Render method</dt>
+<dd>how a document becomes other text — a Jinja2
+template, or org-export. See <a href="render-methods.html">Render methods</a>.
+</dd>
+<dt>Format</dt>
+<dd>what that text is: <code>html</code> to begin with. It names the
+template, the exporter and the file extension.
+</dd>
+<dt>Entry</dt>
+<dd>one top level heading in a daily note — the unit
+<a href="command-commit.html">org commit</a> writes and <a href="command-log.html">org log</a> reports.
+</dd>
+<dt>Topic</dt>
+<dd>an org-roam node, named by title, that <a href="command-note.html">org note</a> files
+entries under. See <a href="note-topics.html">Note topics</a>.
+</dd>
+<dt>Daily note</dt>
+<dd>the org-roam file for one date. See <a href="daily-notes.html">Daily notes</a>.</dd>
+<dt>Daemon</dt>
+<dd>the private Emacs the capture commands drive. See
+<a href="emacs-daemon.html">The Emacs daemon</a>.
+</dd>
+<dt>Canonical JSON</dt>
+<dd>the schema-validated JSON shape both ingestion paths
+produce, modelled on <code>ox-json</code>&#39;s export.
+</dd>
+<dt>ox-json</dt>
+<dd>the Emacs exporter whose output shape the canonical model
+copies.
+</dd>
+<dt>org-parser</dt>
+<dd>the standalone tree-sitter parser used when there is no
+Emacs. See <a href="org-parser-adapter.html">The org-parser adapter</a>.
+</dd>
+</dl>
+<h2>Related</h2>
+<dl>
+<dt><a href="overview.html">What org-cli-helper is</a></dt>
+<dd>the tool in one page.</dd>
+<dt><a href="user-guide.html">User guide</a></dt>
+<dd>these terms in use.</dd>
+<dt><a href="developer-guide.html">Developer guide</a></dt>
+<dd>where each term lives in the code.</dd>
+</dl>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>org serve</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">org serve</h1>
+<p class="filetags"><span class="tag">command</span> <span class="tag">user</span> <span class="tag">service</span> </p>
+<p>Serve the store over HTTP: the same operations <a href="command-store.html">org store</a> and
+<a href="command-search.html">org search</a> offer, as a typed JSON API.
+</p>
+<pre class="src"><code class="language-sh">uv sync --extra service      # or: pip install &#39;org-cli-helper[service]&#39;
+
+org serve                    # http://127.0.0.1:8765
+org serve --host 0.0.0.0 --port 9000
+org serve --schema           # print the OpenAPI document, serve nothing
+</code></pre>
+<h2>No authentication</h2>
+<p>It binds to localhost and has <strong>no authentication</strong>. It is for local tools;
+it is not something to expose to a network. Anyone who can reach the port
+can read and delete your notes.
+</p>
+<h2>The store is opened per request</h2>
+<p>Rather than holding one connection for the server&#39;s lifetime, which would
+serialise every request behind it and go on holding a file you may want to
+move. See <a href="http-api.html">The HTTP API</a> for the operation list and the status codes.
+</p>
+<h2>--schema</h2>
+<p>Prints the OpenAPI document and exits. That document is not a by-product:
+<a href="command-mcp.html">org mcp</a> derives its tools from it, so it is the shared description both
+front ends are generated from.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="http-api.html">The HTTP API</a></dt>
+<dd>the operations, and how failures are reported.</dd>
+<dt><a href="command-mcp.html">org mcp</a></dt>
+<dd>the same API as tools for an agent.</dd>
+<dt><a href="content-store.html">The content store</a></dt>
+<dd>what is being served.</dd>
+</dl>
+
+</main>
+</body>
+</html>

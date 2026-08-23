@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>org-cli-helper documentation</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">org-cli-helper documentation</h1>
+<p class="filetags"><span class="tag">guide</span> <span class="tag">user</span> <span class="tag">developer</span> </p>
+<p>org-cli-helper does some Emacs org things quickly from the command line: it
+captures notes into org-roam through a private Emacs daemon, and it keeps
+org content in a store you can list, search, edit a piece at a time, and
+serve to other programs.
+</p>
+<p>These pages are a wiki. One concept per page, linked wherever concepts
+meet. Two guides give a reading order through them.
+</p>
+<h2>Start here</h2>
+<dl>
+<dt><a href="overview.html">What org-cli-helper is</a></dt>
+<dd>the tool in one page. Read this first.</dd>
+<dt><a href="user-guide.html">User guide</a></dt>
+<dd>using the commands, in order.</dd>
+<dt><a href="developer-guide.html">Developer guide</a></dt>
+<dd>changing the code, in order.</dd>
+<dt><a href="glossary.html">Glossary</a></dt>
+<dd>the words these pages use precisely.</dd>
+</dl>
+<h2>Map of the wiki</h2>
+<p>Every page, by area. Each guide above puts these in an order; this is the
+plain inventory.
+</p>
+<h3>Orientation and setup</h3>
+<dl>
+<dt><a href="overview.html">What org-cli-helper is</a></dt>
+<dd>the two halves and how they meet.</dd>
+<dt><a href="installation.html">Installation</a></dt>
+<dd><code>uv</code>, and which extra buys which feature.</dd>
+<dt><a href="configuration.html">Configuration</a></dt>
+<dd>the layered settings and their spellings.</dd>
+<dt><a href="xdg-locations.html">XDG locations</a></dt>
+<dd>config, state and cache, and what may be deleted.</dd>
+<dt><a href="emacs-daemon.html">The Emacs daemon</a></dt>
+<dd>the private, self-expiring Emacs.</dd>
+</dl>
+<h3>Capturing notes</h3>
+<dl>
+<dt><a href="daily-notes.html">Daily notes</a></dt>
+<dd>the file for a date, and the entries in it.</dd>
+<dt><a href="command-commit.html">org commit</a></dt>
+<dd>record an entry, in the style of <code>git commit</code>.</dd>
+<dt><a href="command-note.html">org note</a></dt>
+<dd>record one with its context, under a topic.</dd>
+<dt><a href="note-context.html">Note context</a></dt>
+<dd>the where and when a note records.</dd>
+<dt><a href="note-topics.html">Note topics</a></dt>
+<dd>the org-roam node entries are filed under.</dd>
+<dt><a href="capture-templates.html">Capture templates</a></dt>
+<dd>choosing one, and where your text lands.</dd>
+<dt><a href="capture-safety.html">Capture safety</a></dt>
+<dd>why your text can never be expanded.</dd>
+<dt><a href="command-log.html">org log</a></dt>
+<dd>read entries back, newest first.</dd>
+<dt><a href="command-visit.html">org visit</a></dt>
+<dd>open a note in Emacs.</dd>
+<dt><a href="date-spellings.html">Date spellings</a></dt>
+<dd>what <code>--since</code> and <code>visit</code> accept.</dd>
+<dt><a href="command-config.html">org config</a></dt>
+<dd>what is set, where, and clearing the cache.</dd>
+<dt><a href="command-daemon.html">org daemon</a></dt>
+<dd>taking charge of the Emacs daemon.</dd>
+</dl>
+<h3>Using the store</h3>
+<dl>
+<dt><a href="content-store.html">The content store</a></dt>
+<dd>what it is for, and its four ideas.</dd>
+<dt><a href="command-store.html">org store</a></dt>
+<dd>create, read, update, delete.</dd>
+<dt><a href="command-search.html">org search</a></dt>
+<dd>find nodes by their words.</dd>
+<dt><a href="semantic-search.html">Semantic search</a></dt>
+<dd>find them by meaning.</dd>
+<dt><a href="command-sync.html">org store sync</a></dt>
+<dd>copy between stores.</dd>
+<dt><a href="command-render.html">org render</a></dt>
+<dd>write documents out as HTML.</dd>
+<dt><a href="command-serve.html">org serve</a></dt>
+<dd>the store over HTTP.</dd>
+<dt><a href="command-mcp.html">org mcp</a></dt>
+<dd>the store as tools for an agent.</dd>
+</dl>
+<h3>How the store works</h3>
+<dl>
+<dt><a href="canonical-document.html">The canonical document</a></dt>
+<dd>the one JSON shape.</dd>
+<dt><a href="node-refs.html">Node refs</a></dt>
+<dd>addressing a node, and why refs move.</dd>
+<dt><a href="content-hash.html">Content hash</a></dt>
+<dd>a digest of what a document says.</dd>
+<dt><a href="derived-index.html">The derived index</a></dt>
+<dd>rows computed, never authored.</dd>
+<dt><a href="json-schema.html">The JSON schema</a></dt>
+<dd>the model, for non-Python readers.</dd>
+<dt><a href="store-backends.html">Store backends</a></dt>
+<dd>three kinds of storage.</dd>
+<dt><a href="backend-sqlite.html">The sqlite backend</a></dt>
+<dd>one database with indexes.</dd>
+<dt><a href="backend-orgfs.html">The org file backend</a></dt>
+<dd>files as the storage.</dd>
+<dt><a href="backend-emacs.html">The Emacs backend</a></dt>
+<dd>the same files, through org-element.</dd>
+<dt><a href="embeddings.html">Embeddings in the store</a></dt>
+<dd>vectors, and why they are asked for.</dd>
+<dt><a href="render-methods.html">Render methods</a></dt>
+<dd>two ways out, and how a format is added.</dd>
+</dl>
+<h3>Working on the code</h3>
+<dl>
+<dt><a href="architecture.html">Architecture</a></dt>
+<dd>ports and adapters, and the one rule.</dd>
+<dt><a href="layering.html">The layering rule</a></dt>
+<dd>no logic in CLI or UI modules.</dd>
+<dt><a href="module-map.html">Module map</a></dt>
+<dd>which file holds what.</dd>
+<dt><a href="service-layer.html">The service layer</a></dt>
+<dd>the only layer with decisions.</dd>
+<dt><a href="backend-protocol.html">The backend protocol</a></dt>
+<dd>nine methods, and the omissions.</dd>
+<dt><a href="org-parser-adapter.html">The org-parser adapter</a></dt>
+<dd>org text in, without Emacs.</dd>
+<dt><a href="org-renderer.html">The org renderer</a></dt>
+<dd>canonical model out, as org text.</dd>
+<dt><a href="http-api.html">The HTTP API</a></dt>
+<dd>one typed definition of the operations.</dd>
+<dt><a href="mcp-tools.html">The MCP tools</a></dt>
+<dd>generated from that definition.</dd>
+<dt><a href="testing.html">Testing</a></dt>
+<dd>what is real in the suite, and what each marker costs.</dd>
+<dt><a href="documentation-wiki.html">This documentation wiki</a></dt>
+<dd>how these pages are made and kept honest.</dd>
+<dt><a href="roadmap.html">Roadmap</a></dt>
+<dd>what is deferred, and what is known broken.</dd>
+</dl>
+<h2>These pages are also a store</h2>
+<p><code>docs/org/</code> is an <a href="backend-orgfs.html">org file store</a>: every page here is a document in it, so
+the documentation can be listed, searched and served by the very tool it
+describes. See <a href="documentation-wiki.html">This documentation wiki</a>.
+</p>
+
+</main>
+</body>
+</html>

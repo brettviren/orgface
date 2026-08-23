@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The sqlite backend</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">The sqlite backend</h1>
+<p class="filetags"><span class="tag">concept</span> <span class="tag">developer</span> <span class="tag">store</span> <span class="tag">search</span> </p>
+<p>The default backend keeps every document in one sqlite file. The canonical
+JSON in <code>documents.content_json</code> is the source of truth; every other table
+is an <a href="derived-index.html">index</a> rebuilt from it on each write.
+</p>
+<p>That is what lets the side tables be dropped and rebuilt at any time with
+no data loss — the whole reason to treat them as indexes rather than as a
+second, subtly diverging copy of the content.
+</p>
+<h2>The tables</h2>
+<dl>
+<dt><code>documents</code></dt>
+<dd>id, path, schema version, the JSON, its
+<a href="content-hash.html">hash</a>, and when it was written.
+</dd>
+<dt><code>nodes</code></dt>
+<dd>keyed by <code>(doc_id, ref)</code>, with type, parent, path, heading
+level, TODO keyword, priority.
+</dd>
+<dt><code>tags</code>, <code>properties</code>, <code>links</code>, <code>timestamps</code></dt>
+<dd>the structured
+qualifiers, each indexed for the queries <a href="command-search.html">search</a> actually makes.
+</dd>
+<dt><code>fts_nodes</code></dt>
+<dd>an FTS5 table with <code>heading_text</code> and <code>body_text</code> in
+separate columns, which is what makes <code>--scope</code> possible.
+</dd>
+<dt><code>embeddings</code></dt>
+<dd>which node has a vector, from which model, for what
+text. Not a derived table; see <a href="embeddings.html">Embeddings in the store</a>.
+</dd>
+</dl>
+<p><code>fts_nodes</code> keeps the text rather than being contentless, so an excerpt can
+be cut from it without re-reading and re-flattening the whole document.
+</p>
+<p>A hit in a heading outranks one in a body, by weighting the bm25 columns:
+somebody who titled a note about a thing meant it to be about that thing,
+where a passing mention in prose is weaker evidence.
+</p>
+<h2>Why keys are what they are</h2>
+<p><code>nodes</code> is keyed by <code>(doc_id, ref)</code> rather than by ref alone. A ref already
+hashes in the document id, so refs assigned by the service are unique
+across the corpus anyway — but that is an invariant enforced two layers up,
+and a table should not corrupt one document because a caller reached past
+the service and stored another with refs it had not reassigned.
+</p>
+<h2>Ad hoc queries</h2>
+<p>Anything without a table goes through sqlite&#39;s JSON1 functions against
+<code>content_json</code> directly. A query pattern earns a table only once it is
+common enough to want an index for. <code>:memory:</code> opens a throwaway store,
+which is what the tests use.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="derived-index.html">The derived index</a></dt>
+<dd>what fills these tables.</dd>
+<dt><a href="command-search.html">org search</a></dt>
+<dd>the queries they answer.</dd>
+<dt><a href="store-backends.html">Store backends</a></dt>
+<dd>the alternatives.</dd>
+</dl>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Store backends</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">Store backends</h1>
+<p class="filetags"><span class="tag">concept</span> <span class="tag">user</span> <span class="tag">developer</span> <span class="tag">store</span> </p>
+<p>Three, chosen with <code>store.backend</code>. All answer the same commands.
+</p>
+<dl>
+<dt><a href="backend-sqlite.html">sqlite</a></dt>
+<dd>the default. One database, with the derived indexes that make
+<a href="command-search.html">search</a> possible. Nothing but this tool reads it.
+</dd>
+<dt><a href="backend-orgfs.html">orgfs</a></dt>
+<dd>ordinary org files in a directory. Nothing to import, no
+search index, and Emacs and git are first-class writers.
+</dd>
+<dt><a href="backend-emacs.html">emacs</a></dt>
+<dd>the same files, read through your running Emacs. Slower, needs
+<code>ox-json</code>, and is the only reader that is definitionally right.
+</dd>
+</dl>
+<p>Which one is active is a configuration question, not a command line one, so
+it is resolved once and every command sees the result. Each backend
+declares which setting locates it — sqlite wants <code>store.database</code>, the file
+backends want <code>store.directory</code> — so the code that opens one does not have
+to know that.
+</p>
+<h2>What a backend is, and is not</h2>
+<p>A backend knows how to keep documents somewhere, and nothing else. It does
+not validate, does not decide what a <a href="node-refs.html">ref</a> means, and does not search.
+That belongs to <a href="service-layer.html">the service layer</a> above it. See
+<a href="backend-protocol.html">The backend protocol</a> for the whole contract.
+</p>
+<h2>Adding one</h2>
+<p>An entry in the backend table: a name, how to open it, which configuration
+setting locates it, where it lives when configuration is silent, whether it
+needs an Emacs, and a one-line summary. Adding a backend is that entry plus
+the module — not an edit to the code that opens one, and not a change to
+any adapter.
+</p>
+<h2>Moving between them</h2>
+<p>Content is not trapped in whichever you chose. <a href="command-sync.html">org store sync</a> copies in
+either direction, and it can tell what has actually changed because a
+<a href="content-hash.html">content hash</a> means the same thing in all three.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="content-store.html">The content store</a></dt>
+<dd>what they all implement.</dd>
+<dt><a href="configuration.html">Configuration</a></dt>
+<dd><code>store.backend</code>, <code>store.database</code>, <code>store.directory</code>.</dd>
+<dt><a href="installation.html">Installation</a></dt>
+<dd>the extras the file backends need.</dd>
+</dl>
+
+</main>
+</body>
+</html>

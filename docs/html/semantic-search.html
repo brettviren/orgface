@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Semantic search</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">Semantic search</h1>
+<p class="filetags"><span class="tag">concept</span> <span class="tag">user</span> <span class="tag">search</span> </p>
+<p><code>-s/--semantic</code> matches on meaning rather than on words.
+</p>
+<pre class="src"><code class="language-sh">org store embed              # build the vectors; only changed text is sent
+org store embed --status     # how much of the store is covered
+org search -s &#34;physics equations&#34;
+</code></pre>
+<p>Word search finds nothing for &#34;physics equations&#34; in a note that says
+<code>\begin{equation} \nabla \cdot \mathbf{E} = ...</code>. Semantic search finds it.
+</p>
+<p>The same <code>-t</code>, <code>-T</code>, <code>-p</code> and <code>-d</code> qualifiers apply. <code>--scope</code> does not: a
+vector is of the whole node, not of its heading or its body.
+</p>
+<h2>Embedding is a separate step, on purpose</h2>
+<p>It costs a call to a model that may not be running, and storing a document
+should not fail for that reason. So <code>org store embed</code> is asked for, and it
+is incremental: a node whose text has not changed is not sent again.
+</p>
+<p>Changing <code>embed.model</code> invalidates every vector the old one produced,
+because vectors from two models do not live in the same space. The model
+name is stored beside each vector so that this can be noticed rather than
+quietly mixed.
+</p>
+<h2>Questions and passages are embedded differently</h2>
+<p>nomic-embed-text is trained asymmetrically: a passage is prefixed
+<code>search_document:</code> and a question <code>search_query:</code>, and embedding both the
+same way measurably worsens retrieval. That is a difference in the
+interface — two methods on the embedder — rather than a flag somebody can
+forget.
+</p>
+<h2>What it needs</h2>
+<p>The default expects <a href="https://github.com/ggml-org/llama.cpp">llama.cpp</a>&#39;s <code>llama-server</code> on <code>127.0.0.1:8080</code>
+serving nomic-embed-text, and the <code>semantic</code> extra for the vector index:
+</p>
+<pre class="src"><code class="language-sh">llama-server -m ~/models/nomic-embed-text-v1.5.Q8_0.gguf --embeddings
+uv sync --extra semantic
+</code></pre>
+<h2>Related</h2>
+<dl>
+<dt><a href="command-search.html">org search</a></dt>
+<dd>the word-matching default.</dd>
+<dt><a href="embeddings.html">Embeddings in the store</a></dt>
+<dd>how vectors are kept and invalidated.</dd>
+<dt><a href="configuration.html">Configuration</a></dt>
+<dd><code>embed.url</code>, <code>embed.model</code>, <code>embed.dimensions</code>.</dd>
+</dl>
+
+</main>
+</body>
+</html>

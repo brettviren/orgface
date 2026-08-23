@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Emacs backend</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">The Emacs backend</h1>
+<p class="filetags"><span class="tag">concept</span> <span class="tag">developer</span> <span class="tag">store</span> <span class="tag">emacs</span> </p>
+<p>The <code>emacs</code> backend reads the same directory as the
+<a href="backend-orgfs.html">org file backend</a>, with a different engine: your running Emacs, through
+<code>ox-json</code>.
+</p>
+<p>org-element <strong>is</strong> the definition of what org means, and here it runs inside
+your own configuration — your link types, your TODO keywords, your
+in-buffer settings. It is the only reader that can promise to agree with
+what you see in Emacs. It also sees a buffer&#39;s unsaved edits, which nothing
+reading the file can.
+</p>
+<p>The price is a running Emacs with <code>ox-json</code> installed, and a round trip per
+read.
+</p>
+<h2>A port, not an import</h2>
+<p>The backend declares what it needs from an Emacs — export a file as
+canonical JSON, report whether a buffer holds it and is modified, revert
+it — as a protocol. <code>org_store</code> is a library the CLI uses, not the other
+way round, so the CLI supplies something satisfying that protocol rather
+than the library importing the CLI.
+</p>
+<h2>Writing does not go through Emacs</h2>
+<p>The <a href="org-renderer.html">renderer</a> already produces org text, and an Emacs-side edit would need a
+second implementation of everything it does. What Emacs is asked instead is
+whether it is <strong>holding</strong> the file.
+</p>
+<dl>
+<dt>Modified buffer</dt>
+<dd>writing or deleting is refused. A merge invented
+here would be a worse answer than a clear stop.
+</dd>
+<dt>Unmodified buffer</dt>
+<dd>written under, then reverted, so Emacs is never
+left showing content the file no longer has.
+</dd>
+</dl>
+<p>The store is one writer among several here, and the others include a person
+with the file open.
+</p>
+<h2>As a conformance oracle</h2>
+<p>Because both backends read the same files, the same fixtures can go through
+each and their canonical JSON compared. That is how walker bugs and grammar
+gaps in the Emacs-free path get caught — see <a href="testing.html">Testing</a>.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="emacs-daemon.html">The Emacs daemon</a></dt>
+<dd>what it reads through.</dd>
+<dt><a href="backend-orgfs.html">The org file backend</a></dt>
+<dd>the same files without Emacs.</dd>
+<dt><a href="canonical-document.html">The canonical document</a></dt>
+<dd>the shape both produce.</dd>
+</dl>
+
+</main>
+</body>
+</html>

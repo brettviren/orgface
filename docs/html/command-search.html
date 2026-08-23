@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>org search</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">org search</h1>
+<p class="filetags"><span class="tag">command</span> <span class="tag">user</span> <span class="tag">search</span> </p>
+<p>Search everything in the store, down to the individual node rather than the
+whole file.
+</p>
+<pre class="src"><code class="language-sh">org search inline math                    # both words, anywhere
+org search &#39;E=mc^2&#39;                       # punctuation is text, not syntax
+org search neutr*                         # prefix match
+org search deadline --scope heading       # headings only
+org search --scope body notes             # bodies only
+org search dune -t physics                # under headings tagged :physics:
+org search setup -T src-block             # only source blocks
+org search plan -p CATEGORY=work          # only under headings with that property
+org search plan -d notes.org -n 5         # one document, at most five hits
+</code></pre>
+<h2>What the words mean</h2>
+<p>Words are ANDed, so two words means both. A trailing <code>*</code> matches by prefix.
+Everything else is taken literally: you type search text, not query syntax,
+so maths and punctuation need no quoting. Passing what you typed straight
+to the index would turn a stray bracket into a syntax error rather than a
+search.
+</p>
+<h2>Filters are inherited</h2>
+<p>Tag and property filters are inherited the way org inherits them: a
+paragraph under a heading tagged <code>:urgent:</code> is part of something urgent and
+is found by <code>-t urgent</code>, even though only the heading carries the tag.
+</p>
+<h2>A hit names a node</h2>
+<p>Each result prints <code>DOC_ID:REF</code>, which <a href="command-store.html">org store node</a> takes directly.
+Matching headings and bodies separately is what makes <code>--scope</code>
+meaningful — a heading match ranks above a passing mention in prose.
+</p>
+<p>Finding nothing is reported on standard error and exits non-zero.
+</p>
+<h2>Which stores can answer</h2>
+<p>Search runs over whichever indexes the active backend keeps. A backend that
+keeps none — the <a href="backend-orgfs.html">org file store</a> — says so, rather than returning an empty
+list that would read as &#34;no matches&#34; when it means &#34;never looked&#34;. Keeping
+a <a href="backend-sqlite.html">sqlite store</a> in <a href="command-sync.html">sync</a> alongside your files is the usual answer.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="semantic-search.html">Semantic search</a></dt>
+<dd>matching by meaning instead of by word.</dd>
+<dt><a href="derived-index.html">The derived index</a></dt>
+<dd>what is searchable and why.</dd>
+<dt><a href="node-refs.html">Node refs</a></dt>
+<dd>the second half of every result line.</dd>
+</dl>
+
+</main>
+</body>
+</html>

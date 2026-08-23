@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>What org-cli-helper is</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">What org-cli-helper is</h1>
+<p class="filetags"><span class="tag">concept</span> <span class="tag">user</span> <span class="tag">developer</span> </p>
+<p>org-cli-helper does some Emacs org things quickly from the command line. It
+is shaped like <code>git</code>: one top level program with subcommands that each do
+one thing and exit.
+</p>
+<p>The entry point is <code>org-cli-helper</code>. These pages assume it is aliased to
+<code>org</code>:
+</p>
+<pre class="src"><code class="language-sh">alias org=org-cli-helper
+</code></pre>
+<h2>Two halves</h2>
+<p>The commands fall into two groups that share configuration and little else.
+</p>
+<dl>
+<dt>Capture</dt>
+<dd><code>commit</code>, <code>note</code>, <code>log</code> and <code>visit</code> write and read org-roam
+notes through Emacs. See <a href="daily-notes.html">Daily notes</a>.
+</dd>
+<dt>Store</dt>
+<dd>=store=, <code>search</code>, <code>serve</code> and <code>mcp</code> treat org content as a
+collection addressable a piece at a time. See <a href="content-store.html">The content store</a>.
+</dd>
+</dl>
+<p>The capture half is about <strong>your</strong> notes, in <strong>your</strong> org-roam directory, under
+<strong>your</strong> Emacs configuration. The store half needs no Emacs at all.
+</p>
+<p>The two halves meet at the org files themselves. A daily note written by
+<code>org commit</code> is an ordinary org file, so a store backend can read it; a
+document edited through <code>org store</code> is an ordinary org file, so Emacs can
+open it.
+</p>
+<h2>What it does not do</h2>
+<p>It does not duplicate anything about your notes or your Emacs
+configuration. Capture templates and org-roam directories are read from the
+running daemon, which loads your normal init file. See
+<a href="emacs-daemon.html">The Emacs daemon</a>.
+</p>
+<p>It does not own your files. The <code>orgfs</code> backend treats a file you wrote by
+hand as already in the store, and git, Emacs and your editor as first-class
+writers alongside it.
+</p>
+<h2>Where to go next</h2>
+<dl>
+<dt><a href="user-guide.html">User guide</a></dt>
+<dd>for using the commands.</dd>
+<dt><a href="developer-guide.html">Developer guide</a></dt>
+<dd>for changing the code.</dd>
+<dt><a href="glossary.html">Glossary</a></dt>
+<dd>for the words these pages use precisely.</dd>
+</dl>
+<h2>Related</h2>
+<dl>
+<dt><a href="installation.html">Installation</a></dt>
+<dd>getting a working copy.</dd>
+<dt><a href="configuration.html">Configuration</a></dt>
+<dd>what can be set, and where.</dd>
+<dt><a href="architecture.html">Architecture</a></dt>
+<dd>how the halves are layered.</dd>
+</dl>
+
+</main>
+</body>
+</html>

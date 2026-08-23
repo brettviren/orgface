@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The content store</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">The content store</h1>
+<p class="filetags"><span class="tag">concept</span> <span class="tag">user</span> <span class="tag">developer</span> <span class="tag">store</span> </p>
+<p>The store keeps org documents in a canonical, schema-validated form so they
+can be listed, read, edited a piece at a time, searched and copied between
+kinds of storage. It is independent of the <a href="command-commit.html">capture commands</a> and needs no
+Emacs daemon.
+</p>
+<pre class="src"><code class="language-sh">org store add notes.org      # an org file, read without Emacs
+org store list
+org store show notes.org
+org search deadline
+</code></pre>
+<h2>Four ideas</h2>
+<p>Everything else in this half follows from these.
+</p>
+<dl>
+<dt><a href="canonical-document.html">A canonical document</a></dt>
+<dd>one JSON shape, modelled on <code>ox-json</code>&#39;s
+export, that every ingestion path produces.
+</dd>
+<dt><a href="node-refs.html">Refs name positions</a></dt>
+<dd>a node is addressed by a hash of the document
+id and its structural path, computed here rather than by the parser.
+</dd>
+<dt><a href="content-hash.html">The hash is of what a document says</a></dt>
+<dd>taken over the document
+rendered back to org text, so two backends can compare theirs.
+</dd>
+<dt><a href="derived-index.html">Indexes are derived, never authored</a></dt>
+<dd>tags, properties, links,
+timestamps and text, recomputed from the document on every write.
+</dd>
+</dl>
+<p>Each has a consequence worth knowing before it surprises you. One shape
+means everything above storage is written once. Refs naming positions means
+an edit moves the refs after it. A portable hash is what makes
+<a href="command-sync.html">sync</a> possible. Derived indexes mean a change to the rules is repaired by a
+reindex rather than by a migration.
+</p>
+<h2>One store, several kinds of storage</h2>
+<p>Which storage is in use is a configuration question: <code>store.backend</code>
+selects between a sqlite database, a directory of org files, and that same
+directory read through Emacs. All three answer the same commands. See
+<a href="store-backends.html">Store backends</a>.
+</p>
+<h2>One store, several front ends</h2>
+<p>The same operations are reachable from the <a href="command-store.html">CLI</a>, over <a href="http-api.html">HTTP</a>, and as
+<a href="mcp-tools.html">MCP tools</a>. Each is a thin adapter over the same service layer, so they
+cannot mean different things.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="command-store.html">org store</a></dt>
+<dd>the command surface.</dd>
+<dt><a href="command-search.html">org search</a></dt>
+<dd>finding things in it.</dd>
+<dt><a href="architecture.html">Architecture</a></dt>
+<dd>how the layers fit together.</dd>
+</dl>
+
+</main>
+</body>
+</html>

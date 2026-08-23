@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The backend protocol</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">The backend protocol</h1>
+<p class="filetags"><span class="tag">reference</span> <span class="tag">developer</span> <span class="tag">store</span> </p>
+<p>A backend knows how to keep documents somewhere and nothing else. The
+protocol is small on purpose.
+</p>
+<dl>
+<dt><code>allocate_id(path_hint)</code></dt>
+<dd>choose the id a document <strong>would</strong> get, without
+storing it.
+</dd>
+<dt><code>create_document(doc, path_hint)</code></dt>
+<dd>store a new document, return its id.</dd>
+<dt>The rest of CRUD</dt>
+<dd>=read_document(doc_id)=,
+=replace_document(doc_id, doc)=, =delete_document(doc_id)=,
+=list_documents()=.
+</dd>
+<dt><code>content_hash(doc_id)</code></dt>
+<dd>the <a href="content-hash.html">digest</a> sync compares.</dd>
+</dl>
+<p><code>allocate_id</code> is separate from <code>create_document</code> because
+<a href="node-refs.html">refs</a> are a function of the document id, so
+<a href="service-layer.html">the service</a> must know the id before it can assign refs and write once. A
+<code>path_hint</code> is a request, not an instruction: a backend may use it as the
+id, as a filename, or ignore it.
+</p>
+<h2>What is not in it</h2>
+<dl>
+<dt>Search</dt>
+<dd>not every backend can answer a text or vector query at all.
+In the contract, every backend would have to reimplement or fake it.
+</dd>
+<dt>Node reads and writes</dt>
+<dd>addressing a node is a walk of the canonical
+tree, and writing one means reassigning refs — a rule the service owns.
+</dd>
+<dt>Validation</dt>
+<dd>a backend is handed documents that are already valid.</dd>
+</dl>
+<h2>Errors are typed</h2>
+<p><code>DocumentNotFound</code>, <code>NodeNotFound</code>, <code>DocumentExists</code> and <code>InvalidDocument</code>
+all derive from <code>StoreError</code>. Every adapter already handles <code>StoreError</code>,
+and none of them should have to import pydantic to report a bad document —
+so a validation failure is re-raised as one of these at the service
+boundary.
+</p>
+<h2>Registering one</h2>
+<p>Backends are entries in a table: name, how to open it, which configuration
+setting locates it, its default location under the state directory,
+whether it needs an Emacs, and a summary. Adding a backend is that entry
+plus the module.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="store-backends.html">Store backends</a></dt>
+<dd>the three that exist.</dd>
+<dt><a href="service-layer.html">The service layer</a></dt>
+<dd>what sits above it.</dd>
+<dt><a href="architecture.html">Architecture</a></dt>
+<dd>why the line falls here.</dd>
+</dl>
+
+</main>
+</body>
+</html>

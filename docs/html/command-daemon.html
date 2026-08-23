@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>org daemon</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">org daemon</h1>
+<p class="filetags"><span class="tag">command</span> <span class="tag">user</span> <span class="tag">emacs</span> </p>
+<p>The <a href="emacs-daemon.html">daemon</a> starts by itself when a command needs it and exits after the
+configured idle lifetime, so these subcommands are for when you want to
+take charge of that explicitly.
+</p>
+<pre class="src"><code class="language-sh">org daemon start
+org daemon stop
+org daemon restart
+org daemon status
+org daemon info
+</code></pre>
+<h2>status</h2>
+<p>Reports the server name, the socket <code>emacsclient</code> will look for, whether it
+is running and with which pid, and the idle lifetime. It never <strong>starts</strong> one
+to find out — a status command that had a side effect would be useless for
+answering the question it is asked.
+</p>
+<h2>stop and restart</h2>
+<p><code>stop</code> shuts the daemon down, saving modified buffers first, and says so
+when there was nothing running. <code>restart</code> stops any daemon, starts a fresh
+one, and arms its idle timer.
+</p>
+<p>Both are worth reaching for after changing your Emacs init file: the
+running daemon loaded the old one.
+</p>
+<h2>info</h2>
+<p>Shows what the daemon reports about your org-roam setup — the directory,
+the dailies directory, the resolved daily-notes path, and the dailies
+capture templates with their keys, descriptions and types.
+</p>
+<p>Running it also refreshes the cached locations, so it doubles as the
+positive form of <code>org config clear-cache</code>.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="emacs-daemon.html">The Emacs daemon</a></dt>
+<dd>what is being managed, and why it expires.</dd>
+<dt><a href="capture-templates.html">Capture templates</a></dt>
+<dd>the list <code>info</code> prints.</dd>
+<dt><a href="command-config.html">org config</a></dt>
+<dd>the settings that govern it.</dd>
+</dl>
+
+</main>
+</body>
+</html>

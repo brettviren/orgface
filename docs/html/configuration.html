@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Configuration</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2rem 1rem;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.6em 0 0.4em; }
+  code, pre { font-family: ui-monospace, monospace; font-size: 0.9em; }
+  pre { overflow-x: auto; padding: 0.8em 1em; border-radius: 6px;
+        background: rgba(127, 127, 127, 0.12); }
+  code { padding: 0.1em 0.3em; border-radius: 3px;
+         background: rgba(127, 127, 127, 0.12); }
+  pre code { padding: 0; background: none; }
+  blockquote { margin: 1em 0; padding: 0.2em 1em;
+               border-left: 3px solid rgba(127, 127, 127, 0.4); }
+  table { border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { border: 1px solid rgba(127, 127, 127, 0.4); padding: 0.3em 0.6em;
+           text-align: left; }
+  dt { font-weight: 600; margin-top: 0.6em; }
+  dd { margin: 0 0 0 1.5rem; }
+  .tag { font-size: 0.7em; font-weight: normal; padding: 0.1em 0.5em;
+         border-radius: 999px; background: rgba(127, 127, 127, 0.18); }
+  .footdef .label { font-weight: 600; margin-right: 0.4em; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<h1 class="title">Configuration</h1>
+<p class="filetags"><span class="tag">concept</span> <span class="tag">reference</span> <span class="tag">user</span> <span class="tag">config</span> </p>
+<p>Every setting is declared once, in <code>SETTINGS</code> in <code>config.py</code>, with its
+attribute name, its TOML section and key, its environment variable, its
+default, and how to coerce it. Each layer reads that one declaration, so a
+new setting is one entry rather than four edits.
+</p>
+<h2>Layers</h2>
+<p>Layers apply in last-one-wins order:
+</p>
+<pre class="fixed-width">environment variables -&gt; config file -&gt; command line options</pre>
+<p>That the file beats the environment is deliberate: the file is the
+considered choice and the environment is the ambient one. A command line
+option beats both, and an option left unset does not count as a value, so
+it cannot clobber a lower layer with <code>None</code>.
+</p>
+<p>The file is named with <code>-c/--config</code>, or found at
+<code>~/.config/org-cli-helper/config.toml</code> — see <a href="xdg-locations.html">XDG locations</a>.
+</p>
+<h2>The settings</h2>
+<pre class="src"><code class="language-conf-toml">[daemon]
+server_name   = &#34;org-cli-helper&#34;  # ORG_CLI_HELPER_SERVER_NAME
+lifetime      = &#34;1h&#34;              # ORG_CLI_HELPER_LIFETIME
+emacs         = &#34;emacs&#34;           # ORG_CLI_HELPER_EMACS
+emacsclient   = &#34;emacsclient&#34;     # ORG_CLI_HELPER_EMACSCLIENT
+start_timeout = &#34;120s&#34;            # ORG_CLI_HELPER_START_TIMEOUT
+
+[roam]
+directory         = &#34;~/org/roam&#34;  # ORG_CLI_HELPER_ROAM_DIRECTORY
+dailies_directory = &#34;daily/&#34;      # ORG_CLI_HELPER_DAILIES_DIRECTORY
+
+[note]
+topic = &#34;Context Notes&#34;           # ORG_CLI_HELPER_NOTE_TOPIC
+
+[log]
+pager = &#34;less&#34;                    # ORG_CLI_HELPER_PAGER
+
+[embed]
+url        = &#34;http://127.0.0.1:8080&#34;   # ORG_CLI_HELPER_EMBED_URL
+model      = &#34;nomic-embed-text-v1.5&#34;   # ORG_CLI_HELPER_EMBED_MODEL
+dimensions = 768                       # ORG_CLI_HELPER_EMBED_DIMENSIONS
+
+[store]
+backend   = &#34;sqlite&#34;       # ORG_CLI_HELPER_STORE_BACKEND
+database  = &#34;~/.local/state/org-cli-helper/store.sqlite&#34;
+directory = &#34;~/org&#34;        # for the orgfs and emacs backends
+</code></pre>
+<p>An unknown section or key in the file is reported by name rather than
+ignored, on the grounds that a typo in a config file is a question, not a
+preference.
+</p>
+<h2>Value spellings</h2>
+<dl>
+<dt>Durations</dt>
+<dd>=90s=, <code>30m</code>, <code>1h</code>, <code>1h30m</code>, <code>2 hours</code>, <code>1d</code>, a bare
+number of seconds, or <code>never</code> (<code>none</code>, <code>inf</code>, <code>0</code>) to disable expiry.
+</dd>
+<dt>Paths</dt>
+<dd>=~= and =$VARIABLES= are expanded.</dd>
+<dt>Booleans</dt>
+<dd>=1/true/yes/on= and <code>0/false/no/off</code>.</dd>
+</dl>
+<h2>Seeing what is in effect</h2>
+<p><code>org config show</code> prints the resolved value of every setting, its dotted
+key, its environment variable, and which file it came from — the fastest
+way to find out why a command is using a store you did not expect. See
+<a href="command-config.html">org config</a>.
+</p>
+<h2>Related</h2>
+<dl>
+<dt><a href="xdg-locations.html">XDG locations</a></dt>
+<dd>where files are looked for by default.</dd>
+<dt><a href="store-backends.html">Store backends</a></dt>
+<dd>what <code>store.backend</code> selects between.</dd>
+<dt><a href="emacs-daemon.html">The Emacs daemon</a></dt>
+<dd>what the <code>[daemon]</code> settings govern.</dd>
+</dl>
+
+</main>
+</body>
+</html>
