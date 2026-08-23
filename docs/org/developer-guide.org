@@ -1,0 +1,96 @@
+#+title: Developer guide
+#+filetags: :guide:developer:
+#+summary: A reading order through the pages for someone changing the code.
+#+audience: developer
+#+status: current
+#+updated: 2026-08-23
+#+source: CLAUDE.md
+#+source: ARCHITECTURE-PLAN.md
+
+For someone changing org-cli-helper. The same pages as the
+[[file:user-guide.org][user guide]] and several more, ordered for a reader who needs to know why
+the code is shaped as it is before touching it.
+
+* Before the first change
+
+#+begin_src sh
+uv sync                              # every extra, so the whole suite runs
+uv run pytest -m "not emacs"         # fast pass
+uv run python -m org_store.schema    # regenerate the committed schema
+#+end_src
+
+Read [[file:layering.org][The layering rule]] first. It is the constraint most likely to be
+broken by a plausible-looking change, and the one that everything else
+depends on.
+
+* Reading order, breadth first
+
+- First :: [[file:architecture.org][Architecture]], [[file:layering.org][The layering rule]], [[file:glossary.org][Glossary]].
+- Second :: [[file:module-map.org][Module map]], [[file:canonical-document.org][The canonical document]],
+  [[file:service-layer.org][The service layer]].
+- Third :: [[file:backend-protocol.org][The backend protocol]], [[file:node-refs.org][Node refs]], [[file:derived-index.org][The derived index]],
+  [[file:content-hash.org][Content hash]].
+- Fourth :: the engines and the front ends — [[file:org-parser-adapter.org][the adapter]],
+  [[file:org-renderer.org][the renderer]], [[file:http-api.org][the HTTP API]], [[file:mcp-tools.org][the MCP tools]].
+- Throughout :: [[file:testing.org][Testing]], and [[file:roadmap.org][Roadmap]] for what is deliberately not
+  there.
+
+* Contents, depth first
+
+- [[file:architecture.org][Architecture]]
+  - [[file:layering.org][The layering rule]]
+  - [[file:module-map.org][Module map]]
+- The model
+  - [[file:canonical-document.org][The canonical document]]
+    - [[file:json-schema.org][The JSON schema]]
+    - [[file:node-refs.org][Node refs]]
+    - [[file:content-hash.org][Content hash]]
+    - [[file:derived-index.org][The derived index]]
+- Storage
+  - [[file:backend-protocol.org][The backend protocol]]
+    - [[file:backend-sqlite.org][The sqlite backend]]
+      - [[file:embeddings.org][Embeddings in the store]]
+    - [[file:backend-orgfs.org][The org file backend]]
+      - [[file:org-parser-adapter.org][The org-parser adapter]]
+      - [[file:org-renderer.org][The org renderer]]
+    - [[file:backend-emacs.org][The Emacs backend]]
+      - [[file:emacs-daemon.org][The Emacs daemon]]
+- Operations
+  - [[file:service-layer.org][The service layer]]
+    - [[file:command-store.org][org store]]
+    - [[file:command-search.org][org search]] and [[file:semantic-search.org][Semantic search]]
+    - [[file:command-sync.org][org store sync]]
+- Front ends
+  - [[file:http-api.org][The HTTP API]]
+    - [[file:mcp-tools.org][The MCP tools]]
+    - [[file:command-serve.org][org serve]] and [[file:command-mcp.org][org mcp]]
+- Keeping it honest
+  - [[file:testing.org][Testing]]
+  - [[file:documentation-wiki.org][This documentation wiki]]
+  - [[file:roadmap.org][Roadmap]]
+
+* Where a change goes
+
+- A new command :: a module under =commands/=, registered in =cli.py=,
+  calling into a data module. See [[file:layering.org][The layering rule]].
+- A new setting :: one entry in =SETTINGS=. See [[file:configuration.org][Configuration]].
+- A new backend :: one entry in the backend table plus the module. See
+  [[file:backend-protocol.org][The backend protocol]].
+- A new indexed fact :: the extraction rules, then =org store reindex=. No
+  migration. See [[file:derived-index.org][The derived index]].
+- A new node type :: a model class, a template, and a line in the walker's
+  dispatch table. See [[file:canonical-document.org][The canonical document]].
+- A new operation for agents :: a route in the HTTP API; the MCP tool
+  follows. See [[file:http-api.org][The HTTP API]].
+
+* And the documentation
+
+Code and documentation are meant to move together. Each page names the
+files it describes, so a change to a file says which pages to revisit;
+[[file:documentation-wiki.org][This documentation wiki]] explains the convention and the checks that enforce
+it.
+
+* Related
+
+- [[file:index.org][Documentation index]] :: every page, by area.
+- [[file:user-guide.org][User guide]] :: what users are told, which is what you must not break.

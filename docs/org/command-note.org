@@ -1,0 +1,60 @@
+#+title: org note
+#+filetags: :command:user:capture:
+#+summary: Record an entry with its context, filed under a topic rather than a date.
+#+audience: user
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_cli_helper/commands/note.py
+#+source: src/org_cli_helper/context.py
+
+Record an entry the way [[file:command-commit.org][org commit]] does, but keep the context it was
+written in and file it under a topic rather than under today's date.
+
+#+begin_src sh
+org note -m "Fixed the thing" -m "Took all day."
+org note -T "Work Log" -m "Fixed the thing"
+#+end_src
+
+The first =-m= is the title and any further =-m= options become body
+paragraphs. With no =-m= an interactive capture opens with the context
+already in place and Emacs asking for the title; =--gui= puts it in a frame
+of its own.
+
+- =--dry-run= prints what would be handed to Emacs.
+- =-q/--quiet= suppresses the summary.
+
+Unlike =commit=, the capture template is built by this tool, so
+=org-roam-dailies-capture-templates= and =-t= play no part.
+
+* What is added
+
+Where and when the command ran becomes part of the entry — see
+[[file:note-context.org][Note context]] for the whole of it:
+
+#+begin_src org
+,* Fixed the thing :home:org_cli_helper:
+:PROPERTIES:
+:DIRECTORY: /home/you/dev/org-cli-helper
+:HOST: yourhost
+:USER: you
+:END:
+[2026-08-04 Tue 13:45:02]
+
+Took all day.
+#+end_src
+
+* Where it goes
+
+To an org-roam [[file:note-topics.org][topic]], by default one titled =Context Notes=, created on
+first use like any other org-roam node.
+
+Notes live outside the dailies, so [[file:command-log.org][org log]] does not report them; read a
+topic with =org visit -T= instead. The entry is shaped like a daily entry
+all the same — heading, properties, timestamp, then the text — so nothing
+about it is peculiar to this tool.
+
+* Related
+
+- [[file:note-context.org][Note context]] :: the timestamp, properties and tags it records.
+- [[file:note-topics.org][Note topics]] :: how a topic is found or created.
+- [[file:capture-safety.org][Capture safety]] :: why your text cannot be expanded by Emacs.

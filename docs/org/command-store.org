@@ -1,0 +1,70 @@
+#+title: org store
+#+filetags: :command:user:store:
+#+summary: Create, read, update and delete documents and nodes.
+#+audience: user
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_cli_helper/commands/store.py
+#+source: tests/test_cli_store.py
+
+The command surface of [[file:content-store.org][the content store]].
+
+#+begin_src sh
+org store add notes.org                     # an org file, no Emacs needed
+org store add exported.json --id notes.org  # or canonical JSON from ox-json
+org store list                              # one line per document
+org store show notes.org                    # summary
+org store show notes.org --json             # the canonical document
+org store node notes.org org1a2b3c4d5e6f    # one node, addressed by ref
+org store rm-node notes.org org1a2b3c4d5e6f
+org store rm notes.org
+org store reindex                           # rebuild the derived tables
+org store sync orgfs:~/org                  # copy to another store
+org store embed                             # build embedding vectors
+#+end_src
+
+* add
+
+=SOURCE= is either an org file, read by the standalone tree-sitter parser
+and so needing no Emacs, or a JSON file in the canonical schema such as
+[[file:backend-emacs.org][ox-json]] exports. Both land on the same document.
+
+=--id= stores it under a chosen id; without one, the source's file name is
+the hint. A backend may adjust a hint — the [[file:backend-orgfs.org][org file store]] makes it a
+safe file name and avoids clobbering an existing document — so the id
+actually used is printed.
+
+Refs are recomputed on the way in, so whatever produced the file, the nodes
+end up addressable the same way.
+
+* list and show
+
+=list= prints one line per document: id, title, file tags. A document it
+cannot read is listed with the reason instead of a title, rather than the
+listing failing over one file. =show= adds the
+[[file:content-hash.org][content hash]], the schema version, and counts of nodes, headings, links and
+timestamps. =--json= prints the canonical document itself, which is what
+another program should read.
+
+* node and rm-node
+
+=node= shows one node, addressed by the ref that [[file:command-search.org][search]] returns; =--json=
+prints it in canonical form. =rm-node= deletes one.
+
+Refs name positions, so deleting a node changes the refs of everything
+after it, and =rm-node= says so. Re-read a document before using a ref
+taken before an edit. See [[file:node-refs.org][Node refs]].
+
+* reindex
+
+Rebuilds the derived tables from the stored documents. The indexes are
+computed from the canonical JSON, so this restores them exactly after the
+extraction rules change — no migration, no data loss. A backend that keeps
+no tables says so rather than pretending to work.
+
+* Related
+
+- [[file:command-sync.org][org store sync]] :: copying between stores.
+- [[file:semantic-search.org][Semantic search]] :: what =org store embed= is for.
+- [[file:node-refs.org][Node refs]] :: what an address means.
+- [[file:canonical-document.org][The canonical document]] :: what =--json= prints.

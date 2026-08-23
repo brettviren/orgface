@@ -1,0 +1,55 @@
+#+title: Embeddings in the store
+#+filetags: :concept:developer:search:
+#+summary: How vectors are kept, invalidated, and kept out of the write path.
+#+audience: developer
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_store/embed.py
+#+source: src/org_store/backends/sqlite.py
+
+A vector stands for a node's meaning, and is what
+[[file:semantic-search.org][semantic search]] compares. The =embeddings= table records, per node, which
+model produced its vector, a hash of the text that was embedded, and the
+row id of the vector itself in a =sqlite-vec= virtual table.
+
+That table cannot be created with the rest of the schema: its width is the
+model's dimension count, which is not known until one is configured.
+
+* Not a derived table
+
+Everything else the store derives — tags, links, full text — is recomputed
+on every write. Embeddings are not, because they are not free: they cost a
+call to a model that may not even be running. A write that depended on one
+would fail for a reason having nothing to do with storing a document.
+
+So embedding is asked for, by =org store embed=, and the store keeps enough
+bookkeeping to make that cheap.
+
+* Incremental by text hash
+
+A node whose text has not changed since it was embedded is left alone. Most
+of a document is unchanged on most writes, so this is the difference
+between an edit costing one call and costing hundreds.
+
+Vectors for nodes that no longer exist are dropped in the same pass, so the
+index does not accumulate orphans.
+
+* Changing the model invalidates everything
+
+Vectors from two models do not live in the same space, and comparing them
+would silently return nonsense. The model name is stored beside every
+vector, so a different =embed.model= means the old ones no longer count
+rather than quietly mixing two spaces.
+
+* Filtering after the search
+
+Nearest-neighbour search knows nothing about tags, properties or document
+ids, so it is asked for more rows than the query wants and the qualifiers
+are applied afterwards. That is why =top_k= is a request rather than a
+promise when qualifiers are in play.
+
+* Related
+
+- [[file:semantic-search.org][Semantic search]] :: the user-facing half.
+- [[file:backend-sqlite.org][The sqlite backend]] :: where the tables live.
+- [[file:derived-index.org][The derived index]] :: everything that *is* recomputed on write.

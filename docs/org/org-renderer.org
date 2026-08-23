@@ -1,0 +1,67 @@
+#+title: The org renderer
+#+filetags: :concept:developer:store:
+#+summary: Canonical model back to org text, one Jinja2 template per node type.
+#+audience: developer
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_store/render/renderer.py
+#+source: tests/test_org_render.py
+
+Writing goes through one Jinja2 template per node type, dispatched by the
+node's =type=. A type with no template of its own falls back to one that
+prints whatever text the node holds, so an unrecognised construct comes out
+looking like itself rather than disappearing.
+
+* The split with the templates
+
+The same rule as everywhere else: everything that has to be *worked out* —
+a headline's stars, its tag column, which children are blocks, a list
+item's bullet and indent — is computed in Python and handed over. Templates
+decide layout only. A template reaching into the model would be a data
+processing module in disguise.
+
+* The whitespace rule
+
+Every template obeys one rule: *a block's rendering ends with exactly one
+newline, and an inline's ends with none.* Blank lines between blocks are
+inserted by whatever contains them, so no template has to guess what
+follows it.
+
+Two exceptions are deliberate. A run of one-line blocks — a stack of
+=#+keyword:= lines, a drawer's properties — is packed with no blank lines,
+because a blank line between them would end the run. And inside a *tight*
+container — a list item, a table, a drawer — children are not spaced apart
+at all, since a blank line there breaks the construct rather than
+formatting it.
+
+Org moves the whitespace that followed an inline node out of the tree into
+a =post-blank= count. A renderer ignoring that writes =\alphaand=, which
+reads back as an entity nobody wrote.
+
+* Keywords are written from two places
+
+A file's keywords live both as =keyword= nodes in the first section, which
+is where both readers put them, and again in the document's properties,
+which is the convenient view. Writing both would grow a second =#+title= on
+every save; writing only the nodes would drop the title of a document built
+in Python. So the nodes are written, and a property with no node of its own
+is written too.
+
+Only =title= and =filetags= are treated that way. =ox-json= fills in
+=author=, =email=, =language= and =creator= from the *exporting Emacs*
+rather than from the file, so writing those back would put into a file
+something it never said — and would make the same document
+[[file:content-hash.org][hash]] differently depending on who read it.
+
+* Idempotent, not byte-preserving
+
+Everything the model records survives; what it does not record — blank-line
+runs, table column alignment — comes back normalised. Rendering the result
+again changes nothing, so a file settles after one write rather than
+drifting.
+
+* Related
+
+- [[file:org-parser-adapter.org][The org-parser adapter]] :: the other half of the round trip.
+- [[file:content-hash.org][Content hash]] :: taken over this output.
+- [[file:documentation-wiki.org][This documentation wiki]] :: written through it, and shaped by its limits.

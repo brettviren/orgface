@@ -152,6 +152,9 @@ def format_store_list(summaries: Sequence, colour: bool = False) -> str:
     lines = []
     for summary in summaries:
         line = style(f"{summary.doc_id:<{width}}", "yellow", colour)
+        if summary.error:
+            lines.append(line + "  " + style(f"({summary.error})", "red", colour))
+            continue
         line += f"  {summary.title or '(untitled)'}"
         if summary.filetags:
             tags = format_tags(summary.filetags, separate=False)

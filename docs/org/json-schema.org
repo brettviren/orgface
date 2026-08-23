@@ -1,0 +1,43 @@
+#+title: The JSON schema
+#+filetags: :reference:developer:store:
+#+summary: The canonical model rendered as JSON Schema, generated and checked in.
+#+audience: developer
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_store/schema.py
+#+source: tests/test_org_schema.py
+
+The [[file:canonical-document.org][pydantic model]] is the definition. The schema is that model rendered as
+JSON Schema, so consumers which are not Python — the Emacs side, an MCP
+client, anything reading the stored JSON directly — have something to
+validate against.
+
+It is committed at =src/org_store/schemas/org-document.schema.json= and
+regenerated with:
+
+#+begin_src sh
+uv run python -m org_store.schema
+#+end_src
+
+A test asserts the committed copy still matches the model, so a change that
+alters the stored shape shows up as a schema diff to review rather than as
+a silent change nobody noticed.
+
+* Validation mode, not serialisation mode
+
+The schema is generated in validation mode on purpose. It is the contract
+for "is this a conforming org document", which has to accept what =ox-json=
+emits — not merely what this code produces when it dumps a document.
+
+* Versioning
+
+=SCHEMA_VERSION= lives on the model and is bumped whenever a change alters
+the stored JSON shape. Every document carries the version it was written
+under, and the =$id= of the schema names it, so a stored document can
+always say which contract it was written against.
+
+* Related
+
+- [[file:canonical-document.org][The canonical document]] :: the model this renders.
+- [[file:testing.org][Testing]] :: the drift check that keeps them in step.
+- [[file:http-api.org][The HTTP API]] :: the other generated description, of the operations.

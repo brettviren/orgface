@@ -1,0 +1,57 @@
+#+title: Semantic search
+#+filetags: :concept:user:search:
+#+summary: Matching on meaning with embeddings, and why embedding is a separate step.
+#+audience: both
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_store/embed.py
+#+source: src/org_cli_helper/commands/search.py
+
+=-s/--semantic= matches on meaning rather than on words.
+
+#+begin_src sh
+org store embed              # build the vectors; only changed text is sent
+org store embed --status     # how much of the store is covered
+org search -s "physics equations"
+#+end_src
+
+Word search finds nothing for "physics equations" in a note that says
+=\begin{equation} \nabla \cdot \mathbf{E} = ...=. Semantic search finds it.
+
+The same =-t=, =-T=, =-p= and =-d= qualifiers apply. =--scope= does not: a
+vector is of the whole node, not of its heading or its body.
+
+* Embedding is a separate step, on purpose
+
+It costs a call to a model that may not be running, and storing a document
+should not fail for that reason. So =org store embed= is asked for, and it
+is incremental: a node whose text has not changed is not sent again.
+
+Changing =embed.model= invalidates every vector the old one produced,
+because vectors from two models do not live in the same space. The model
+name is stored beside each vector so that this can be noticed rather than
+quietly mixed.
+
+* Questions and passages are embedded differently
+
+nomic-embed-text is trained asymmetrically: a passage is prefixed
+=search_document:= and a question =search_query:=, and embedding both the
+same way measurably worsens retrieval. That is a difference in the
+interface — two methods on the embedder — rather than a flag somebody can
+forget.
+
+* What it needs
+
+The default expects [[https://github.com/ggml-org/llama.cpp][llama.cpp]]'s =llama-server= on =127.0.0.1:8080=
+serving nomic-embed-text, and the =semantic= extra for the vector index:
+
+#+begin_src sh
+llama-server -m ~/models/nomic-embed-text-v1.5.Q8_0.gguf --embeddings
+uv sync --extra semantic
+#+end_src
+
+* Related
+
+- [[file:command-search.org][org search]] :: the word-matching default.
+- [[file:embeddings.org][Embeddings in the store]] :: how vectors are kept and invalidated.
+- [[file:configuration.org][Configuration]] :: =embed.url=, =embed.model=, =embed.dimensions=.

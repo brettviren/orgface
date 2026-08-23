@@ -1,0 +1,57 @@
+#+title: org store sync
+#+filetags: :command:concept:user:store:
+#+summary: Copy documents from one store to another, in the direction you name.
+#+audience: both
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_store/sync.py
+#+source: tests/test_org_sync.py
+
+Copy documents between the configured store and another one. The commonest
+use is keeping a [[file:backend-sqlite.org][sqlite store]], for its search, alongside the
+[[file:backend-orgfs.org][org files]] you actually edit.
+
+#+begin_src sh
+org store sync orgfs:~/org              # configured store -> those files
+org store sync orgfs:~/org --pull       # those files -> configured store
+org store sync orgfs:~/org --dry-run    # say what would change
+org store sync orgfs:~/org --prune      # also delete what the source lacks
+org store sync sqlite                   # that backend's usual location
+#+end_src
+
+=TARGET= is =BACKEND= or =BACKEND:PATH=. Left off, the path is that
+backend's usual location, which is what makes =sqlite= on its own mean "the
+store I normally use".
+
+* Only what differs is written
+
+Documents are compared by [[file:content-hash.org][content hash]], so a second run reports everything
+unchanged. That works *across* backends because a content hash means the
+same thing in all of them — it is taken over the org text a document
+renders to, not over any file or any JSON.
+
+* A copy, not a merge
+
+The source always wins. Comparing two stores tells you that a document
+differs, not which side changed it, so an edit made at the destination is
+overwritten. No amount of care here could avoid that: knowing who changed
+what needs a record of the last sync and a three-way merge, and neither
+exists yet.
+
+Run =--dry-run= first when it matters. The one-line summary always names
+the direction.
+
+* Failure does not strand a run
+
+A document that cannot be read is reported and the run carries on, so one
+unreadable file does not leave the rest half-copied. The command exits
+non-zero if anything failed.
+
+=--prune= is off by default and is ignored for a partial run: with a subset
+named, "not in the source" cannot be told from "not asked about".
+
+* Related
+
+- [[file:content-hash.org][Content hash]] :: what makes cross-backend comparison meaningful.
+- [[file:store-backends.org][Store backends]] :: what can be at either end.
+- [[file:roadmap.org][Roadmap]] :: what a two-way sync would need.

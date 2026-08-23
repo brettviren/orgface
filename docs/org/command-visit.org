@@ -1,0 +1,40 @@
+#+title: org visit
+#+filetags: :command:user:capture:
+#+summary: Open a daily note or a topic in Emacs, without waiting for you.
+#+audience: user
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_cli_helper/commands/visit.py
+
+Open a note in Emacs, in a frame of its own, without waiting for you to
+close it.
+
+#+begin_src sh
+org visit                # today's daily note
+org visit yesterday      # a daily note by date
+org visit 3 days ago     # dates need no quoting
+org visit -T             # the topic 'note' captures into
+org visit -T "Work Log"  # a topic by title
+#+end_src
+
+Without =-T= the arguments are a date, in the same free-form spelling
+[[file:command-log.org][org log]] takes. With =-T= they are an org-roam [[file:note-topics.org][topic]] title instead, taken
+as =note -T= takes it, defaulting to =note.topic=.
+
+* A note that does not exist is reported
+
+Either way, a missing note is reported rather than created. Visiting is
+reading; creating is [[file:command-commit.org][commit]]'s or [[file:command-note.org][note]]'s job, and quietly conflating the
+two would make a typo in a date into a new file.
+
+* What needs the daemon
+
+Finding a topic means asking org-roam's database, so =visit -T= needs the
+[[file:emacs-daemon.org][daemon]]. Visiting a daily note does not need it to *find* the file — only
+to open it.
+
+* Related
+
+- [[file:date-spellings.org][Date spellings]] :: what a date argument may look like.
+- [[file:note-topics.org][Note topics]] :: what =-T= names.
+- [[file:emacs-daemon.org][The Emacs daemon]] :: what opens the frame.

@@ -1,0 +1,46 @@
+#+title: Date spellings
+#+filetags: :reference:user:capture:
+#+summary: The git-style date forms that log and visit accept.
+#+audience: both
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_cli_helper/dates.py
+#+source: tests/test_dates.py
+
+[[file:command-log.org][org log]] and [[file:command-visit.org][org visit]] take dates in the forms people actually type at
+=git log=. This is a *documented subset* of git's =approxidate=, not a
+reimplementation of it: anything unrecognised is reported rather than
+guessed at.
+
+* Forms
+
+- Absolute :: =2026-07-30=, =2026/07/30=, =20260730=, =260730=, each
+  optionally with a time — =2026-07-30 14:05= or =2026-07-30T14:05:00=.
+- Named :: =today=, =yesterday=, =now=.
+- Relative :: =3 days ago=, =2 weeks ago=, =1 month ago=, and git's
+  dotted =2.weeks.ago=. Units may be plural and =ago= may be left off.
+- Last :: =last week=, =last month=, =last year=.
+
+Units run from =second= through =minute=, =hour=, =day=, =week=,
+=fortnight=, =month= and =year=, with the short spellings =s=, =min=, =h=,
+=d= and =w=.
+
+* Whole-day bounds
+
+An upper bound named as a bare day covers that whole day: =--until
+2026-07-30= includes everything written on the 30th, rather than everything
+before midnight at its start. A lower bound named the same way starts at
+midnight, which is the same rule read from the other end.
+
+* Why a subset
+
+git's =approxidate= accepts a great deal and guesses at the rest. Guessing
+is fine for a tool you are watching interactively and bad for one whose
+output you might act on: =org log --since "next tuesdya"= should say it
+does not understand rather than quietly report the wrong fortnight.
+
+* Related
+
+- [[file:command-log.org][org log]] :: =--since=, =--until=, =--today=.
+- [[file:command-visit.org][org visit]] :: a date as its argument.
+- [[file:configuration.org][Configuration]] :: durations, which are spelled differently on purpose.

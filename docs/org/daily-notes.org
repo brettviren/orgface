@@ -1,0 +1,48 @@
+#+title: Daily notes
+#+filetags: :concept:user:capture:
+#+summary: The org-roam file for one date, and the entries inside it.
+#+audience: user
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_cli_helper/dailies.py
+#+source: src/org_cli_helper/locations.py
+
+A daily note is the org-roam file for one date, named =YYYY-MM-DD.org= by
+the stock dailies target and living under =org-roam-dailies-directory=.
+
+Each *top level heading* in that file is one entry — the unit
+[[file:command-commit.org][org commit]] writes and [[file:command-log.org][org log]] reports. That is what makes an
+entry the natural analogue of a commit: a titled, timestamped thing you
+added, in a file that accumulates them.
+
+Content ahead of the first heading becomes a preamble entry rather than
+being dropped, so a hand-edited file still reports everything it holds.
+
+* Read from disk, not from Emacs
+
+Daily notes are plain files, so =org log= reads them directly and works
+whether or not the daemon is running. Only the *locations* of the notes
+come from Emacs, and those are cached — see [[file:xdg-locations.org][XDG locations]].
+
+Set =roam.directory= and =roam.dailies_directory= explicitly and =org log=
+never consults Emacs at all.
+
+* What an entry looks like
+
+#+begin_src org
+,* Fixed the thing
+[2026-08-04 Tue 13:45]
+
+Took all day.
+#+end_src
+
+A line holding nothing but a timestamp — what the stock template's =%T=
+produces — is the entry's date rather than part of what was written, so it
+is reported as the date instead of twice.
+
+* Related
+
+- [[file:command-commit.org][org commit]] :: writing an entry.
+- [[file:command-log.org][org log]] :: reading them back.
+- [[file:command-visit.org][org visit]] :: opening one in Emacs.
+- [[file:note-topics.org][Note topics]] :: where =org note= files entries instead.

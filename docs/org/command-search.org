@@ -1,0 +1,58 @@
+#+title: org search
+#+filetags: :command:user:search:
+#+summary: Full text search over the store, down to the node rather than the file.
+#+audience: user
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_cli_helper/commands/search.py
+#+source: src/org_store/search.py
+
+Search everything in the store, down to the individual node rather than the
+whole file.
+
+#+begin_src sh
+org search inline math                    # both words, anywhere
+org search 'E=mc^2'                       # punctuation is text, not syntax
+org search neutr*                         # prefix match
+org search deadline --scope heading       # headings only
+org search --scope body notes             # bodies only
+org search dune -t physics                # under headings tagged :physics:
+org search setup -T src-block             # only source blocks
+org search plan -p CATEGORY=work          # only under headings with that property
+org search plan -d notes.org -n 5         # one document, at most five hits
+#+end_src
+
+* What the words mean
+
+Words are ANDed, so two words means both. A trailing =*= matches by prefix.
+Everything else is taken literally: you type search text, not query syntax,
+so maths and punctuation need no quoting. Passing what you typed straight
+to the index would turn a stray bracket into a syntax error rather than a
+search.
+
+* Filters are inherited
+
+Tag and property filters are inherited the way org inherits them: a
+paragraph under a heading tagged =:urgent:= is part of something urgent and
+is found by =-t urgent=, even though only the heading carries the tag.
+
+* A hit names a node
+
+Each result prints =DOC_ID:REF=, which [[file:command-store.org][org store node]] takes directly.
+Matching headings and bodies separately is what makes =--scope=
+meaningful — a heading match ranks above a passing mention in prose.
+
+Finding nothing is reported on standard error and exits non-zero.
+
+* Which stores can answer
+
+Search runs over whichever indexes the active backend keeps. A backend that
+keeps none — the [[file:backend-orgfs.org][org file store]] — says so, rather than returning an empty
+list that would read as "no matches" when it means "never looked". Keeping
+a [[file:backend-sqlite.org][sqlite store]] in [[file:command-sync.org][sync]] alongside your files is the usual answer.
+
+* Related
+
+- [[file:semantic-search.org][Semantic search]] :: matching by meaning instead of by word.
+- [[file:derived-index.org][The derived index]] :: what is searchable and why.
+- [[file:node-refs.org][Node refs]] :: the second half of every result line.

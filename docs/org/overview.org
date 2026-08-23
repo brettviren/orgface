@@ -1,0 +1,59 @@
+#+title: What org-cli-helper is
+#+filetags: :concept:user:developer:
+#+summary: The shape of the tool, and the two halves it is made of.
+#+audience: both
+#+status: current
+#+updated: 2026-08-23
+#+source: README.org
+#+source: src/org_cli_helper/cli.py
+
+org-cli-helper does some Emacs org things quickly from the command line. It
+is shaped like =git=: one top level program with subcommands that each do
+one thing and exit.
+
+The entry point is =org-cli-helper=. These pages assume it is aliased to
+=org=:
+
+#+begin_src sh
+alias org=org-cli-helper
+#+end_src
+
+* Two halves
+
+The commands fall into two groups that share configuration and little else.
+
+- Capture :: =commit=, =note=, =log= and =visit= write and read org-roam
+  notes through Emacs. See [[file:daily-notes.org][Daily notes]].
+- Store :: =store=, =search=, =serve= and =mcp= treat org content as a
+  collection addressable a piece at a time. See [[file:content-store.org][The content store]].
+
+The capture half is about *your* notes, in *your* org-roam directory, under
+*your* Emacs configuration. The store half needs no Emacs at all.
+
+The two halves meet at the org files themselves. A daily note written by
+=org commit= is an ordinary org file, so a store backend can read it; a
+document edited through =org store= is an ordinary org file, so Emacs can
+open it.
+
+* What it does not do
+
+It does not duplicate anything about your notes or your Emacs
+configuration. Capture templates and org-roam directories are read from the
+running daemon, which loads your normal init file. See
+[[file:emacs-daemon.org][The Emacs daemon]].
+
+It does not own your files. The =orgfs= backend treats a file you wrote by
+hand as already in the store, and git, Emacs and your editor as first-class
+writers alongside it.
+
+* Where to go next
+
+- [[file:user-guide.org][User guide]] :: for using the commands.
+- [[file:developer-guide.org][Developer guide]] :: for changing the code.
+- [[file:glossary.org][Glossary]] :: for the words these pages use precisely.
+
+* Related
+
+- [[file:installation.org][Installation]] :: getting a working copy.
+- [[file:configuration.org][Configuration]] :: what can be set, and where.
+- [[file:architecture.org][Architecture]] :: how the halves are layered.

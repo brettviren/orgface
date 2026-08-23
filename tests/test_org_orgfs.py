@@ -172,6 +172,31 @@ def test_reindex_is_refused_too(filestore: OrgStore) -> None:
 # -- the registry -----------------------------------------------------------
 
 
+def test_an_unreadable_file_does_not_spoil_the_listing(
+    files: OrgDirectoryStore, filestore: OrgStore, kept: str
+) -> None:
+    """A directory holds whatever it holds; listing must survive that.
+
+    A file the parser cannot manage -- or, as here, one that is not text
+    at all -- is a fact about that file, not a reason to refuse to say
+    what else is in the store.
+    """
+    (files.root / "binary.org").write_bytes(b"\xff\xfe not text\n")
+
+    listed = {brief.doc_id: brief for brief in filestore.briefs()}
+    assert listed[kept].title == "Canonical model fixture"
+    assert listed["binary.org"].error
+    assert "utf-8" in listed["binary.org"].error
+
+
+def test_reading_an_unreadable_file_is_a_store_error(
+    files: OrgDirectoryStore,
+) -> None:
+    (files.root / "binary.org").write_bytes(b"\xff\xfe not text\n")
+    with pytest.raises(StoreError):
+        files.read_document("binary.org")
+
+
 def test_the_backends_are_registered() -> None:
     assert set(BACKENDS) == {"sqlite", "orgfs", "emacs"}
 

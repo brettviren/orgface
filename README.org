@@ -29,6 +29,22 @@ org visit yesterday
 org daemon status
 #+end_src
 
+* Documentation
+
+This file is the tour. The reference is a wiki of org files in [[file:docs/org/][docs/org/]],
+one concept to a page: start at [[file:docs/org/index.org][docs/org/index.org]], or go straight to the
+[[file:docs/org/user-guide.org][user guide]] or the [[file:docs/org/developer-guide.org][developer guide]].
+
+Those pages are themselves a store, so the documentation can be read with
+the tool it documents:
+
+#+begin_src sh
+export ORG_CLI_HELPER_STORE_BACKEND=orgfs
+export ORG_CLI_HELPER_STORE_DIRECTORY=docs/org
+org store list
+org store show node-refs.org
+#+end_src
+
 * Installation
 
 org-cli-helper uses [[https://docs.astral.sh/uv/][uv]] for development.

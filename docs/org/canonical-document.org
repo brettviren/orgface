@@ -1,0 +1,63 @@
+#+title: The canonical document
+#+filetags: :concept:developer:store:
+#+summary: The one JSON shape every ingestion path produces, and its two rules.
+#+audience: developer
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_store/model.py
+#+source: tests/test_org_model.py
+
+The canonical form is =ox-json='s shape rather than an invented one. Every
+org-element node becomes an object:
+
+#+begin_src json
+{
+  "$$data_type": "org-node",
+  "type": "headline",
+  "ref": "org3f9a1c2d5e7b9081",
+  "properties": {"level": 1, "raw-value": "A heading", "tags": ["work"]},
+  "contents": ["child nodes, or bare strings of text"]
+}
+#+end_src
+
+A document wraps those in file-level properties — title, filetags, author,
+date and the rest — and carries a schema version.
+
+Copying =ox-json='s shape means the Emacs ingestion path needs no
+translation at all, and the [[file:org-parser-adapter.org][Emacs-free path]] only has to reproduce it.
+Everything above — storage, [[file:derived-index.org][indexing]], [[file:command-search.org][search]], [[file:command-sync.org][sync]], every adapter — is
+then written once, against one model.
+
+* Nothing is discarded
+
+Every model allows extra fields. =ox-json= puts org-element internals in
+=properties= (=post-blank=, =mode=, =secondary=) and hangs derived values
+off the node itself (a headline's =tags-all= and =drawer=, a link's
+=target-ref=). Only the ones worth naming are declared; the rest survive
+validation and round-trip untouched rather than being silently dropped.
+
+Property names keep org-element's kebab spelling: =:raw-value= arrives as
+=raw-value=, and the model's alias generator maps it to =raw_value= in
+Python.
+
+* Known types are typed
+
+=contents= is a discriminated union over the node types the code actually
+operates on — headline, section, paragraph, src-block, link, timestamp,
+property-drawer, latex fragments and so on — falling back to a generic node
+for the rest of org-element's vocabulary. The typed set grows by adding a
+class, without touching anything else.
+
+* Positions are not in the model
+
+Where a node sits in the source text is never stored. When an edit needs a
+position it is recomputed from the live file, because a stored offset is
+wrong the moment anything above it changes. What *is* stored is the
+structural path, which is what a [[file:node-refs.org][ref]] hashes.
+
+* Related
+
+- [[file:node-refs.org][Node refs]] :: how a node in this tree is addressed.
+- [[file:json-schema.org][The JSON schema]] :: this model, rendered for non-Python consumers.
+- [[file:org-parser-adapter.org][The org-parser adapter]] :: producing this shape without Emacs.
+- [[file:org-renderer.org][The org renderer]] :: turning it back into org text.

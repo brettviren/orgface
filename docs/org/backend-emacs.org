@@ -1,0 +1,55 @@
+#+title: The Emacs backend
+#+filetags: :concept:developer:store:emacs:
+#+summary: The same org files read through org-element, and the writes it refuses.
+#+audience: developer
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_store/backends/emacsfs.py
+#+source: tests/test_emacs_store_live.py
+
+The =emacs= backend reads the same directory as the
+[[file:backend-orgfs.org][org file backend]], with a different engine: your running Emacs, through
+=ox-json=.
+
+org-element *is* the definition of what org means, and here it runs inside
+your own configuration — your link types, your TODO keywords, your
+in-buffer settings. It is the only reader that can promise to agree with
+what you see in Emacs. It also sees a buffer's unsaved edits, which nothing
+reading the file can.
+
+The price is a running Emacs with =ox-json= installed, and a round trip per
+read.
+
+* A port, not an import
+
+The backend declares what it needs from an Emacs — export a file as
+canonical JSON, report whether a buffer holds it and is modified, revert
+it — as a protocol. =org_store= is a library the CLI uses, not the other
+way round, so the CLI supplies something satisfying that protocol rather
+than the library importing the CLI.
+
+* Writing does not go through Emacs
+
+The [[file:org-renderer.org][renderer]] already produces org text, and an Emacs-side edit would need a
+second implementation of everything it does. What Emacs is asked instead is
+whether it is *holding* the file.
+
+- Modified buffer :: writing or deleting is refused. A merge invented
+  here would be a worse answer than a clear stop.
+- Unmodified buffer :: written under, then reverted, so Emacs is never
+  left showing content the file no longer has.
+
+The store is one writer among several here, and the others include a person
+with the file open.
+
+* As a conformance oracle
+
+Because both backends read the same files, the same fixtures can go through
+each and their canonical JSON compared. That is how walker bugs and grammar
+gaps in the Emacs-free path get caught — see [[file:testing.org][Testing]].
+
+* Related
+
+- [[file:emacs-daemon.org][The Emacs daemon]] :: what it reads through.
+- [[file:backend-orgfs.org][The org file backend]] :: the same files without Emacs.
+- [[file:canonical-document.org][The canonical document]] :: the shape both produce.

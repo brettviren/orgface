@@ -1,0 +1,54 @@
+#+title: The service layer
+#+filetags: :concept:developer:store:
+#+summary: The only layer that knows what a create or an update means.
+#+audience: developer
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_store/service.py
+#+source: tests/test_org_service.py
+
+=OrgStore= wraps one [[file:backend-protocol.org][backend]] and offers CRUDS over it. It is the only
+layer that knows what an operation *means*: which refs a document ends up
+with, what has to be re-derived after a write, and what a caller may
+address.
+
+Anything a second adapter would otherwise have to reimplement belongs here.
+That is why the views it returns — =DocumentSummary=, =NodeSummary= — are
+already-computed facts rather than models an adapter would have to walk.
+
+* Create settles the id first
+
+Refs are a function of the document id, so the id has to be known *before*
+refs can be assigned. The backend is therefore asked to allocate an id, the
+document gets its refs, and then it is written — once. Folding the two
+together would store the document twice and leave it briefly persisted
+under refs nobody can address.
+
+* Read reassigns refs too
+
+Refs are recomputed on read rather than trusted from the backend. They are
+a pure function of the id and each node's structural path, so recomputing
+is cheap and always right — and it is the only thing that makes the
+[[file:backend-orgfs.org][org file store]] addressable at all, since org text has nowhere to keep a
+ref. A backend that persists them is caching what this would have worked
+out anyway.
+
+* Node operations live here, not in backends
+
+Addressing a node means walking the canonical tree, and *writing* one means
+reassigning the refs of everything after it. A backend offering
+=update_node= would either duplicate that walk or write a node and leave
+the document's refs stale. Both are expressed once here, over
+=read_document= and =replace_document=.
+
+* Capabilities are asked for, not assumed
+
+Search, reindex and embed are not on the backend protocol. The service asks
+whether the active backend can do them and, when it cannot, says so — an
+empty result would read as "no matches" when it means "never looked".
+
+* Related
+
+- [[file:backend-protocol.org][The backend protocol]] :: what is deliberately not in it.
+- [[file:node-refs.org][Node refs]] :: the rule this layer enforces.
+- [[file:http-api.org][The HTTP API]] :: one of the thin things above it.

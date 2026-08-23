@@ -1,0 +1,62 @@
+#+title: Architecture
+#+filetags: :concept:developer:
+#+summary: Ports and adapters: one model, several backends, several front ends.
+#+audience: developer
+#+status: current
+#+updated: 2026-08-23
+#+source: ARCHITECTURE-PLAN.md
+#+source: src/org_store/__init__.py
+
+The store half is ports and adapters. One canonical model at the centre,
+several kinds of storage below it, several front ends above it, and exactly
+one layer that knows what an operation *means*.
+
+#+begin_example
+        CLI          HTTP API         MCP tools        <- adapters
+          \             |               /
+           \            |              /
+            +---- service layer (CRUDS) ----+          <- the only decisions
+                        |
+       +----------------+----------------+
+    sqlite           org files        via Emacs        <- backends
+       +----------------+----------------+
+                        |
+              canonical document model                 <- one shape
+#+end_example
+
+* The rule
+
+The service layer is the only thing that knows CRUDS semantics. Adapters
+are thin and call it. Backends are the only things that know about sqlite,
+org-parser, Jinja2 or Emacs. [[file:command-sync.org][Sync]] talks to stores exclusively through the
+service layer, never by reaching into one backend's internals to shortcut
+into another's.
+
+State that rule and most design questions answer themselves: where does
+validation go (service), where does "what is a tag" go (the
+[[file:derived-index.org][extraction rules]], beside the model), where does "which backend is active"
+go (configuration, resolved once).
+
+* Two packages
+
+- =org_store= :: the library — model, backends, service, search, sync,
+  renderer, HTTP and MCP. It never imports =org_cli_helper=.
+- =org_cli_helper= :: the CLI. Argument parsing, presentation, Emacs daemon
+  management, configuration, and the capture commands.
+
+The dependency runs one way, which is what lets the store be used without
+the CLI — and what forces the [[file:backend-emacs.org][Emacs backend]] to declare a *port* for the
+Emacs it needs rather than importing one.
+
+* Where the capture half sits
+
+It is older and simpler: commands over data modules, with =emacs.py= as the
+one channel to Emacs. It shares [[file:configuration.org][configuration]], the XDG conventions and the
+=ui= module with the store half, and nothing else.
+
+* Related
+
+- [[file:layering.org][The layering rule]] :: the constraint every module is written under.
+- [[file:service-layer.org][The service layer]] :: the middle of the diagram.
+- [[file:module-map.org][Module map]] :: which file is which.
+- [[file:roadmap.org][Roadmap]] :: what the design leaves for later.

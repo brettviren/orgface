@@ -1,0 +1,68 @@
+#+title: Testing
+#+filetags: :reference:developer:
+#+summary: How the suite is organised, what is real in it, and what each marker costs.
+#+audience: developer
+#+status: current
+#+updated: 2026-08-23
+#+source: tests/conftest.py
+#+source: tests/test_org_conformance.py
+
+Tests live in =tests/= and run with =uv run pytest=. A plain =uv sync=
+installs every extra, so the whole suite is runnable from a fresh checkout.
+
+#+begin_src sh
+uv run pytest                          # everything
+uv run pytest -m "not emacs"           # skip the live Emacs tests
+uv run pytest -m "not emacs and not embed"
+uv run pytest tests/test_org_refs.py   # one module
+#+end_src
+
+* Real things, not mocks
+
+Real exporter output in =tests/data=, a real sqlite file in a temporary
+directory, a real click runner, a real Emacs daemon under the marker.
+Internals are not mocked: a test that mocks the thing it is testing passes
+when the thing is broken.
+
+* Markers
+
+- =emacs= :: needs a real Emacs with org-roam, and skips when it cannot
+  find one. Slow: each test spawns a daemon.
+- =embed= :: needs an embedding model answering on =embed.url=. Skipped
+  when nothing is listening.
+
+The =emacs= tests build a throwaway org-roam directory and an init file of
+their own, then drive a private daemon against them, so your notes and your
+configuration are untouched.
+
+* Isolation
+
+An autouse fixture points =XDG_CONFIG_HOME=, =XDG_STATE_HOME= and
+=XDG_CACHE_HOME= at a scratch tree and drops any ambient
+=ORG_CLI_HELPER_*= variable, so a test reads only what it sets. Without it,
+a real =~/.config/org-cli-helper/config.toml= would beat the environment
+variables a test sets — [[file:configuration.org][configuration]] is layered that way on purpose —
+and the suite would run against the developer's own notes.
+
+* The three kinds of check worth knowing about
+
+- Round trip :: whatever the [[file:org-renderer.org][renderer]] emits must parse back into the
+  same document, over the whole fixture corpus.
+- Conformance :: the same fixtures through both reading engines, with
+  =ox-json= as the oracle and the [[file:org-parser-adapter.org][walker]] as the thing under test.
+- Schema drift :: the committed [[file:json-schema.org][JSON schema]] must still match the model.
+
+Round-tripping matters because otherwise the org file store loses content
+every time it writes.
+
+Conformance divergences are not failures by default: the two engines will
+never agree on everything, and a walker contorted to match Emacs' internals
+would be worse than one that differs knowingly. Each structural difference
+is named and asserted instead, so a *new* one fails rather than passing
+unnoticed.
+
+* Related
+
+- [[file:documentation-wiki.org][This documentation wiki]] :: itself a corpus these checks can run against.
+- [[file:installation.org][Installation]] :: what a development area needs.
+- [[file:layering.org][The layering rule]] :: which layer a given test belongs to.

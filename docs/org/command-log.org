@@ -1,0 +1,57 @@
+#+title: org log
+#+filetags: :command:user:capture:
+#+summary: Show recent daily entries, newest first, through your pager.
+#+audience: user
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_cli_helper/commands/log.py
+#+source: src/org_cli_helper/dailies.py
+
+Show recent [[file:daily-notes.org][daily note]] entries, newest first, through your pager. Each top
+level heading in a daily note is one entry, which makes this the analogue
+of =git log=.
+
+Daily notes are read straight from disk, so this works whether or not Emacs
+is running.
+
+#+begin_src sh
+org log --today
+org log --since "2 weeks ago" --oneline
+org log -n 5 --reverse
+#+end_src
+
+* Options
+
+| Option | Meaning |
+|---|
+| =--today= | Only entries written today |
+| =--since=, =--after= | At or after a date |
+| =--until=, =--before= | At or before a date |
+| =-n=, =--max-count= | Limit to the N most recent entries |
+| =--oneline= | One compact line per entry |
+| =--reverse= | Oldest first |
+| =--color= | =auto= (default), =always=, =never= |
+| =--no-pager= | Write straight to stdout |
+| =--refresh= | Re-read org-roam locations from Emacs |
+
+=--today= cannot be combined with =--since= or =--until=; saying both is a
+question about which was meant, so it is reported rather than resolved.
+
+An upper bound named as a bare day covers that whole day, so
+=--until 2026-07-30= includes everything written on the 30th. Date
+spellings are their own subject: see [[file:date-spellings.org][Date spellings]].
+
+* What it does not show
+
+Notes written by [[file:command-note.org][org note]] live in a [[file:note-topics.org][topic]] rather than the dailies, so
+they are not reported here. A log is a chronology; read a topic with
+=org visit -T=.
+
+Finding nothing is reported on standard error and exits non-zero, so a
+shell loop can tell "no entries" from "entries printed".
+
+* Related
+
+- [[file:daily-notes.org][Daily notes]] :: what is being read.
+- [[file:date-spellings.org][Date spellings]] :: what =--since= accepts.
+- [[file:command-search.org][org search]] :: searching content rather than listing it by date.

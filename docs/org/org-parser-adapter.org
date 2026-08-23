@@ -1,0 +1,111 @@
+#+title: The org-parser adapter
+#+filetags: :concept:developer:store:
+#+summary: Reading org text into the canonical model without Emacs, and the two repairs.
+#+audience: developer
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_store/adapters/orgparser.py
+#+source: tests/test_org_walker.py
+
+=org-parser= is tree-sitter based and gives an object tree of its own. This
+adapter turns that into the same [[file:canonical-document.org][canonical document]] shape =ox-json=
+produces, so everything above neither knows nor cares which engine read the
+file.
+
+Most of it is a type-dispatch table: headings, blocks, drawers, lists,
+tables, timestamps, and the inline objects. Emphasis genuinely nests in
+that parser, so it maps onto recursive =contents= with no special casing.
+
+* What it repairs
+
+Each of these is put right at this boundary and nowhere else, so documents
+that came from Emacs are untouched — they were already right.
+
+- LaTeX :: there is no fragment or environment type at all, so maths
+  arrives as inert text or, worse, mangled.
+- Footnote definitions :: there is no block-level type, so a definition
+  arrives as an ordinary paragraph.
+- Block content :: a line inside a block that looks like a heading ends
+  the block where it stands, losing the rest.
+- Ordered lists :: an item's bullet comes back as =.= alone, without the
+  number written beside it.
+- Bare links :: the scheme is kept apart from the path, and a link built
+  from the path alone points somewhere else.
+- Keywords :: a document's keywords arrive in a list of their own, and
+  its property drawer as a mapping, both without their elements.
+- Indentation :: a list item's continuation lines keep the indent that
+  put them under the bullet, and indented content arrives wrapped.
+- Dying :: the parser can take the process down rather than raise, so a
+  file is read in a child process.
+
+** Maths and footnotes
+
+Inline maths survives inside a paragraph as plain text, which is
+recoverable. A =\begin{equation}= is actively mangled: its first word
+becomes an inline entity and the rest plain text. Both are detected in the
+paragraph's *raw source*, which is intact either way, and promoted to real
+=latex-fragment= and =latex-environment= nodes.
+
+A footnote definition is a paragraph beginning with a footnote reference,
+and that is exactly the signal used to promote it.
+
+** Block content
+
+A =*= at the start of a line inside a block is content, and org reads it as
+such. This parser ends the block there, reports an unterminated block, and
+reads the rest of the file as a heading — so the block's content is
+silently lost. Org's own comma escape is no help, because the same happens
+to the many lines nobody escaped.
+
+So the offending character is masked before the parser sees it and put back
+once the block's text is in hand. The mask does not outlive the parse, and
+what the document says is not changed.
+
+** Positions and structure
+
+An item's counter, a link's scheme and a keyword's line are all reported,
+just not where the obvious reading of the parser's output would put them.
+Refs are computed from structure, so a keyword hoisted out of its place
+would move every ref after it — which is a second reason to merge a
+document's keywords, its property drawer and its elements back into the
+order they were written in.
+
+The indent under a bullet is structure rather than text: left in the
+paragraph it would be added to on every write, so a three-line item would
+never settle. Content indented under a heading arrives wrapped in an
+element org-element has no equivalent for, so what is *inside* it is kept
+and the width recorded, which is enough to write the file back as it was.
+
+** Dying rather than failing
+
+Reading a file can end the program. org-parser's elements each hold a
+tree-sitter node, and reading one whose tree has gone reads freed memory:
+a segmentation fault, which no =except= catches and no caller reports.
+Holding off the cyclic collector for the duration of a parse fixes a good
+part of it, and is done here. It does not fix all of it.
+
+So a *file* is read in a child process, and a child that dies becomes one
+document reported as unreadable — which is what every other bad document
+already is. It costs a fork and a JSON round trip, about half again as
+long as parsing in this process, and it is why one unparseable file in a
+directory no longer takes [[file:command-store.org][org store list]] with it.
+
+* Normalisations
+
+=FILETAGS= comes back as a raw string like =":physics:dune:"= where
+=ox-json= gives a pre-split array, so the adapter splits it. File-level
+keywords and the file-level property drawer are genuinely different things
+in that parser, and only the keywords carry a document's title and tags.
+
+* Checked against Emacs
+
+The adapter is the thing under test and =ox-json= is the oracle. The
+[[file:testing.org][conformance tests]] run the same fixtures through both and pin down the part
+that has to agree — the document's content — naming each structural
+divergence explicitly, so a new one fails rather than passing unnoticed.
+
+* Related
+
+- [[file:org-renderer.org][The org renderer]] :: the other half of the round trip.
+- [[file:backend-orgfs.org][The org file backend]] :: its only caller.
+- [[file:roadmap.org][Roadmap]] :: the round-trip gaps that remain.

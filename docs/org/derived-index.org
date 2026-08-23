@@ -1,0 +1,58 @@
+#+title: The derived index
+#+filetags: :concept:developer:store:search:
+#+summary: The rows computed from a document, and why none of them are authored.
+#+audience: developer
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_store/extract.py
+#+source: tests/test_org_extract.py
+
+The canonical JSON is the source of truth. Everything else the store keeps
+about a document is a *view* onto it, computed fresh on every write.
+
+- =nodes= :: one row per node — its type, parent, structural path, heading
+  level, TODO keyword, priority.
+- =tags= :: a headline's effective tags.
+- =properties= :: property drawers, and standalone node-properties.
+- =links= :: link targets and their types, which is a backlink graph
+  waiting for a consumer.
+- =timestamps= :: planning timestamps (scheduled, deadline, closed) and
+  standalone timestamp nodes.
+- =fts_nodes= :: heading text and body text, in separate columns.
+
+Because no row here is ever edited independently, a change to the
+extraction rules is repaired by =org store reindex= rather than by a
+migration.
+
+* Tags are the inherited ones
+
+=tags-all= is preferred over =tags= because it includes what a headline
+inherits from its ancestors and from =#+filetags=, which is what somebody
+searching for a tag means by it. A document whose source engine does not
+compute inheritance falls back to the local tags.
+
+* Each word belongs to exactly one row
+
+Full-text indexing gives every node a row, so a node contributes only the
+strings sitting directly in its own contents — plus a verbatim =value= when
+it has none, which is how source blocks, examples and LaTeX carry their
+text. Flattening the whole subtree instead would index a sentence against
+its paragraph, its section and its headline, and one search would return
+four hits on the same words.
+
+The cost is that a phrase running through markup — =very *loud* noise= — is
+split across two rows, so it matches as words but not as a phrase.
+Emphasis mid-phrase is rare enough to accept that.
+
+* Kept out of the backend on purpose
+
+What counts as a tag, a property or a link is a fact about *org*, not about
+how rows are stored. So the rules live in one module and any future backend
+that wants the same indexes gets them from there rather than reimplementing
+them.
+
+* Related
+
+- [[file:backend-sqlite.org][The sqlite backend]] :: the tables these rows fill.
+- [[file:command-search.org][org search]] :: what the index is for.
+- [[file:canonical-document.org][The canonical document]] :: what the rows are derived from.

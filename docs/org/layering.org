@@ -1,0 +1,49 @@
+#+title: The layering rule
+#+filetags: :concept:developer:
+#+summary: CLI and UI modules hold no logic; that is what makes three front ends possible.
+#+audience: developer
+#+status: current
+#+updated: 2026-08-23
+#+source: CLAUDE.md
+#+source: src/org_cli_helper/commands/__init__.py
+
+The rule, from =CLAUDE.md= and non-negotiable: *CLI and UI modules contain
+no data processing logic.* Commands parse arguments and call into data
+modules; =ui.py= renders what they return; every decision lives somewhere
+neither of them.
+
+It is not aesthetic. It is what makes the [[file:http-api.org][HTTP API]] and the
+[[file:mcp-tools.org][MCP tools]] possible without a second implementation: if a rule had been
+written inside a click command, every other front end would need its own
+copy, and the copies would diverge.
+
+* How to tell you are breaking it
+
+- A command module computing something it then prints.
+- A Jinja2 template reaching into the model to work out a headline's
+  stars. Templates decide *layout* and nothing else.
+- A backend deciding what a ref means, or validating a document.
+- A rule about org — what counts as a tag, what a node's text is — living
+  in a backend rather than beside the model.
+
+* Where things go instead
+
+- Argument shapes shared by commands :: =commands/__init__.py=, declared
+  once so commands stay consistent by construction.
+- Rendering for people :: =ui.py=.
+- Decisions about documents :: [[file:service-layer.org][the service layer]].
+- Decisions about org :: beside the model — =text.py=, =extract.py=,
+  =refs.py=, =tree.py=.
+- Decisions about storage :: the [[file:backend-protocol.org][backend]].
+
+* DRY as it is meant here
+
+As functionality is reused across commands, it is factored out rather than
+copied. The test that a factoring is right is usually whether a *second*
+adapter would have had to reimplement it: if so, it belongs lower down.
+
+* Related
+
+- [[file:architecture.org][Architecture]] :: the shape this rule produces.
+- [[file:module-map.org][Module map]] :: where each layer lives.
+- [[file:testing.org][Testing]] :: which tests exercise which layer.

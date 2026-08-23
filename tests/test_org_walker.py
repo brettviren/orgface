@@ -13,8 +13,10 @@ from pathlib import Path
 
 import pytest
 
-from org_store.adapters.orgparser import parse, parse_file
+from org_store.adapters.orgparser import _parse_isolated, parse, parse_file
+from org_store.extract import content_hash
 from org_store.model import OrgDocument, walk
+from org_store.store import StoreError
 
 DATA = Path(__file__).parent / "data"
 
@@ -179,6 +181,170 @@ def test_table(parsed: OrgDocument) -> None:
     rows = by_type(parsed, "table-row")
     assert any(row.properties.type == "rule" for row in rows)
     assert by_type(parsed, "table-cell")[1].contents == ["value"]
+
+
+def test_block_content_that_looks_like_org_is_content() -> None:
+    """A star line inside a block belongs to the block, not to the document.
+
+    The parser ends the block at such a line on its own, which loses
+    everything after it; the walker masks it first.
+    """
+    doc = parse("#+begin_src org\n* A heading\ntext\n#+end_src\n")
+    (block,) = by_type(doc, "src-block")
+    assert block.properties.value == "* A heading\ntext\n"
+    assert by_type(doc, "headline") == []
+
+
+def test_orgs_comma_escape_is_not_part_of_the_content() -> None:
+    """``,*`` is how org writes a star line; the comma is not text."""
+    doc = parse("#+begin_example\n,* A heading\n,,* Literal comma\n#+end_example\n")
+    (block,) = by_type(doc, "example-block")
+    assert block.properties.value == "* A heading\n,* Literal comma\n"
+
+
+def test_a_keyword_line_inside_a_block_stays_inside_it() -> None:
+    doc = parse("#+begin_example\n#+title: inside\n#+end_example\n")
+    (block,) = by_type(doc, "example-block")
+    assert block.properties.value == "#+title: inside\n"
+    assert doc.properties.title == []
+
+
+def test_ordered_items_keep_their_numbers() -> None:
+    """org-parser reports the punctuation alone, so the counter is added."""
+    doc = parse("3. three\n4. four\n")
+    assert [item.properties.bullet for item in by_type(doc, "item")] == ["3.", "4."]
+
+
+def test_a_bare_link_keeps_its_scheme() -> None:
+    """The scheme is a separate field, and a link without it is a different one."""
+    doc = parse("See https://example.org/x here.\n")
+    (link,) = by_type(doc, "link")
+    assert link.properties.get("raw_link") == "https://example.org/x"
+    assert link.properties.get("type") == "https"
+    assert link.properties.get("path") == "//example.org/x"
+
+
+def test_an_angle_link_keeps_its_scheme() -> None:
+    doc = parse("See <mailto:someone@example.org> here.\n")
+    (link,) = by_type(doc, "link")
+    assert link.properties.get("raw_link") == "mailto:someone@example.org"
+    assert link.properties.get("format") == "angle"
+
+
+def test_an_affiliated_keyword_stays_with_its_block() -> None:
+    """``#+name:`` names the block after it, so its position matters."""
+    doc = parse("#+name: snip\n#+begin_src sh\nls\n#+end_src\n")
+    (section,) = doc.contents
+    assert [node.type for node in section.contents] == ["keyword", "src-block"]
+    assert section.contents[0].properties.get("key") == "NAME"
+
+
+def test_a_caption_is_a_keyword_like_any_other() -> None:
+    doc = parse("#+caption: A cap\n#+begin_src sh\nls\n#+end_src\n")
+    (keyword,) = by_type(doc, "keyword")
+    assert keyword.properties.get("key") == "CAPTION"
+    assert keyword.properties.get("value") == "A cap"
+
+
+def test_a_file_level_property_drawer_is_kept() -> None:
+    """It is reported apart from the elements, and would otherwise be lost."""
+    doc = parse("#+title: T\n:PROPERTIES:\n:ID: abc\n:END:\n\nBody.\n")
+    (drawer,) = by_type(doc, "property-drawer")
+    (property_node,) = drawer.contents
+    assert property_node.properties.get("key") == "ID"
+    assert property_node.properties.get("value") == "abc"
+
+
+def test_document_keywords_keep_their_place() -> None:
+    """A keyword is not hoisted to the top; only its own line says where it is."""
+    doc = parse("#+title: T\n\nA paragraph.\n\n#+options: toc:2\n")
+    (section,) = doc.contents
+    assert [node.type for node in section.contents] == [
+        "keyword",
+        "paragraph",
+        "keyword",
+    ]
+
+
+def test_a_special_block_keeps_its_name() -> None:
+    """The name after ``#+begin_`` is all that distinguishes one."""
+    doc = parse("#+begin_note :class warn\nSomething.\n#+end_note\n")
+    (block,) = by_type(doc, "special-block")
+    assert block.properties.get("type") == "note"
+    assert block.properties.get("parameters") == ":class warn"
+
+
+def test_indented_content_is_the_content_inside_it() -> None:
+    """org-element has no indent element, so neither has the model."""
+    doc = parse("* H\n\n  indented paragraph\n  second line\n")
+    assert [node.type for node in by_type(doc, "paragraph")] == ["paragraph"]
+    (paragraph,) = by_type(doc, "paragraph")
+    assert paragraph.properties.get("indent") == 2
+    assert "\n  " not in "".join(
+        part for part in paragraph.contents if isinstance(part, str)
+    )
+
+
+def test_indented_lists_are_lists() -> None:
+    doc = parse("* H\n\n  - one\n  - two\n")
+    assert len(by_type(doc, "item")) == 2
+
+
+def test_a_big_document_does_not_take_the_process_with_it() -> None:
+    """org-parser's nodes outlive their tree unless the collector is held off.
+
+    Reading one after the tree has gone reads freed memory and kills the
+    process, which no ``except`` can catch -- so what this really checks
+    is that :func:`org_store.adapters.orgparser.parse` still holds it off.
+    """
+    text = "#+title: Big\n\n" + "".join(
+        f"* Heading {n}\n\nSome text with a [[https://example.org][link]] in it.\n\n"
+        for n in range(400)
+    )
+    assert len(by_type(parse(text), "headline")) == 400
+
+
+def test_item_continuation_lines_drop_the_bullet_indent() -> None:
+    """The indent puts a line under the bullet; it is not what the item says."""
+    doc = parse("- Item :: first line\n  second line\n  third line\n")
+    text = "".join(
+        part for node in by_type(doc, "paragraph") for part in node.contents
+        if isinstance(part, str)
+    )
+    assert "\n " not in text
+
+
+# -- reading a file safely --------------------------------------------------
+
+
+def test_a_file_reads_the_same_either_way() -> None:
+    """Isolating the parse must not change what comes back."""
+    isolated = parse_file(DATA / "fixture.org")
+    here = parse_file(DATA / "fixture.org", isolated=False)
+    assert content_hash(isolated) == content_hash(here)
+
+
+def _dies(text: str, sender) -> None:
+    """A parser that dies the way tree-sitter does: no exception, no output."""
+    import os
+
+    os._exit(11)
+
+
+def _raises(text: str, sender) -> None:
+    sender.send(("error", "ValueError: something the child noticed"))
+    sender.close()
+
+
+def test_a_parser_that_dies_is_reported_rather_than_fatal() -> None:
+    """A segmentation fault in the parser must not take the program with it."""
+    with pytest.raises(StoreError, match="died reading this file"):
+        _parse_isolated("* H\n", "probe.org", target=_dies)
+
+
+def test_a_failure_in_the_child_reaches_the_caller() -> None:
+    with pytest.raises(StoreError, match="something the child noticed"):
+        _parse_isolated("* H\n", "probe.org", target=_raises)
 
 
 def test_unknown_constructs_are_kept_not_dropped() -> None:

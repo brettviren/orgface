@@ -1,0 +1,48 @@
+#+title: org config
+#+filetags: :command:user:config:
+#+summary: Show resolved settings, XDG paths, and clear the location cache.
+#+audience: user
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_cli_helper/commands/config.py
+
+Inspect configuration and cached state. Three subcommands, none of which
+change anything except the cache.
+
+#+begin_src sh
+org config show          # the resolved configuration
+org config show --env    # also name each environment variable
+org config paths         # the XDG locations in use
+org config clear-cache   # forget the cached org-roam locations
+#+end_src
+
+* show
+
+Prints the config file actually loaded — or the XDG path it looked at and
+did not find — then every setting as =section.key = value=, in the order
+they are declared. With =--env= each line also carries the environment
+variable that would set it.
+
+This is the fastest answer to "why is it using *that* store": the value
+printed is the one the command would use, after all
+[[file:configuration.org][layers]] have been applied.
+
+* paths
+
+Prints the configuration file, state directory and cache directory in use.
+See [[file:xdg-locations.org][XDG locations]] for what belongs in each.
+
+* clear-cache
+
+Removes the cached org-roam locations, so the next command that needs them
+asks the [[file:emacs-daemon.org][daemon]] again. Use it after moving your org-roam directory. It
+says whether there was anything to remove.
+
+Only locations are cached, and a warm cache is an optimisation rather than
+a requirement: if the cache cannot be written, nothing fails.
+
+* Related
+
+- [[file:configuration.org][Configuration]] :: what the settings mean.
+- [[file:xdg-locations.org][XDG locations]] :: the three directories.
+- [[file:command-daemon.org][org daemon]] :: where the cached values come from.

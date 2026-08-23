@@ -1,0 +1,53 @@
+#+title: The backend protocol
+#+filetags: :reference:developer:store:
+#+summary: The nine methods a backend implements, and the ones left out on purpose.
+#+audience: developer
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_store/store.py
+#+source: src/org_store/backends/__init__.py
+
+A backend knows how to keep documents somewhere and nothing else. The
+protocol is small on purpose.
+
+- =allocate_id(path_hint)= :: choose the id a document *would* get, without
+  storing it.
+- =create_document(doc, path_hint)= :: store a new document, return its id.
+- =read_document(doc_id)=, =replace_document(doc_id, doc)=,
+  =delete_document(doc_id)=, =list_documents()= :: the rest of CRUD.
+- =content_hash(doc_id)= :: the [[file:content-hash.org][digest]] sync compares.
+
+=allocate_id= is separate from =create_document= because
+[[file:node-refs.org][refs]] are a function of the document id, so
+[[file:service-layer.org][the service]] must know the id before it can assign refs and write once. A
+=path_hint= is a request, not an instruction: a backend may use it as the
+id, as a filename, or ignore it.
+
+* What is not in it
+
+- Search :: not every backend can answer a text or vector query at all.
+  In the contract, every backend would have to reimplement or fake it.
+- Node reads and writes :: addressing a node is a walk of the canonical
+  tree, and writing one means reassigning refs — a rule the service owns.
+- Validation :: a backend is handed documents that are already valid.
+
+* Errors are typed
+
+=DocumentNotFound=, =NodeNotFound=, =DocumentExists= and =InvalidDocument=
+all derive from =StoreError=. Every adapter already handles =StoreError=,
+and none of them should have to import pydantic to report a bad document —
+so a validation failure is re-raised as one of these at the service
+boundary.
+
+* Registering one
+
+Backends are entries in a table: name, how to open it, which configuration
+setting locates it, its default location under the state directory,
+whether it needs an Emacs, and a summary. Adding a backend is that entry
+plus the module.
+
+* Related
+
+- [[file:store-backends.org][Store backends]] :: the three that exist.
+- [[file:service-layer.org][The service layer]] :: what sits above it.
+- [[file:architecture.org][Architecture]] :: why the line falls here.

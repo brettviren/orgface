@@ -1,0 +1,43 @@
+#+title: org serve
+#+filetags: :command:user:service:
+#+summary: The store over HTTP, for local tools that should not shell out.
+#+audience: user
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_cli_helper/commands/serve.py
+#+source: src/org_store/api.py
+
+Serve the store over HTTP: the same operations [[file:command-store.org][org store]] and
+[[file:command-search.org][org search]] offer, as a typed JSON API.
+
+#+begin_src sh
+uv sync --extra service      # or: pip install 'org-cli-helper[service]'
+
+org serve                    # http://127.0.0.1:8765
+org serve --host 0.0.0.0 --port 9000
+org serve --schema           # print the OpenAPI document, serve nothing
+#+end_src
+
+* No authentication
+
+It binds to localhost and has *no authentication*. It is for local tools;
+it is not something to expose to a network. Anyone who can reach the port
+can read and delete your notes.
+
+* The store is opened per request
+
+Rather than holding one connection for the server's lifetime, which would
+serialise every request behind it and go on holding a file you may want to
+move. See [[file:http-api.org][The HTTP API]] for the operation list and the status codes.
+
+* --schema
+
+Prints the OpenAPI document and exits. That document is not a by-product:
+[[file:command-mcp.org][org mcp]] derives its tools from it, so it is the shared description both
+front ends are generated from.
+
+* Related
+
+- [[file:http-api.org][The HTTP API]] :: the operations, and how failures are reported.
+- [[file:command-mcp.org][org mcp]] :: the same API as tools for an agent.
+- [[file:content-store.org][The content store]] :: what is being served.

@@ -1,0 +1,50 @@
+#+title: Glossary
+#+filetags: :reference:user:developer:
+#+summary: The words these pages use precisely, each linked to its own page.
+#+audience: both
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_store/store.py
+#+source: src/org_store/model.py
+
+- Document :: one org file's worth of content, in the
+  [[file:canonical-document.org][canonical form]]. What =org store= creates, reads and deletes.
+- Document id :: how a store names a document, opaque above the backend
+  that issued it. A file store uses a path relative to its root.
+- Node :: one element inside a document — a heading, a paragraph, a source
+  block, a link, a timestamp. Documents are trees of nodes.
+- Ref :: the address of one node within one document. A
+  [[file:node-refs.org][ref]] names a position, not an identity, so editing moves it.
+- Content hash :: a digest of what a document *says*, taken over its
+  rendering. Comparable between backends; see [[file:content-hash.org][Content hash]].
+- Backend :: storage for documents — sqlite, a directory of org files, an
+  Emacs session. See [[file:store-backends.org][Store backends]].
+- Service layer :: the one place that knows what a create or an update
+  means. See [[file:service-layer.org][The service layer]].
+- Adapter :: a thin front end onto the service layer: the CLI, the
+  [[file:http-api.org][HTTP API]], the [[file:mcp-tools.org][MCP tools]].
+- Index :: rows derived from a document — nodes, tags, properties, links,
+  timestamps, full text. Always rebuildable; see [[file:derived-index.org][The derived index]].
+- Reindex :: rebuilding those rows from the stored documents, after the
+  extraction rules change.
+- Embedding :: a vector standing for a node's meaning, used by
+  [[file:semantic-search.org][semantic search]].
+- Entry :: one top level heading in a daily note — the unit
+  [[file:command-commit.org][org commit]] writes and [[file:command-log.org][org log]] reports.
+- Topic :: an org-roam node, named by title, that [[file:command-note.org][org note]] files
+  entries under. See [[file:note-topics.org][Note topics]].
+- Daily note :: the org-roam file for one date. See [[file:daily-notes.org][Daily notes]].
+- Daemon :: the private Emacs the capture commands drive. See
+  [[file:emacs-daemon.org][The Emacs daemon]].
+- Canonical JSON :: the schema-validated JSON shape both ingestion paths
+  produce, modelled on =ox-json='s export.
+- ox-json :: the Emacs exporter whose output shape the canonical model
+  copies.
+- org-parser :: the standalone tree-sitter parser used when there is no
+  Emacs. See [[file:org-parser-adapter.org][The org-parser adapter]].
+
+* Related
+
+- [[file:overview.org][What org-cli-helper is]] :: the tool in one page.
+- [[file:user-guide.org][User guide]] :: these terms in use.
+- [[file:developer-guide.org][Developer guide]] :: where each term lives in the code.

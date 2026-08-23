@@ -1,0 +1,89 @@
+#+title: Roadmap
+#+filetags: :reference:developer:
+#+summary: What is deliberately deferred, and the round-trip gaps confirmed so far.
+#+audience: developer
+#+status: current
+#+updated: 2026-08-23
+#+source: ARCHITECTURE-PLAN.md
+#+source: src/org_store/adapters/orgparser.py
+
+Two lists: decisions taken to defer something, and defects found by using
+the thing. Both are here so that a page describing current behaviour does
+not have to apologise for it in passing.
+
+* Deferred by design
+
+- Two-way sync :: [[file:command-sync.org][sync]] goes one way and the source wins. Detecting
+  that *both* sides moved needs a last-sync record and a three-way merge.
+- Partial writes through Emacs :: the [[file:backend-emacs.org][Emacs backend]] reads through
+  org-element but writes with the renderer.
+- Node splicing :: a node update re-renders the whole document rather
+  than splicing the changed span back into the original source.
+- A backlink view :: =links= rows are populated and nothing yet consumes
+  them. A web view of this wiki is the obvious candidate.
+- Structured maths :: LaTeX is captured verbatim and deliberately not
+  parsed.
+
+A targeted Emacs-side edit — keeping its undo history and buffer-local
+state coherent — needs a new bootstrap entry point and real design time.
+Splicing would preserve formatting the model does not record. If structured
+maths is ever needed it belongs as an optional derived representation,
+never as a required schema field.
+
+* What the reader normalises
+
+These are not losses. A document says the same thing after a write, but
+not always in the same characters, because the model records what a
+document *says* rather than how it was typed.
+
+- Whitespace :: runs of blank lines come back as one, and a list item's
+  continuation lines are re-indented to the width of its bullet.
+- Table alignment :: column padding is presentation, so it is rewritten
+  rather than preserved. Org realigns a table on the next edit anyway.
+- Block content :: a line inside a block that would read as a heading or
+  a keyword is written with org's comma escape, whether or not the file
+  already had one. That is what org itself writes.
+- A file-level property drawer :: it keeps its place among the file's
+  keywords, but any blank line between the two is closed up, since org
+  reads such a drawer only at the top of the file.
+
+* Known divergences from org-element
+
+Places where the [[file:org-parser-adapter.org][Emacs-free reader]] and =ox-json= describe the same
+document differently. Content survives either way; the structure does not
+always match, and the [[file:testing.org][conformance tests]] name each one.
+
+- A keyword under a heading :: =#+options:= below a headline comes back
+  as a paragraph rather than as a keyword node.
+- Affiliated keywords :: =#+name:= and =#+caption:= stay keyword nodes of
+  their own, where org-element makes them properties of the element they
+  name. They keep their position, so the file reads the same.
+
+* Still losing content
+
+Measured on a corpus of 942 real org files: 854 survive a round trip
+unchanged, 87 do not, and one cannot be read at all. What the 87 have in
+common, in order of how often it appears:
+
+- Heading property drawers and =LOGBOOK= drawers, which come back
+  differently or not at all.
+- Headings that arrive as something else, usually where a drawer above
+  them was mis-read.
+- Dynamic blocks, which have no mapping yet.
+
+Each is worth the same treatment the repairs above got: find what the
+parser actually reports, and put it right at the one boundary.
+
+* Open questions from the design
+
+- Which side tables earn their keep, once real query patterns exist.
+- Whether the LaTeX and footnote repairs stay local or become an upstream
+  contribution to the parser.
+- What an Emacs partial write should do about a modified buffer beyond
+  refusing it.
+
+* Related
+
+- [[file:org-parser-adapter.org][The org-parser adapter]] :: where three of the four gaps live.
+- [[file:org-renderer.org][The org renderer]] :: where the fourth would be fixed.
+- [[file:testing.org][Testing]] :: how a fix would be pinned down.

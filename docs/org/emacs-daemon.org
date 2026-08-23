@@ -1,0 +1,58 @@
+#+title: The Emacs daemon
+#+filetags: :concept:user:emacs:
+#+summary: The private, self-expiring Emacs the capture commands talk to.
+#+audience: both
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_cli_helper/emacs.py
+#+source: src/org_cli_helper/elisp.py
+#+source: src/org_cli_helper/commands/daemon.py
+
+Commands that need Emacs talk to a daemon under a private server name,
+=org-cli-helper= by default, so your interactive Emacs is never touched. It
+is managed the way =ssh= manages a master control connection: started on
+first use, reused by everything after, and shut down by itself once it has
+been idle long enough.
+
+- The first command needing Emacs starts it. Cold start costs a few
+  seconds; everything afterwards is a few tens of milliseconds.
+- Every request resets an idle timer *inside* Emacs. After
+  =daemon.lifetime= of quiet the daemon saves modified buffers and exits.
+- No supervising process is involved. The countdown lives in the daemon, so
+  nothing is left behind if the CLI is interrupted or killed.
+
+To share one Emacs rather than run a private one, point =daemon.server_name=
+at it.
+
+* The elisp bridge
+
+=emacsclient --eval= prints Elisp's =prin1= representation, which is
+painful to parse faithfully. Rather than reverse-engineer it, the
+daemon-side code base64-encodes a UTF-8 JSON payload and prints *that* as a
+quoted string, which =elisp.decode_payload= unwraps.
+
+=bootstrap.el= is the daemon-side half, loaded on demand. Every feature
+needing Emacs — capture, org-roam lookups, [[file:backend-emacs.org][ox-json export]] — adds a
+function there rather than a second channel.
+
+* Which commands need it
+
+- Need it :: =commit=, =note=, =visit -T=, and the =emacs= store backend.
+- Do not :: =log= and =visit= by date read org files straight from disk;
+  the whole [[file:content-store.org][store]] half needs no Emacs at all.
+
+* Taking charge
+
+#+begin_src sh
+org daemon status    # running or not, and since when
+org daemon start
+org daemon stop
+org daemon restart
+org daemon info      # what it reports about your org-roam setup
+#+end_src
+
+* Related
+
+- [[file:command-daemon.org][org daemon]] :: the command in detail.
+- [[file:configuration.org][Configuration]] :: =daemon.lifetime=, =daemon.server_name= and friends.
+- [[file:backend-emacs.org][The Emacs backend]] :: reading org files through this daemon.

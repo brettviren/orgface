@@ -1,0 +1,51 @@
+#+title: org daemon
+#+filetags: :command:user:emacs:
+#+summary: Take explicit charge of the Emacs daemon the other commands share.
+#+audience: user
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_cli_helper/commands/daemon.py
+#+source: src/org_cli_helper/emacs.py
+
+The [[file:emacs-daemon.org][daemon]] starts by itself when a command needs it and exits after the
+configured idle lifetime, so these subcommands are for when you want to
+take charge of that explicitly.
+
+#+begin_src sh
+org daemon start
+org daemon stop
+org daemon restart
+org daemon status
+org daemon info
+#+end_src
+
+* status
+
+Reports the server name, the socket =emacsclient= will look for, whether it
+is running and with which pid, and the idle lifetime. It never *starts* one
+to find out — a status command that had a side effect would be useless for
+answering the question it is asked.
+
+* stop and restart
+
+=stop= shuts the daemon down, saving modified buffers first, and says so
+when there was nothing running. =restart= stops any daemon, starts a fresh
+one, and arms its idle timer.
+
+Both are worth reaching for after changing your Emacs init file: the
+running daemon loaded the old one.
+
+* info
+
+Shows what the daemon reports about your org-roam setup — the directory,
+the dailies directory, the resolved daily-notes path, and the dailies
+capture templates with their keys, descriptions and types.
+
+Running it also refreshes the cached locations, so it doubles as the
+positive form of =org config clear-cache=.
+
+* Related
+
+- [[file:emacs-daemon.org][The Emacs daemon]] :: what is being managed, and why it expires.
+- [[file:capture-templates.org][Capture templates]] :: the list =info= prints.
+- [[file:command-config.org][org config]] :: the settings that govern it.

@@ -75,6 +75,17 @@ def test_rendering_is_idempotent(name: str) -> None:
         "* Parent\n:PROPERTIES:\n:ID: abc\n:END:\n\n** Child\n",
         "* Scheduled\nSCHEDULED: <2026-08-24 Mon>\n",
         ": fixed width\n",
+        "1. one\n2. two\n",
+        "3. three\n4. four\n",
+        "See https://example.org here.\n",
+        "See <mailto:someone@example.org> here.\n",
+        "#+name: snip\n#+begin_src sh\nls\n#+end_src\n",
+        "#+caption: A cap\n#+begin_src sh\nls\n#+end_src\n",
+        "#+title: T\n:PROPERTIES:\n:ID: abc\n:END:\n\nBody.\n",
+        "- Item :: first line\n  second line\n  third line\n",
+        "- A plain item running on\n  to a second line\n  and a third\n",
+        "#+begin_src org\n,* A heading\n#+end_src\n",
+        "#+begin_quote\nQuoted.\n\nTwice.\n#+end_quote\n",
     ],
 )
 def test_constructs_round_trip(source: str) -> None:
@@ -112,6 +123,83 @@ def test_file_keywords_are_written_once() -> None:
 def test_property_drawer() -> None:
     text = render_document(parse("* H\n:PROPERTIES:\n:ID: xyz\n:END:\n"))
     assert ":PROPERTIES:\n:ID: xyz\n:END:" in text
+
+
+def test_block_content_is_written_with_orgs_escape() -> None:
+    """The model holds what the block says; org spells a star line ``,*``."""
+    text = render_document(parse("#+begin_src org\n* A heading\n#+end_src\n"))
+    assert text == "#+begin_src org\n,* A heading\n#+end_src\n"
+
+
+def test_an_affiliated_keyword_is_not_spaced_off_its_block() -> None:
+    """A blank line after ``#+name:`` would leave it naming nothing."""
+    text = render_document(parse("#+name: snip\n#+begin_src sh\nls\n#+end_src\n"))
+    assert text.startswith("#+name: snip\n#+begin_src sh\n")
+
+
+def test_ordered_lists_are_written_with_their_numbers() -> None:
+    text = render_document(parse("1. one\n2. two\n"))
+    assert text == "1. one\n2. two\n"
+
+
+def test_a_special_block_is_written_with_its_own_name() -> None:
+    text = render_document(parse("#+begin_note\nSomething.\n#+end_note\n"))
+    assert text == "#+begin_note\nSomething.\n#+end_note\n"
+
+
+def test_a_special_block_without_a_name_still_renders() -> None:
+    """A document need not have come from the reader; it may lack the name."""
+    doc = OrgDocument.model_validate(
+        {
+            "contents": [
+                {
+                    "$$data_type": "org-node",
+                    "type": "special-block",
+                    "properties": {},
+                    "contents": [
+                        {
+                            "$$data_type": "org-node",
+                            "type": "paragraph",
+                            "properties": {},
+                            "contents": ["Something."],
+                        }
+                    ],
+                }
+            ]
+        }
+    )
+    assert render_document(doc) == "#+begin_special\nSomething.\n#+end_special\n"
+
+
+def test_indentation_is_kept_where_it_was_written() -> None:
+    """Rewriting a file should not shift its indented prose to the margin."""
+    text = render_document(parse("* H\n\n  indented paragraph\n"))
+    assert text == "* H\n\n  indented paragraph\n"
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "- Item :: first line\n  second line\n  third line\n",
+        "- plain item\n  second line\n  third line\n  fourth line\n",
+        "#+begin_src org\n,* A heading\n#+end_src\n",
+        "#+name: snip\n#+begin_src sh\nls\n#+end_src\n",
+        "#+title: T\n:PROPERTIES:\n:ID: abc\n:END:\n\nBody.\n",
+        "#+begin_note\nSomething.\n#+end_note\n",
+        "#+begin_note :class warn\nSomething.\n#+end_note\n",
+        "* H\n\n  indented paragraph\n  second line\n",
+        "* H\n\n  - one\n  - two\n",
+    ],
+)
+def test_already_canonical_text_is_written_back_unchanged(source: str) -> None:
+    """A file written by the renderer must survive being read and written again.
+
+    Not merely idempotent from the second write on: text in the form the
+    renderer produces is a fixed point on the first.  A list item running
+    to three lines used to gain two spaces of indent on one pass and lose
+    them on the next, so no version of the file was stable.
+    """
+    assert render_document(parse(source)) == source
 
 
 def test_planning_line_follows_the_heading() -> None:

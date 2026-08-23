@@ -1,0 +1,56 @@
+#+title: Capture safety
+#+filetags: :concept:user:developer:capture:
+#+summary: Why text you write can never be expanded as a capture placeholder.
+#+audience: both
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_cli_helper/templates.py
+#+source: tests/test_emacs_live.py
+
+Filling a template means splicing your text into a string that Emacs will
+afterwards expand. Left alone, Emacs would interpret =%t=, =%(sexp)=,
+=%^{...}= and friends in whatever you wrote — and =%(shell)= would
+genuinely start a shell. So your text is escaped, and the escaping is
+exact rather than approximate.
+
+* How org escapes, and how often
+
+Org escapes a placeholder with a *preceding backslash*, counted so that for
+a run of n backslashes it deletes (n+1)/2 of them and treats the
+placeholder as escaped when n is odd.
+
+An org-roam capture body is expanded *twice*: org-roam fills the template
+and hands the result back to org-capture, which fills it again. One round
+of escaping is consumed by the first pass, so text must be escaped for both
+rounds.
+
+The escape only applies where org actually recognises a placeholder. A =%=
+followed by anything else is left alone, since a backslash added there
+would survive into the captured text. That is why the code matches org's
+own placeholder patterns precisely rather than escaping every =%=.
+
+Because this is arithmetic about somebody else's implementation, it is
+checked against a real Emacs in the live tests rather than trusted — see
+[[file:testing.org][Testing]].
+
+* The two things that are refused
+
+- =${...}= :: org-roam expands it by calling a same-named function or
+  prompting, and offers no escape mechanism at all.
+- =%?= in a title :: Emacs finds the capture point with a plain search
+  for =%?=, which honours no escaping.
+
+Rather than execute or hang, =org commit -m= refuses a message containing
+=${...}= and says so; capture interactively if you need that text.
+=org note= refuses it in the [[file:note-context.org][context]] too, on the vanishing chance of a
+directory named that way.
+
+A =%?= in the body is safe, since it sits after the capture point. One
+ahead of it cannot be protected, so a warning is printed rather than
+pretending otherwise.
+
+* Related
+
+- [[file:capture-templates.org][Capture templates]] :: what the escaping is applied to.
+- [[file:command-commit.org][org commit]] :: where you meet it.
+- [[file:testing.org][Testing]] :: the live Emacs tests that confirm it.

@@ -1,0 +1,54 @@
+#+title: Installation
+#+filetags: :reference:user:developer:
+#+summary: Installing the tool, and which optional extras buy which features.
+#+audience: both
+#+status: current
+#+updated: 2026-08-23
+#+source: pyproject.toml
+#+source: README.org
+
+org-cli-helper uses [[https://docs.astral.sh/uv/][uv]] for development.
+
+#+begin_src sh
+uv sync                # set up the development area
+uv run pytest          # run the tests
+uv run org-cli-helper  # run the CLI
+#+end_src
+
+* Extras
+
+The base install is deliberately small: =click=, =jinja2= and =pydantic=.
+Anything that only some users need is an optional extra.
+
+- =orgfs= :: adds =org-parser=, the standalone tree-sitter parser. Needed by
+  the [[file:backend-orgfs.org][org file backend]] and by =org store add= on an =.org= file.
+- =semantic= :: adds =sqlite-vec=, the vector index behind
+  [[file:semantic-search.org][semantic search]].
+- =service= :: adds =fastapi= and =fastmcp=, behind [[file:command-serve.org][org serve]] and
+  [[file:command-mcp.org][org mcp]].
+
+#+begin_src sh
+uv sync --extra orgfs            # one extra
+pip install 'org-cli-helper[orgfs,semantic,service]'
+#+end_src
+
+A command needing an extra that is not installed says which one supplies
+it, rather than failing with an import error.
+
+* The development area
+
+The =dev= dependency group pulls in every extra, because the test suite
+covers every backend and both service front ends. A plain =uv sync= is
+therefore enough to run the whole suite; see [[file:testing.org][Testing]].
+
+* Emacs
+
+Only the capture half needs Emacs, and it needs =org-roam= in it. The store
+half runs with no Emacs installed at all — except the
+[[file:backend-emacs.org][Emacs backend]], which also wants =ox-json=.
+
+* Related
+
+- [[file:configuration.org][Configuration]] :: what to set once it is installed.
+- [[file:testing.org][Testing]] :: running the suite, including the live Emacs tests.
+- [[file:store-backends.org][Store backends]] :: which extra each backend needs.

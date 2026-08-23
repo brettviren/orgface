@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import re
 from functools import cached_property
 from pathlib import Path
 from typing import Any
@@ -16,10 +17,26 @@ TEMPLATES = Path(__file__).parent / "templates"
 #: Used for any node type without a template of its own.
 FALLBACK = "fallback.org.j2"
 
-#: Blocks that are a single line and belong in an unbroken run with their
-#: own kind, rather than being spaced apart like paragraphs.  A blank line
-#: between two ``#+keyword:`` lines would end the run.
-LINE_BLOCKS = frozenset({"keyword", "node-property"})
+#: Blocks that belong in an unbroken run with each other rather than
+#: being spaced apart like paragraphs.  A blank line between two
+#: ``#+keyword:`` lines would end the run, and one between a file's
+#: keywords and its property drawer would separate the drawer from the
+#: top of the file, which is the only place org reads one.
+LINE_BLOCKS = frozenset({"keyword", "node-property", "property-drawer"})
+
+#: Keywords that belong to the element following them.  A blank line
+#: after one of these does not merely look wrong: it detaches the keyword
+#: from what it names, so a ``#+name:`` no longer names anything.
+#: ``ATTR_`` covers the per-backend family, ``#+attr_html:`` and its kin.
+AFFILIATED = frozenset({"CAPTION", "HEADER", "NAME", "PLOT", "RESULTS", "TBLNAME"})
+AFFILIATED_PREFIX = "ATTR_"
+
+#: Blocks whose content org writes with a comma before any line that
+#: would otherwise read as a heading or a keyword.  The model holds what
+#: the block says; the escape belongs to how org writes it down.
+ESCAPED_BLOCKS = frozenset(
+    {"src-block", "example-block", "export-block", "comment-block"}
+)
 
 #: Containers whose children must not be spaced apart at all: a blank line
 #: inside a list item or a table ends the construct rather than formats it.
@@ -97,7 +114,7 @@ class OrgRenderer:
         if isinstance(node, str):
             return node
         template = self._template(node.type)
-        return template.render(**self._context(node))
+        return _indented(node, template.render(**self._context(node)))
 
     # -- internals ----------------------------------------------------------
 
@@ -112,13 +129,20 @@ class OrgRenderer:
     def _context(self, node: OrgNodeBase) -> dict[str, Any]:
         """Everything a template is allowed to need, worked out here."""
         properties = node.properties
+        value = properties.get("value") or ""
         context: dict[str, Any] = {
             "node": node,
             "props": properties,
             "type": node.type,
-            "value": properties.get("value") or "",
+            "value": _escape_lines(value) if node.type in ESCAPED_BLOCKS else value,
             "content": self._contents(node),
         }
+        if node.type == "special-block":
+            # The block's own name, which is all that distinguishes one
+            # special block from another.  Worked out here so a document
+            # that does not name one still renders as something.
+            context["name"] = str(properties.get("type") or "special")
+            context["parameters"] = str(properties.get("parameters") or "")
         if node.type == "headline":
             context.update(self._headline(node))
         elif node.type == "item":
@@ -271,20 +295,66 @@ def _join(items: list[tuple[Any, str]], tight: bool = False) -> str:
 
     Two ordinary blocks are separated by one; two run-on line blocks --
     a stack of ``#+keyword:`` lines, a drawer's properties -- are not,
-    because a blank line between them would end the run.
+    because a blank line between them would end the run.  Nor is an
+    affiliated keyword separated from what follows it, because the blank
+    line would be what detaches the two.
     """
     out: list[str] = []
-    previous: str | None = None
+    previous: Any = None
     for child, text in items:
         if not text.strip():
             continue
         kind = child.type if isinstance(child, OrgNodeBase) else None
-        packed = tight or (kind in LINE_BLOCKS and previous in LINE_BLOCKS)
+        previous_kind = previous.type if isinstance(previous, OrgNodeBase) else None
+        packed = tight or _affiliated(previous) or (
+            kind in LINE_BLOCKS and previous_kind in LINE_BLOCKS
+        )
         if out and not packed:
             out.append("\n")
         out.append(_newline(text))
-        previous = kind
+        previous = child
     return "".join(out)
+
+
+def _indented(node: OrgNodeBase, text: str) -> str:
+    """Put back the indentation a block was written with, if any.
+
+    Only the Emacs-free reader records it, and only for content that sat
+    indented under a heading.  Indentation is not part of what a document
+    says -- org-element does not model it at all -- but rewriting a file
+    that has it should not shift every such paragraph to the margin.
+    """
+    width = node.properties.get("indent")
+    if not isinstance(width, int) or width <= 0 or node.type not in BLOCKS:
+        return text
+    pad = " " * width
+    return "".join(
+        pad + line if line.strip() else line for line in text.splitlines(keepends=True)
+    )
+
+
+def _affiliated(node: Any) -> bool:
+    """True for a keyword that belongs to whatever comes after it."""
+    if not isinstance(node, OrgNodeBase) or node.type != "keyword":
+        return False
+    key = str(node.properties.get("key") or "").upper()
+    return key in AFFILIATED or key.startswith(AFFILIATED_PREFIX)
+
+
+#: A line org would otherwise read as a heading or a keyword, which
+#: inside a block has to carry a comma to say it is content.
+_ESCAPABLE_LINE = re.compile(r"^([ \t]*)(,*(?:\*|#\+))", re.MULTILINE)
+
+
+def _escape_lines(text: str) -> str:
+    """Write a block's content the way org writes one.
+
+    org-element hands back a block's value with the commas taken off, and
+    puts them back when it writes the block out again.  So does this: the
+    model holds what the block says, and the escape is added here, where
+    org text is produced.
+    """
+    return _ESCAPABLE_LINE.sub(r"\1,\2", text)
 
 
 def _newline(text: str) -> str:

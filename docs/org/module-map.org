@@ -1,0 +1,50 @@
+#+title: Module map
+#+filetags: :reference:developer:
+#+summary: Which source file holds what, for both packages.
+#+audience: developer
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_cli_helper
+#+source: src/org_store
+
+Two packages under =src/=. The dependency runs one way: =org_store= never
+imports =org_cli_helper=.
+
+* org_cli_helper — the CLI
+
+- =cli.py= :: the click group, the shared context, command registration.
+- =commands/= :: one module per command group, doing parsing and
+  presentation only.
+- =ui.py= :: all rendering for people, including colour resolution and
+  paging.
+- =config.py= :: the [[file:configuration.org][layered settings]], declared once in =SETTINGS=.
+- =xdgpaths.py=, =cache.py= :: [[file:xdg-locations.org][XDG locations]] and the location cache.
+- =storage.py= :: turning configuration into an open store.
+- =emacs.py=, =elisp.py=, =bootstrap.el= :: the [[file:emacs-daemon.org][daemon]] and the JSON bridge.
+- =templates.py= :: [[file:capture-templates.org][capture template]] selection, filling and escaping.
+- =context.py= :: the [[file:note-context.org][context]] a note records.
+- =dailies.py=, =dates.py=, =locations.py= :: reading
+  [[file:daily-notes.org][daily notes]], [[file:date-spellings.org][date spellings]], and where org-roam keeps things.
+
+* org_store — the library
+
+- =model.py= :: the [[file:canonical-document.org][canonical document]]; =schema.py= renders it to
+  [[file:json-schema.org][JSON Schema]].
+- =refs.py= :: [[file:node-refs.org][ref]] computation; =tree.py= walks and locates nodes.
+- =text.py= :: what the text of a node is; =extract.py= the
+  [[file:derived-index.org][index rows]] and the [[file:content-hash.org][content hash]].
+- =service.py= :: [[file:service-layer.org][CRUDS]]; =store.py= the
+  [[file:backend-protocol.org][backend protocol]] and the error types.
+- =backends/= :: [[file:backend-sqlite.org][sqlite]], [[file:backend-orgfs.org][orgfs]], [[file:backend-emacs.org][emacsfs]], and the table that names them.
+- =adapters/orgparser.py= :: [[file:org-parser-adapter.org][org text to canonical model]], no Emacs.
+- =render/= :: [[file:org-renderer.org][canonical model back to org text]], one template per node type.
+- =search.py=, =embed.py= :: query shapes and the
+  [[file:embeddings.org][embedder protocol]].
+- =sync.py= :: [[file:command-sync.org][copying between stores]].
+- =api.py=, =mcp.py= :: the [[file:http-api.org][HTTP API]] and the [[file:mcp-tools.org][MCP tools]] derived from it.
+
+* Related
+
+- [[file:architecture.org][Architecture]] :: why the split falls this way.
+- [[file:layering.org][The layering rule]] :: what may live where.
+- [[file:testing.org][Testing]] :: the test file per module.

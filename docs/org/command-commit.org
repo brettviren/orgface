@@ -1,0 +1,56 @@
+#+title: org commit
+#+filetags: :command:user:capture:
+#+summary: Record an entry in today's daily note, in the style of git commit.
+#+audience: user
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_cli_helper/commands/commit.py
+#+source: src/org_cli_helper/templates.py
+
+Record an entry in today's org-roam [[file:daily-notes.org][daily note]]. The first =-m= is the
+entry title; any further =-m= options become body paragraphs.
+
+#+begin_src sh
+org commit -m "Fixed the thing" -m "Took all day." -m "Worth it."
+#+end_src
+
+With no =-m= at all, an interactive capture opens in the terminal, exactly
+as =org-roam-dailies-capture-today= would. Finishing or aborting it returns
+you to the shell. =--gui= uses a separate frame instead.
+
+* Choosing a template
+
+Writing goes through =org-roam-dailies-capture-today=, so the templates on
+offer are your own =org-roam-dailies-capture-templates=. Note this is a
+*different variable* from =org-roam-capture-templates=: a directory-based
+daily note needs its template in the *dailies* list.
+
+#+begin_src sh
+org commit --list-templates      # what is on offer
+org commit -t d       -m "..."   # by key
+org commit -t 0       -m "..."   # by index
+org commit -t default -m "..."   # by description
+#+end_src
+
+Selection is by key, then by 0-based index, then by description, in that
+order of precedence — so a template keyed =1= still wins over the template
+at index 1. See [[file:capture-templates.org][Capture templates]].
+
+* Seeing what would be written
+
+#+begin_example
+$ org commit --dry-run -m "Fixed the thing" -m "Took all day."
+,* Fixed the thing
+%T
+%?Took all day.
+#+end_example
+
+The =%T= and =%?= are still there because Emacs, not this tool, expands
+them. Your own text is escaped so that it cannot be — see
+[[file:capture-safety.org][Capture safety]].
+
+* Related
+
+- [[file:command-note.org][org note]] :: the same shape of entry, filed under a topic with its context.
+- [[file:command-log.org][org log]] :: reading entries back.
+- [[file:emacs-daemon.org][The Emacs daemon]] :: what does the writing.

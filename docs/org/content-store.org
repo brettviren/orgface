@@ -1,0 +1,58 @@
+#+title: The content store
+#+filetags: :concept:user:developer:store:
+#+summary: What the store is for, and the four ideas the rest of it rests on.
+#+audience: both
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_store/__init__.py
+#+source: src/org_store/service.py
+
+The store keeps org documents in a canonical, schema-validated form so they
+can be listed, read, edited a piece at a time, searched and copied between
+kinds of storage. It is independent of the [[file:command-commit.org][capture commands]] and needs no
+Emacs daemon.
+
+#+begin_src sh
+org store add notes.org      # an org file, read without Emacs
+org store list
+org store show notes.org
+org search deadline
+#+end_src
+
+* Four ideas
+
+Everything else in this half follows from these.
+
+- [[file:canonical-document.org][A canonical document]] :: one JSON shape, modelled on =ox-json='s
+  export, that every ingestion path produces.
+- [[file:node-refs.org][Refs name positions]] :: a node is addressed by a hash of the document
+  id and its structural path, computed here rather than by the parser.
+- [[file:content-hash.org][The hash is of what a document says]] :: taken over the document
+  rendered back to org text, so two backends can compare theirs.
+- [[file:derived-index.org][Indexes are derived, never authored]] :: tags, properties, links,
+  timestamps and text, recomputed from the document on every write.
+
+Each has a consequence worth knowing before it surprises you. One shape
+means everything above storage is written once. Refs naming positions means
+an edit moves the refs after it. A portable hash is what makes
+[[file:command-sync.org][sync]] possible. Derived indexes mean a change to the rules is repaired by a
+reindex rather than by a migration.
+
+* One store, several kinds of storage
+
+Which storage is in use is a configuration question: =store.backend=
+selects between a sqlite database, a directory of org files, and that same
+directory read through Emacs. All three answer the same commands. See
+[[file:store-backends.org][Store backends]].
+
+* One store, several front ends
+
+The same operations are reachable from the [[file:command-store.org][CLI]], over [[file:http-api.org][HTTP]], and as
+[[file:mcp-tools.org][MCP tools]]. Each is a thin adapter over the same service layer, so they
+cannot mean different things.
+
+* Related
+
+- [[file:command-store.org][org store]] :: the command surface.
+- [[file:command-search.org][org search]] :: finding things in it.
+- [[file:architecture.org][Architecture]] :: how the layers fit together.

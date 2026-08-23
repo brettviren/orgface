@@ -1,0 +1,47 @@
+#+title: XDG locations
+#+filetags: :reference:user:config:
+#+summary: Which freedesktop directory holds configuration, state and cache.
+#+audience: both
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_cli_helper/xdgpaths.py
+#+source: src/org_cli_helper/cache.py
+
+org-cli-helper follows the freedesktop XDG base directory convention. Each
+of the three kinds of file has one home, and the distinction between them
+is not cosmetic: it says what is safe to delete.
+
+- Configuration :: =$XDG_CONFIG_HOME/org-cli-helper/= (=~/.config/…=), holding
+  =config.toml=. Written by you, never by the tool.
+- State :: =$XDG_STATE_HOME/org-cli-helper/= (=~/.local/state/…=), holding
+  a store with nowhere else to live. Deleting it loses content.
+- Cache :: =$XDG_CACHE_HOME/org-cli-helper/= (=~/.cache/…=), holding
+  org-roam locations. Deleting it costs one round trip to the daemon.
+
+What lives in state is the default sqlite database and the default org
+directory; what lives in cache is only what can be asked for again.
+
+A variable is honoured only when it holds an absolute path; otherwise the
+=~=-relative default applies.
+
+=$XDG_RUNTIME_DIR=, when set, is where the daemon's socket is looked for.
+
+* Why the store defaults to state and not cache
+
+A store holds content. If the sqlite store were treated as a cache, then
+clearing caches would silently destroy documents that exist nowhere else —
+which is exactly the mistake the XDG split exists to prevent. Only the
+org-roam locations are cached, because they can always be asked for again.
+
+* Seeing them
+
+#+begin_src sh
+org config paths        # the directories in use
+org config clear-cache  # forget the cached org-roam locations
+#+end_src
+
+* Related
+
+- [[file:configuration.org][Configuration]] :: the settings that override these defaults.
+- [[file:command-config.org][org config]] :: the command that prints them.
+- [[file:backend-sqlite.org][The sqlite backend]] :: the main occupant of the state directory.

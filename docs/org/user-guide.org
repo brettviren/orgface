@@ -1,0 +1,98 @@
+#+title: User guide
+#+filetags: :guide:user:
+#+summary: A reading order through the pages for someone using the commands.
+#+audience: user
+#+status: current
+#+updated: 2026-08-23
+#+source: README.org
+#+source: src/org_cli_helper/commands
+
+For someone using org-cli-helper rather than changing it. Two orderings of
+the same pages: read across the first to get the shape of the tool, then
+down the second for whichever part you need.
+
+* Quick start
+
+#+begin_src sh
+alias org=org-cli-helper
+
+org commit -m "Fixed the thing" -m "Took all day."
+org note -m "Fixed the thing" -m "Took all day."
+org log --today
+org visit yesterday
+org daemon status
+
+org store add notes.org
+org store list
+org search deadline --scope heading
+#+end_src
+
+* Reading order, breadth first
+
+Each level of the subject before the level below it. Read the first tier
+and you know what the tool does; read the second and you can run it.
+
+- First :: [[file:overview.org][What org-cli-helper is]], then [[file:glossary.org][Glossary]].
+- Second :: [[file:installation.org][Installation]], [[file:configuration.org][Configuration]], [[file:emacs-daemon.org][The Emacs daemon]].
+- Third, the capture half :: [[file:command-commit.org][org commit]], [[file:command-note.org][org note]], [[file:command-log.org][org log]],
+  [[file:command-visit.org][org visit]].
+- Third, the store half :: [[file:content-store.org][The content store]], [[file:command-store.org][org store]],
+  [[file:command-search.org][org search]].
+- Fourth, the detail :: everything under the outline below — what a
+  template does, what a date may say, which backend to keep your notes in.
+
+* Contents, depth first
+
+Each topic followed by everything beneath it.
+
+- [[file:overview.org][What org-cli-helper is]]
+  - [[file:glossary.org][Glossary]]
+- [[file:installation.org][Installation]]
+  - [[file:configuration.org][Configuration]]
+    - [[file:xdg-locations.org][XDG locations]]
+    - [[file:command-config.org][org config]]
+- [[file:emacs-daemon.org][The Emacs daemon]]
+  - [[file:command-daemon.org][org daemon]]
+- Capturing notes
+  - [[file:daily-notes.org][Daily notes]]
+    - [[file:command-commit.org][org commit]]
+      - [[file:capture-templates.org][Capture templates]]
+      - [[file:capture-safety.org][Capture safety]]
+    - [[file:command-log.org][org log]]
+      - [[file:date-spellings.org][Date spellings]]
+  - [[file:note-topics.org][Note topics]]
+    - [[file:command-note.org][org note]]
+      - [[file:note-context.org][Note context]]
+  - [[file:command-visit.org][org visit]]
+- Using the store
+  - [[file:content-store.org][The content store]]
+    - [[file:command-store.org][org store]]
+      - [[file:node-refs.org][Node refs]]
+      - [[file:canonical-document.org][The canonical document]]
+    - [[file:command-search.org][org search]]
+      - [[file:semantic-search.org][Semantic search]]
+    - [[file:store-backends.org][Store backends]]
+      - [[file:backend-sqlite.org][The sqlite backend]]
+      - [[file:backend-orgfs.org][The org file backend]]
+      - [[file:backend-emacs.org][The Emacs backend]]
+    - [[file:command-sync.org][org store sync]]
+      - [[file:content-hash.org][Content hash]]
+  - Serving it to other programs
+    - [[file:command-serve.org][org serve]]
+    - [[file:command-mcp.org][org mcp]]
+
+* If something surprises you
+
+- A command used a store you did not expect :: =org config show=, and see
+  [[file:configuration.org][Configuration]] on which layer wins.
+- A search found nothing :: check the backend can index at all —
+  [[file:command-search.org][org search]] explains which can.
+- A file came back reformatted :: [[file:backend-orgfs.org][The org file backend]] says what
+  writing normalises, and [[file:roadmap.org][Roadmap]] what is known broken.
+- Emacs was not touched :: only some commands need it;
+  [[file:emacs-daemon.org][The Emacs daemon]] lists which.
+
+* Related
+
+- [[file:index.org][Documentation index]] :: every page, by area.
+- [[file:developer-guide.org][Developer guide]] :: the same subject from the inside.

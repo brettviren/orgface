@@ -25,7 +25,7 @@ import re
 from collections.abc import Iterable
 from pathlib import Path
 
-from ..adapters.orgparser import parse
+from ..adapters.orgparser import parse_file
 from ..extract import content_hash
 from ..model import OrgDocument
 from ..render import render_document
@@ -84,7 +84,15 @@ class OrgDirectoryStore:
         return doc_id
 
     def read_document(self, doc_id: DocId) -> OrgDocument:
-        return parse(self._existing(doc_id).read_text(encoding="utf-8"))
+        """Read one file, in a child process.
+
+        The files here are whatever is in the directory, and the parser
+        can die on one rather than raise -- see
+        :func:`org_store.adapters.orgparser.parse_file`.  A store that
+        took the program down over one unreadable file would be worse
+        than one that costs a fork per read.
+        """
+        return parse_file(self._existing(doc_id))
 
     def replace_document(self, doc_id: DocId, doc: OrgDocument) -> None:
         """Rewrite a document's file from the canonical model.

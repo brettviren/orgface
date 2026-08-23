@@ -44,6 +44,10 @@ class DocumentSummary:
     tags: list[str] = field(default_factory=list)
     links: int = 0
     timestamps: int = 0
+    #: Why this document could not be read, when it could not be.  A
+    #: listing says so and carries on rather than failing entirely: one
+    #: unreadable file among a thousand is a fact about that file.
+    error: str = ""
 
 
 @dataclass(frozen=True)
@@ -242,7 +246,18 @@ class OrgStore:
     # -- internals ----------------------------------------------------------
 
     def _brief(self, doc_id: DocId) -> DocumentSummary:
-        doc = self.backend.read_document(doc_id)
+        """One line of a listing, or why that document has none.
+
+        A store is a directory or a database that other things write to,
+        so one document in it may be unreadable -- a file in some other
+        format, or one the parser cannot manage.  Listing is how somebody
+        finds out what is there, and it would be a poor answer to that
+        question to fail entirely because of one of them.
+        """
+        try:
+            doc = self.backend.read_document(doc_id)
+        except StoreError as exc:
+            return DocumentSummary(doc_id=doc_id, title="", error=str(exc))
         return DocumentSummary(
             doc_id=doc_id,
             title=document_title(doc),

@@ -1,0 +1,51 @@
+#+title: Content hash
+#+filetags: :concept:developer:store:
+#+summary: A digest of what a document says, taken over its rendering.
+#+audience: both
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_store/extract.py
+#+source: tests/test_org_extract.py
+
+A document's content hash is taken over the document *rendered back to org
+text* — not over its JSON, and not over the bytes of any file it came from.
+It is the same in every backend, which is the only reason it exists.
+
+* Why not the JSON
+
+Because the two readers never agree on it. =ox-json= carries org-element's
+own bookkeeping — =mode=, =true-level=, a =post-blank= on everything — that
+no independent parser can reproduce. Hashing JSON would report every
+document as differing the moment it crossed between the
+[[file:backend-emacs.org][Emacs]] and [[file:backend-orgfs.org][Emacs-free]] readers.
+
+They do agree on the org text, which is what the document actually says.
+
+* Why not the file
+
+A file digest is far cheaper, and meaningless across backends: a hash of
+bytes on disk could never equal one computed from rows in sqlite, so every
+document would read as changed and [[file:command-sync.org][sync]] would copy the world on every run.
+
+* What it deliberately ignores
+
+Hashing the rendering also normalises formatting the model does not
+record. A hand-aligned table and a freshly written one hash alike — as they
+should, since they say the same thing. Blank-line runs are normalised the
+same way.
+
+Refs are not in the org text at all, so a document held under two different
+ids hashes the same. That is what lets one store recognise the other's copy
+of it.
+
+* What it costs
+
+The org file store has to parse a file and render it again to answer
+=content_hash=, where reading its bytes would have done. That is the price
+of the property that makes the number worth having.
+
+* Related
+
+- [[file:command-sync.org][org store sync]] :: the one consumer.
+- [[file:org-renderer.org][The org renderer]] :: what the hash is taken over.
+- [[file:store-backends.org][Store backends]] :: which must all compute it the same way.

@@ -1,0 +1,58 @@
+#+title: Capture templates
+#+filetags: :concept:user:capture:
+#+summary: How a dailies template is chosen, filled, and where your text lands.
+#+audience: both
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_cli_helper/templates.py
+#+source: tests/test_templates.py
+
+[[file:command-commit.org][org commit]] writes through =org-roam-dailies-capture-today=, so the
+templates on offer are the ones in your own
+=org-roam-dailies-capture-templates=. Nothing about them is configured
+here; they are read from the running daemon.
+
+* Selection
+
+=-t/--template= selects one by *key*, then by *0-based index*, then by
+*description*, in that order of precedence — so a template keyed =1= still
+wins over the template at index 1. Descriptions match case-insensitively
+and may be abbreviated to an unambiguous prefix.
+
+Without =-t= the first template is used. If you define none at all,
+org-roam's own default applies.
+
+#+begin_src sh
+org commit --list-templates
+#+end_src
+
+* Filling
+
+Your title replaces the template's first =%^{...}= prompt and your body
+goes exactly where =%?= sits.
+
+*Whitespace follows your template literally.* With the common
+=* %^{Title}\n%T\n%?= there is no blank line between the timestamp and the
+body. If you would rather have one, put it in the template:
+
+#+begin_src elisp
+(setq org-roam-dailies-capture-templates
+      '(("d" "default" entry "* %^{Title}\n%T\n\n%?"
+         :target (file+head "%<%Y-%m-%d>.org" "#+title: %<%Y-%m-%d>\n"))))
+#+end_src
+
+* Templates that need a person
+
+Interactive escapes with no non-interactive answer — =%^t=, =%^{Prop}p= and
+similar — cause =commit -m= to stop and suggest capturing interactively. A
+second plain =%^{...}= prompt is filled empty with a warning, since the
+first one takes the title.
+
+A template with no body at all falls back to org's own default for its
+type: =* %?\n  %a= for an entry, =- %?= for an item, and so on.
+
+* Related
+
+- [[file:capture-safety.org][Capture safety]] :: the escaping that protects your text.
+- [[file:command-commit.org][org commit]] :: the command that uses these.
+- [[file:command-note.org][org note]] :: which builds its own template instead.

@@ -1,0 +1,57 @@
+#+title: The sqlite backend
+#+filetags: :concept:developer:store:search:
+#+summary: One database, JSON as truth, and a deliberately small set of indexes.
+#+audience: developer
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_store/backends/sqlite.py
+#+source: tests/test_org_sqlite.py
+
+The default backend keeps every document in one sqlite file. The canonical
+JSON in =documents.content_json= is the source of truth; every other table
+is an [[file:derived-index.org][index]] rebuilt from it on each write.
+
+That is what lets the side tables be dropped and rebuilt at any time with
+no data loss — the whole reason to treat them as indexes rather than as a
+second, subtly diverging copy of the content.
+
+* The tables
+
+- =documents= :: id, path, schema version, the JSON, its
+  [[file:content-hash.org][hash]], and when it was written.
+- =nodes= :: keyed by =(doc_id, ref)=, with type, parent, path, heading
+  level, TODO keyword, priority.
+- =tags=, =properties=, =links=, =timestamps= :: the structured
+  qualifiers, each indexed for the queries [[file:command-search.org][search]] actually makes.
+- =fts_nodes= :: an FTS5 table with =heading_text= and =body_text= in
+  separate columns, which is what makes =--scope= possible.
+- =embeddings= :: which node has a vector, from which model, for what
+  text. Not a derived table; see [[file:embeddings.org][Embeddings in the store]].
+
+=fts_nodes= keeps the text rather than being contentless, so an excerpt can
+be cut from it without re-reading and re-flattening the whole document.
+
+A hit in a heading outranks one in a body, by weighting the bm25 columns:
+somebody who titled a note about a thing meant it to be about that thing,
+where a passing mention in prose is weaker evidence.
+
+* Why keys are what they are
+
+=nodes= is keyed by =(doc_id, ref)= rather than by ref alone. A ref already
+hashes in the document id, so refs assigned by the service are unique
+across the corpus anyway — but that is an invariant enforced two layers up,
+and a table should not corrupt one document because a caller reached past
+the service and stored another with refs it had not reassigned.
+
+* Ad hoc queries
+
+Anything without a table goes through sqlite's JSON1 functions against
+=content_json= directly. A query pattern earns a table only once it is
+common enough to want an index for. =:memory:= opens a throwaway store,
+which is what the tests use.
+
+* Related
+
+- [[file:derived-index.org][The derived index]] :: what fills these tables.
+- [[file:command-search.org][org search]] :: the queries they answer.
+- [[file:store-backends.org][Store backends]] :: the alternatives.

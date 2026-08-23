@@ -1,0 +1,108 @@
+#+title: This documentation wiki
+#+filetags: :concept:reference:developer:
+#+summary: How these pages are shaped, generated and kept honest as the code changes.
+#+audience: developer
+#+status: current
+#+updated: 2026-08-23
+#+source: docs/org
+#+source: src/org_store/backends/orgfs.py
+
+=docs/org/= is the package documentation *and* a corpus. Every page is one
+document in an [[file:backend-orgfs.org][org file store]]: one concept per file, linked liberally, with
+[[file:index.org][index pages]] giving a reading order.
+
+Because the pages are a store, everything the store does can be done to
+them — listed, summarised, searched, copied into
+[[file:backend-sqlite.org][sqlite]], served over [[file:http-api.org][HTTP]], read by an agent over
+[[file:mcp-tools.org][MCP]] — which makes this documentation the natural fixture for tests of all
+of those, and the natural content for a future web view.
+
+* The shape of a page
+
+#+begin_src org
+,#+title: Node refs
+,#+filetags: :concept:user:developer:store:
+,#+summary: How one node is addressed, and why refs move.
+,#+audience: both
+,#+status: current
+,#+updated: 2026-08-23
+,#+source: src/org_store/refs.py
+,#+source: tests/test_org_refs.py
+
+An opening paragraph that answers "what is this" without ceremony.
+
+,* Sections, one idea each
+
+,* Related
+
+- [[file:canonical-document.org][The canonical document]] :: why this page links to that one.
+#+end_src
+
+- =title= :: what the page is called, and what =org store list= shows.
+- =filetags= :: audience, kind and area. They are indexed and inherited,
+  so =org search -t command= finds every command page.
+- =summary= :: one line, for an index or a listing to show.
+- =audience= :: =user=, =developer= or =both=, in prose form.
+- =status= :: =current=, or =draft= for a page written ahead of the code.
+- =updated= :: the date the content was last checked against the code.
+- =source= :: repeatable. The files this page describes.
+
+The tag vocabulary is small on purpose: audience is =user= or =developer=;
+kind is =guide=, =concept=, =command= or =reference=; area is =capture=,
+=store=, =search=, =service=, =config= or =emacs=.
+
+* The metadata is for co-evolution
+
+=source= is the load-bearing one. It is the anchor that says *which page to
+suspect when a file changes*: touching =src/org_store/refs.py= should
+prompt a look at every page naming it. =updated= says when that was last
+done, and =status= admits when a page is ahead of or behind the code.
+
+Three checks fall out of that, each cheap to write as a test:
+
+- Every =source= path still exists in the tree.
+- Every =file:= link resolves to a document in this store.
+- Adding every page again produces byte-identical files. The corpus is
+  already canonical, so a page that stops round-tripping is a regression.
+
+That last one is the valuable check: it exercises the parser and the
+renderer on real prose rather than on a fixture written to please them.
+
+* How pages are written
+
+Through the store, not with an editor writing into =docs/org/= directly —
+though that works too, since the files *are* the storage.
+
+#+begin_src sh
+export ORG_CLI_HELPER_STORE_BACKEND=orgfs
+export ORG_CLI_HELPER_STORE_DIRECTORY=docs/org
+org store add newpage.org --id newpage.org
+org store list
+org store show node-refs.org
+#+end_src
+
+Writing goes through the [[file:org-renderer.org][renderer]], so what lands is the canonical
+rendering of what was written. Since rendering is idempotent, an edited
+page re-added is stable.
+
+* The org these pages use
+
+The [[file:org-parser-adapter.org][Emacs-free reader]] and the [[file:org-renderer.org][renderer]] are the round trip these pages must
+survive, and everything an ordinary documentation page needs comes back
+unchanged: headings with tags and property drawers, paragraphs, emphasis
+and verbatim, links of every spelling, lists numbered and not, source and
+example and quote blocks, tables, footnotes, maths, and =#+keyword:= lines.
+
+What does change is formatting the model does not record — blank-line runs,
+table alignment, the indent under a bullet — and block content is written
+with org's comma escape, =,*=, exactly as org writes it. [[file:roadmap.org][Roadmap]] lists each
+normalisation. None of them loses anything a page says, which is why the
+round-trip check above can be an equality rather than a comparison of
+meanings.
+
+* Related
+
+- [[file:index.org][Documentation index]] :: the way in.
+- [[file:testing.org][Testing]] :: where the checks above would live.
+- [[file:backend-orgfs.org][The org file backend]] :: what this directory is.
+- [[file:roadmap.org][Roadmap]] :: every normalisation, and what is deferred.

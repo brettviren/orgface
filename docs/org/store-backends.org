@@ -1,0 +1,50 @@
+#+title: Store backends
+#+filetags: :concept:user:developer:store:
+#+summary: The three kinds of storage, and what choosing one costs you.
+#+audience: both
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_store/backends/__init__.py
+#+source: src/org_cli_helper/storage.py
+
+Three, chosen with =store.backend=. All answer the same commands.
+
+- [[file:backend-sqlite.org][sqlite]] :: the default. One database, with the derived indexes that make
+  [[file:command-search.org][search]] possible. Nothing but this tool reads it.
+- [[file:backend-orgfs.org][orgfs]] :: ordinary org files in a directory. Nothing to import, no
+  search index, and Emacs and git are first-class writers.
+- [[file:backend-emacs.org][emacs]] :: the same files, read through your running Emacs. Slower, needs
+  =ox-json=, and is the only reader that is definitionally right.
+
+Which one is active is a configuration question, not a command line one, so
+it is resolved once and every command sees the result. Each backend
+declares which setting locates it — sqlite wants =store.database=, the file
+backends want =store.directory= — so the code that opens one does not have
+to know that.
+
+* What a backend is, and is not
+
+A backend knows how to keep documents somewhere, and nothing else. It does
+not validate, does not decide what a [[file:node-refs.org][ref]] means, and does not search.
+That belongs to [[file:service-layer.org][the service layer]] above it. See
+[[file:backend-protocol.org][The backend protocol]] for the whole contract.
+
+* Adding one
+
+An entry in the backend table: a name, how to open it, which configuration
+setting locates it, where it lives when configuration is silent, whether it
+needs an Emacs, and a one-line summary. Adding a backend is that entry plus
+the module — not an edit to the code that opens one, and not a change to
+any adapter.
+
+* Moving between them
+
+Content is not trapped in whichever you chose. [[file:command-sync.org][org store sync]] copies in
+either direction, and it can tell what has actually changed because a
+[[file:content-hash.org][content hash]] means the same thing in all three.
+
+* Related
+
+- [[file:content-store.org][The content store]] :: what they all implement.
+- [[file:configuration.org][Configuration]] :: =store.backend=, =store.database=, =store.directory=.
+- [[file:installation.org][Installation]] :: the extras the file backends need.

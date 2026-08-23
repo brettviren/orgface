@@ -1,0 +1,95 @@
+#+title: org-cli-helper documentation
+#+filetags: :guide:user:developer:
+#+summary: The way in: two guides, a glossary, and the full map of these pages.
+#+audience: both
+#+status: current
+#+updated: 2026-08-23
+#+source: README.org
+#+source: docs/org
+
+org-cli-helper does some Emacs org things quickly from the command line: it
+captures notes into org-roam through a private Emacs daemon, and it keeps
+org content in a store you can list, search, edit a piece at a time, and
+serve to other programs.
+
+These pages are a wiki. One concept per page, linked wherever concepts
+meet. Two guides give a reading order through them.
+
+* Start here
+
+- [[file:overview.org][What org-cli-helper is]] :: the tool in one page. Read this first.
+- [[file:user-guide.org][User guide]] :: using the commands, in order.
+- [[file:developer-guide.org][Developer guide]] :: changing the code, in order.
+- [[file:glossary.org][Glossary]] :: the words these pages use precisely.
+
+* Map of the wiki
+
+Every page, by area. Each guide above puts these in an order; this is the
+plain inventory.
+
+** Orientation and setup
+
+- [[file:overview.org][What org-cli-helper is]] :: the two halves and how they meet.
+- [[file:installation.org][Installation]] :: =uv=, and which extra buys which feature.
+- [[file:configuration.org][Configuration]] :: the layered settings and their spellings.
+- [[file:xdg-locations.org][XDG locations]] :: config, state and cache, and what may be deleted.
+- [[file:emacs-daemon.org][The Emacs daemon]] :: the private, self-expiring Emacs.
+
+** Capturing notes
+
+- [[file:daily-notes.org][Daily notes]] :: the file for a date, and the entries in it.
+- [[file:command-commit.org][org commit]] :: record an entry, in the style of =git commit=.
+- [[file:command-note.org][org note]] :: record one with its context, under a topic.
+- [[file:note-context.org][Note context]] :: the where and when a note records.
+- [[file:note-topics.org][Note topics]] :: the org-roam node entries are filed under.
+- [[file:capture-templates.org][Capture templates]] :: choosing one, and where your text lands.
+- [[file:capture-safety.org][Capture safety]] :: why your text can never be expanded.
+- [[file:command-log.org][org log]] :: read entries back, newest first.
+- [[file:command-visit.org][org visit]] :: open a note in Emacs.
+- [[file:date-spellings.org][Date spellings]] :: what =--since= and =visit= accept.
+- [[file:command-config.org][org config]] :: what is set, where, and clearing the cache.
+- [[file:command-daemon.org][org daemon]] :: taking charge of the Emacs daemon.
+
+** Using the store
+
+- [[file:content-store.org][The content store]] :: what it is for, and its four ideas.
+- [[file:command-store.org][org store]] :: create, read, update, delete.
+- [[file:command-search.org][org search]] :: find nodes by their words.
+- [[file:semantic-search.org][Semantic search]] :: find them by meaning.
+- [[file:command-sync.org][org store sync]] :: copy between stores.
+- [[file:command-serve.org][org serve]] :: the store over HTTP.
+- [[file:command-mcp.org][org mcp]] :: the store as tools for an agent.
+
+** How the store works
+
+- [[file:canonical-document.org][The canonical document]] :: the one JSON shape.
+- [[file:node-refs.org][Node refs]] :: addressing a node, and why refs move.
+- [[file:content-hash.org][Content hash]] :: a digest of what a document says.
+- [[file:derived-index.org][The derived index]] :: rows computed, never authored.
+- [[file:json-schema.org][The JSON schema]] :: the model, for non-Python readers.
+- [[file:store-backends.org][Store backends]] :: three kinds of storage.
+- [[file:backend-sqlite.org][The sqlite backend]] :: one database with indexes.
+- [[file:backend-orgfs.org][The org file backend]] :: files as the storage.
+- [[file:backend-emacs.org][The Emacs backend]] :: the same files, through org-element.
+- [[file:embeddings.org][Embeddings in the store]] :: vectors, and why they are asked for.
+
+** Working on the code
+
+- [[file:architecture.org][Architecture]] :: ports and adapters, and the one rule.
+- [[file:layering.org][The layering rule]] :: no logic in CLI or UI modules.
+- [[file:module-map.org][Module map]] :: which file holds what.
+- [[file:service-layer.org][The service layer]] :: the only layer with decisions.
+- [[file:backend-protocol.org][The backend protocol]] :: nine methods, and the omissions.
+- [[file:org-parser-adapter.org][The org-parser adapter]] :: org text in, without Emacs.
+- [[file:org-renderer.org][The org renderer]] :: canonical model out, as org text.
+- [[file:http-api.org][The HTTP API]] :: one typed definition of the operations.
+- [[file:mcp-tools.org][The MCP tools]] :: generated from that definition.
+- [[file:testing.org][Testing]] :: what is real in the suite, and what each marker costs.
+- [[file:documentation-wiki.org][This documentation wiki]] :: how these pages are made and kept honest.
+- [[file:roadmap.org][Roadmap]] :: what is deferred, and what is known broken.
+
+* These pages are also a store
+
+=docs/org/= is an [[file:backend-orgfs.org][org file store]]: every page here is a document in it, so
+the documentation can be listed, searched and served by the very tool it
+describes. See [[file:documentation-wiki.org][This documentation wiki]].

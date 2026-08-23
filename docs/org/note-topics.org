@@ -1,0 +1,41 @@
+#+title: Note topics
+#+filetags: :concept:user:capture:
+#+summary: The org-roam node that note entries are filed under, found by title.
+#+audience: user
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_cli_helper/commands/note.py
+#+source: src/org_cli_helper/commands/visit.py
+
+A topic is an org-roam node that [[file:command-note.org][org note]] files entries under, in place of
+a date. The default is one titled =Context Notes=; =-T/--topic= names
+another, and =note.topic= changes the default.
+
+#+begin_src sh
+org note -T "Work Log" -m "Fixed the thing"
+org visit -T "Work Log"
+#+end_src
+
+* Found by title, not by file
+
+Because the topic is looked up by *title*, the note joins whatever node
+already carries that title, wherever it lives. Only when there is none is a
+new file made — in your =org-roam-directory=, in the same form org-roam
+itself would use.
+
+That is why =visit -T= needs the daemon: only org-roam's database knows
+which file holds a given title. Visiting a daily note does not.
+
+* Why not the dailies
+
+A daily note answers "what did I do on this day". A topic answers "what do
+I know about this thing". Entries whose value is the subject rather than
+the date belong in the second, and [[file:command-log.org][org log]] deliberately does not report
+them, since a log is a chronology.
+
+* Related
+
+- [[file:command-note.org][org note]] :: writing into a topic.
+- [[file:command-visit.org][org visit]] :: opening one.
+- [[file:daily-notes.org][Daily notes]] :: the other place entries go.
+- [[file:configuration.org][Configuration]] :: =note.topic=.

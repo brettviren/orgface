@@ -1,0 +1,53 @@
+#+title: Node refs
+#+filetags: :concept:user:developer:store:
+#+summary: How one node is addressed, why refs move, and what survives an edit.
+#+audience: both
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_store/refs.py
+#+source: tests/test_org_refs.py
+
+A ref names one node so that operations can address part of a document
+rather than the whole of it. It is a hash of the document id and the node's
+structural path, prefixed =org=, and it is computed in Python — never taken
+from whichever engine parsed the document.
+
+: org search deadline
+: notes.org:org1a2b3c4d5e6f0987  headline  Review the deadline
+
+* Why computed here
+
+=ox-json= can emit its own refs, and with =:json-deterministic-refs t= they
+are stable across exports. But they would still only ever agree with
+themselves: the [[file:org-parser-adapter.org][Emacs-free path]] has no way to reproduce Emacs'
+scheme. Computing refs on this side means both paths yield the same ref for
+the same node of the same document, by construction — which is what lets a
+document be [[file:command-sync.org][synced]] between backends and stay addressable the same way.
+
+The digest is kept to sixteen hex digits. Refs are the key across a whole
+corpus rather than one document, so the width is sized against the birthday
+bound; =ox-json='s own seven digits would not do.
+
+* Refs name positions, not objects
+
+Inserting or deleting a node changes the refs of its later siblings and
+their descendants. Anything holding a ref across an edit must re-read the
+document. The service layer reassigns refs after every write for exactly
+this reason, and =update_node= *returns* the ref the node has afterwards,
+because the one passed in may no longer name it.
+
+The identifier that does survive an edit is the one org already has: the
+=ID= property, which lives in the node's own properties.
+
+* Where they come from on a read
+
+Refs are assigned on the way in and again on the way out. A backend that
+persists them — sqlite does — is merely caching what would have been worked
+out anyway, and it is what makes the [[file:backend-orgfs.org][org file store]] addressable at all,
+since org text has nowhere to keep a ref.
+
+* Related
+
+- [[file:canonical-document.org][The canonical document]] :: the tree a path indexes into.
+- [[file:command-store.org][org store]] :: =node= and =rm-node=, which take a ref.
+- [[file:service-layer.org][The service layer]] :: where refs are assigned and reassigned.

@@ -1,0 +1,59 @@
+#+title: The HTTP API
+#+filetags: :reference:developer:service:
+#+summary: One typed definition of the operations, which the MCP tools are generated from.
+#+audience: developer
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_store/api.py
+#+source: tests/test_org_api.py
+
+The store as a FastAPI application. This is one definition serving two
+purposes: describing the operations once, with typed requests and
+responses, gives an OpenAPI document for free — and the
+[[file:mcp-tools.org][MCP server]] is derived from that document rather than hand-written.
+
+Every handler is a single call into [[file:service-layer.org][the service layer]]. Nothing here
+decides anything, which is the same rule the [[file:command-store.org][CLI]] follows and what lets a
+third adapter be added without a fourth copy of the logic.
+
+* The operations
+
+| Method | Path | Operation id |
+|---|
+| GET | =/documents= | =list_documents= |
+| POST | =/documents= | =create_document= |
+| GET | =/documents/{id}= | =read_document= |
+| PUT | =/documents/{id}= | =replace_document= |
+| DELETE | =/documents/{id}= | =delete_document= |
+| GET | =/documents/{id}/summary= | =summarise_document= |
+| GET | =/documents/{id}/text= | =read_document_text= |
+| GET | =/documents/{id}/nodes/{ref}= | =read_node= |
+| PUT | =/documents/{id}/nodes/{ref}= | =update_node= |
+| DELETE | =/documents/{id}/nodes/{ref}= | =delete_node= |
+| POST | =/search= | =search= |
+| POST | =/embed= | =embed= |
+
+=read_document_text= returns the document as org text, which is what a
+person would read; =read_document= returns the
+[[file:canonical-document.org][canonical JSON]], which is what a program should.
+
+=update_node= returns the [[file:node-refs.org][ref]] the node has *after* the edit, because refs
+name positions and the one sent may no longer name anything.
+
+* Failures carry meaning
+
+A store error becomes the status code that means it: 404 for a document or
+node that is not there, 409 for an id that already exists, 400 for anything
+else, each with the store's own message as the detail.
+
+* No configuration in here
+
+The store is opened per request through a callable given at construction,
+so this module knows nothing about configuration — which is what keeps
+=org_store= free of any dependency on the CLI that configures it.
+
+* Related
+
+- [[file:command-serve.org][org serve]] :: running it.
+- [[file:mcp-tools.org][The MCP tools]] :: what is generated from it.
+- [[file:service-layer.org][The service layer]] :: what each handler calls.

@@ -1,0 +1,61 @@
+#+title: The org file backend
+#+filetags: :concept:user:developer:store:
+#+summary: Files as the storage, with no database and nothing to import.
+#+audience: both
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_store/backends/orgfs.py
+#+source: tests/test_org_orgfs.py
+
+The =orgfs= backend keeps documents as ordinary org files under one
+directory. The files *are* the storage: there is no database and no derived
+state, so anything else editing them — Emacs, git, a text editor — is a
+first-class writer rather than something to be reconciled with.
+
+A file you wrote by hand is already in the store. Nothing has to be
+imported.
+
+#+begin_src sh
+export ORG_CLI_HELPER_STORE_BACKEND=orgfs
+export ORG_CLI_HELPER_STORE_DIRECTORY=~/org/wiki
+org store list
+#+end_src
+
+Reading uses the [[file:org-parser-adapter.org][standalone parser]] and writing the
+[[file:org-renderer.org][Jinja2 renderer]]; neither needs Emacs. Both come from the =orgfs= extra.
+
+A file is read in a child process, because the parser can die on one
+rather than raise. One unreadable file is then reported as such, and a
+listing still says what else is there.
+
+* Document ids are paths
+
+A document id is a path relative to the root, so it is stable, readable,
+and means the same thing to a person as to the store. Ids never escape the
+root: a caller cannot address =../../etc/passwd= by asking for it.
+
+A =--id= hint is turned into a safe file name — anything outside letters,
+digits, dot, dash and underscore collapses to a dash — and a hint that
+would collide gets a number appended rather than overwriting.
+
+* Writing re-renders the whole file
+
+Everything the model records survives; formatting it does not record comes
+back normalised, the way org itself normalises on save. Blank-line runs and
+table column alignment are the two you will notice, and a line inside a
+block that would read as a heading is written with org's comma escape.
+Text already in the form the renderer produces is written back byte for
+byte, so a file settles rather than drifting. [[file:roadmap.org][Roadmap]] lists every
+normalisation.
+
+* No search index
+
+There is nowhere to keep one, and saying so is better than returning an
+empty result that reads as "no matches" when it means "never looked". The
+usual arrangement is to [[file:command-sync.org][sync]] into a [[file:backend-sqlite.org][sqlite store]] and search that.
+
+* Related
+
+- [[file:backend-emacs.org][The Emacs backend]] :: the same files, read through Emacs.
+- [[file:org-renderer.org][The org renderer]] :: what writing goes through.
+- [[file:documentation-wiki.org][This documentation wiki]] :: a store of exactly this kind.

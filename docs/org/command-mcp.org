@@ -1,0 +1,51 @@
+#+title: org mcp
+#+filetags: :command:user:service:
+#+summary: The store as MCP tools, generated from the HTTP API rather than written twice.
+#+audience: user
+#+status: current
+#+updated: 2026-08-23
+#+source: src/org_cli_helper/commands/serve.py
+#+source: src/org_store/mcp.py
+
+Speak [[https://modelcontextprotocol.io][MCP]] on stdin and stdout, so an agent can use the store without
+shelling out.
+
+#+begin_src sh
+uv sync --extra service
+
+org mcp                # serve on stdio
+org mcp --list-tools   # what an agent would see
+#+end_src
+
+Point an MCP client at the command:
+
+#+begin_src json
+{"command": "org-cli-helper", "args": ["mcp"]}
+#+end_src
+
+* The tools are generated
+
+Each tool's name, arguments and result come from the corresponding HTTP
+operation's OpenAPI description, so adding a route adds a tool and the two
+cannot drift apart. Twelve tools come out: =list_documents=,
+=read_document=, =read_document_text=, =summarise_document=,
+=create_document=, =replace_document=, =delete_document=, =read_node=,
+=update_node=, =delete_node=, =search= and =embed=.
+
+The MCP server calls the API *in process*, over an ASGI transport — no
+socket, no port, nothing else can reach it. Running =org mcp= does not
+expose anything on the network the way [[file:command-serve.org][org serve]] does.
+
+* What an agent is told
+
+The server carries instructions of its own: how a document is addressed,
+that a [[file:node-refs.org][ref]] names a position and moves when the document is edited, that
+org's =ID= property is the identifier which survives editing, and that
+semantic search only finds what has been embedded. An agent that reuses a
+stale ref is the failure this is meant to prevent.
+
+* Related
+
+- [[file:mcp-tools.org][The MCP tools]] :: how the generation works.
+- [[file:command-serve.org][org serve]] :: the same operations over HTTP.
+- [[file:node-refs.org][Node refs]] :: the rule agents most need to know.
