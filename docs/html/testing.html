@@ -64,8 +64,8 @@ configuration are untouched.
 <h2>Isolation</h2>
 <p>An autouse fixture points <code>XDG_CONFIG_HOME</code>, <code>XDG_STATE_HOME</code> and
 <code>XDG_CACHE_HOME</code> at a scratch tree and drops any ambient
-<code>ORG_CLI_HELPER_*</code> variable, so a test reads only what it sets. Without it,
-a real <code>~/.config/org-cli-helper/config.toml</code> would beat the environment
+<code>ORGFACE_*</code> variable, so a test reads only what it sets. Without it,
+a real <code>~/.config/orgface/config.toml</code> would beat the environment
 variables a test sets — <a href="configuration.html">configuration</a> is layered that way on purpose —
 and the suite would run against the developer&#39;s own notes.
 </p>

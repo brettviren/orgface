@@ -57,7 +57,7 @@ def render(
     if source is not None and Path(source).is_file():
         return emacs.export(Path(source), exporter)
 
-    with tempfile.TemporaryDirectory(prefix="org-cli-helper-") as folder:
+    with tempfile.TemporaryDirectory(prefix="orgface-") as folder:
         path = Path(folder) / (Path(doc_id).name or "document")
         path = path.with_suffix(".org")
         path.write_text(_org_text(doc), encoding="utf-8")

@@ -9,7 +9,7 @@ from datetime import date, datetime
 
 import pytest
 
-from org_cli_helper.dailies import (
+from orgface.dailies import (
     DailiesError,
     collect,
     daily_files,

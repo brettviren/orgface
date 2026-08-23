@@ -1,21 +1,21 @@
-#+title: What org-cli-helper is
+#+title: What orgface is
 #+filetags: :concept:user:developer:
 #+summary: The shape of the tool, and the two halves it is made of.
 #+audience: both
 #+status: current
 #+updated: 2026-08-23
 #+source: README.org
-#+source: src/org_cli_helper/cli.py
+#+source: src/orgface/cli.py
 
-org-cli-helper does some Emacs org things quickly from the command line. It
+orgface does some Emacs org things quickly from the command line. It
 is shaped like =git=: one top level program with subcommands that each do
 one thing and exit.
 
-The entry point is =org-cli-helper=. These pages assume it is aliased to
+The entry point is =orgface=. These pages assume it is aliased to
 =org=:
 
 #+begin_src sh
-alias org=org-cli-helper
+alias org=orgface
 #+end_src
 
 * Two halves

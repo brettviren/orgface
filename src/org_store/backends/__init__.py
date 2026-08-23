@@ -32,7 +32,7 @@ class Backend:
 
     name: str
     open: Callable[..., Any]
-    #: Which :class:`~org_cli_helper.config.Config` field locates it.
+    #: Which :class:`~orgface.config.Config` field locates it.
     setting: str
     #: Where it lives when configuration does not say, under the XDG
     #: state directory.
@@ -89,7 +89,7 @@ def _needs_orgfs(factory, *args):
     except ImportError as exc:
         raise StoreError(
             "the 'orgfs' backend needs the orgfs extra: "
-            f"install org-cli-helper[orgfs] ({exc})"
+            f"install orgface[orgfs] ({exc})"
         ) from exc
 
 

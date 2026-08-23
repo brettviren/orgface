@@ -4,8 +4,8 @@
 #+audience: user
 #+status: current
 #+updated: 2026-08-23
-#+source: src/org_cli_helper/commands/note.py
-#+source: src/org_cli_helper/context.py
+#+source: src/orgface/commands/note.py
+#+source: src/orgface/context.py
 
 Record an entry the way [[file:command-commit.org][org commit]] does, but keep the context it was
 written in and file it under a topic rather than under today's date.
@@ -32,9 +32,9 @@ Where and when the command ran becomes part of the entry — see
 [[file:note-context.org][Note context]] for the whole of it:
 
 #+begin_src org
-,* Fixed the thing :home:org_cli_helper:
+,* Fixed the thing :home:orgface:
 :PROPERTIES:
-:DIRECTORY: /home/you/dev/org-cli-helper
+:DIRECTORY: /home/you/dev/orgface
 :HOST: yourhost
 :USER: you
 :END:

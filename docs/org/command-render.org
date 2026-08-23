@@ -4,8 +4,8 @@
 #+audience: user
 #+status: current
 #+updated: 2026-08-23
-#+source: src/org_cli_helper/commands/render.py
-#+source: src/org_cli_helper/rendering.py
+#+source: src/orgface/commands/render.py
+#+source: src/orgface/rendering.py
 
 Render documents from the store as some other kind of text.
 

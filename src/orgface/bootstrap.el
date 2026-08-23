@@ -1,9 +1,9 @@
-;;; bootstrap.el --- daemon-side support for org-cli-helper  -*- lexical-binding: t; -*-
+;;; bootstrap.el --- daemon-side support for orgface  -*- lexical-binding: t; -*-
 
 ;; SPDX-FileCopyrightText: 2026 Brett Viren <brett.viren@gmail.com>
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 
-;; Loaded into the managed `emacs --daemon' by org-cli-helper.  Every
+;; Loaded into the managed `emacs --daemon' by orgface.  Every
 ;; function returns a base64-encoded UTF-8 JSON string so the CLI never has
 ;; to parse Emacs' printed representation of anything richer than a string.
 
@@ -11,51 +11,51 @@
 
 (require 'org-capture)
 
-(defconst org-cli-helper-version "3"
+(defconst orgface-version "3"
   "Protocol version, probed by the CLI to detect a bootstrapped daemon.
 
 Bumped when functions are added: a daemon started before the change has
 the old definitions loaded and will not gain the new ones until it is
 restarted.")
 
-(defvar org-cli-helper--expiry-timer nil
+(defvar orgface--expiry-timer nil
   "Timer that shuts this daemon down once it has been idle long enough.")
 
-(defun org-cli-helper--payload (object)
+(defun orgface--payload (object)
   "Encode OBJECT as base64 UTF-8 JSON."
   (base64-encode-string
    (encode-coding-string (json-serialize object) 'utf-8)
    t))
 
-(defun org-cli-helper-expire ()
+(defun orgface-expire ()
   "Save anything outstanding and shut the daemon down."
   (ignore-errors (save-some-buffers t))
   (kill-emacs 0))
 
-(defun org-cli-helper-touch (seconds)
+(defun orgface-touch (seconds)
   "Restart the idle countdown, exiting after SECONDS of quiet.
 A nil or non-positive SECONDS cancels expiry entirely."
-  (when (timerp org-cli-helper--expiry-timer)
-    (cancel-timer org-cli-helper--expiry-timer))
-  (setq org-cli-helper--expiry-timer
+  (when (timerp orgface--expiry-timer)
+    (cancel-timer orgface--expiry-timer))
+  (setq orgface--expiry-timer
         (when (and (numberp seconds) (> seconds 0))
-          (run-at-time seconds nil #'org-cli-helper-expire)))
+          (run-at-time seconds nil #'orgface-expire)))
   nil)
 
-(defun org-cli-helper--require (feature)
+(defun orgface--require (feature)
   "Load FEATURE, signalling a useful error if it is unavailable."
   (unless (require feature nil t)
     (error "%s is not available in this Emacs; check your init file" feature)))
 
-(defun org-cli-helper--require-roam ()
+(defun orgface--require-roam ()
   "Load org-roam, signalling a useful error if unavailable."
-  (org-cli-helper--require 'org-roam))
+  (orgface--require 'org-roam))
 
-(defun org-cli-helper--require-dailies ()
+(defun orgface--require-dailies ()
   "Load org-roam dailies, signalling a useful error if unavailable."
-  (org-cli-helper--require 'org-roam-dailies))
+  (orgface--require 'org-roam-dailies))
 
-(defun org-cli-helper--stored-file (marker)
+(defun orgface--stored-file (marker)
   "The file org-capture last stored into, per MARKER, or nil.
 
 The capture happens in an indirect buffer, so the base buffer is the one
@@ -64,7 +64,7 @@ holding the file name once that indirect buffer has been killed."
     (buffer-file-name (or (buffer-base-buffer (marker-buffer marker))
                           (marker-buffer marker)))))
 
-(defun org-cli-helper--with-capture-frame (thunk)
+(defun orgface--with-capture-frame (thunk)
   "Call THUNK, deleting this emacsclient frame once the capture finalises.
 
 Evaluated inside the frame `emacsclient -t' (or -c) just created, which
@@ -90,7 +90,7 @@ Only a frame emacsclient owns is ever deleted, so an unexpected
        (remove-hook 'org-capture-after-finalize-hook hook)
        (signal (car err) (cdr err))))))
 
-(defun org-cli-helper--split-template (entry)
+(defun orgface--split-template (entry)
   "Split org-roam capture template ENTRY into (HEAD BODY REST).
 
 HEAD is the positional prefix up to but excluding the template body, and
@@ -111,7 +111,7 @@ Returns nil for a two element prefix group or anything unrecognised."
      (list (list key desc type) body rest))
     (_ nil)))
 
-(defun org-cli-helper--describe-body (body)
+(defun orgface--describe-body (body)
   "Describe the template text BODY for JSON encoding."
   (cond
    ((stringp body) (list :body body :body_kind "string"))
@@ -122,9 +122,9 @@ Returns nil for a two element prefix group or anything unrecognised."
    ((functionp body) (list :body (format "%s" body) :body_kind "function"))
    (t (list :body :null :body_kind "nil"))))
 
-(defun org-cli-helper--describe-template (entry)
+(defun orgface--describe-template (entry)
   "Describe capture template ENTRY as a plist for JSON encoding."
-  (let ((split (org-cli-helper--split-template entry)))
+  (let ((split (orgface--split-template entry)))
     (if (null split)
         ;; A two element entry is a multi-key prefix group, not a template.
         (list :key (format "%s" (or (nth 0 entry) ""))
@@ -138,28 +138,28 @@ Returns nil for a two element prefix group or anything unrecognised."
         (append (list :key (format "%s" (or (nth 0 head) ""))
                       :description (format "%s" (or (nth 1 head) ""))
                       :type (format "%s" (or (nth 2 head) 'entry)))
-                (org-cli-helper--describe-body body)
+                (orgface--describe-body body)
                 (list :group :false))))))
 
-(defun org-cli-helper-info ()
+(defun orgface-info ()
   "Report org-roam locations and dailies capture templates."
-  (org-cli-helper--require-dailies)
-  (org-cli-helper--payload
+  (orgface--require-dailies)
+  (orgface--payload
    (list :roam_directory (expand-file-name org-roam-directory)
          :dailies_directory org-roam-dailies-directory
          :dailies_path (expand-file-name org-roam-dailies-directory
                                          org-roam-directory)
          :templates
-         (vconcat (mapcar #'org-cli-helper--describe-template
+         (vconcat (mapcar #'orgface--describe-template
                           org-roam-dailies-capture-templates)))))
 
-(defun org-cli-helper--with-body (entry body)
+(defun orgface--with-body (entry body)
   "Copy org-roam capture template ENTRY with its text replaced by BODY.
 
 `:immediate-finish' is appended rather than prepended:
 `org-roam-capture--convert-template' walks the property list forwards
 building it up with `plist-put', so for duplicated keys the last one wins."
-  (let ((split (org-cli-helper--split-template entry)))
+  (let ((split (orgface--split-template entry)))
     (unless split
       (error "Capture template %S has an unsupported shape" (car-safe entry)))
     (append (nth 0 split)
@@ -167,26 +167,26 @@ building it up with `plist-put', so for duplicated keys the last one wins."
             (nth 2 split)
             (list :immediate-finish t))))
 
-(defun org-cli-helper-commit (keys body)
+(defun orgface-commit (keys body)
   "Capture BODY into today's daily note using template KEYS.
 BODY is a fully expanded capture template string."
-  (org-cli-helper--require-dailies)
+  (orgface--require-dailies)
   (let* ((org-roam-dailies-capture-templates
           (mapcar (lambda (entry)
                     (if (equal (car entry) keys)
-                        (org-cli-helper--with-body entry body)
+                        (orgface--with-body entry body)
                       entry))
                   org-roam-dailies-capture-templates))
          (org-capture-last-stored-marker (make-marker)))
     (org-roam-dailies-capture-today nil keys)
-    (org-cli-helper--payload
-     (list :file (or (org-cli-helper--stored-file org-capture-last-stored-marker)
+    (orgface--payload
+     (list :file (or (orgface--stored-file org-capture-last-stored-marker)
                      :null)))))
 
-(defun org-cli-helper-capture-interactive (keys)
+(defun orgface-capture-interactive (keys)
   "Run an interactive dailies capture with template KEYS."
-  (org-cli-helper--require-dailies)
-  (org-cli-helper--with-capture-frame
+  (orgface--require-dailies)
+  (orgface--with-capture-frame
    (lambda ()
      (if (and keys (not (equal keys "")))
          (org-roam-dailies-capture-today nil keys)
@@ -201,9 +201,9 @@ BODY is a fully expanded capture template string."
 ;; expanded the same number of times as a commit body and needs no separate
 ;; escaping arithmetic on the CLI side.
 
-(defconst org-cli-helper-note-target
+(defconst orgface-note-target
   '(file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
-  "Capture target for the topic notes `org-cli-helper-note' writes.
+  "Capture target for the topic notes `orgface-note' writes.
 
 Only reached when the topic does not exist yet: for one that does,
 `org-roam-capture--target-truepath' answers with the node's own file and
@@ -211,7 +211,7 @@ the head is never inserted.  The shape deliberately matches org-roam's own
 default so a topic created here is indistinguishable from one created
 interactively.")
 
-(defun org-cli-helper--topic-node (topic)
+(defun orgface--topic-node (topic)
   "An `org-roam-node' titled TOPIC, existing or waiting to be created.
 
 `org-roam-capture-' gives a node with no ID an ID, and its target creates
@@ -219,7 +219,7 @@ the file, so a fresh node is all that is needed to make a new topic."
   (or (org-roam-node-from-title-or-alias topic)
       (org-roam-node-create :title topic)))
 
-(defun org-cli-helper--note-capture (topic body immediate)
+(defun orgface--note-capture (topic body immediate)
   "Capture BODY as an entry in the org-roam node titled TOPIC.
 
 BODY is a fully expanded capture template string.  With IMMEDIATE the
@@ -229,9 +229,9 @@ into.
 The entry lands at the end of the topic's file: the target leaves point at
 the start of the file, which is not a heading, and org-capture appends a
 top level entry when its target is not an entry."
-  (let ((node (org-cli-helper--topic-node topic))
+  (let ((node (orgface--topic-node topic))
         (template (list "n" "context note" 'entry body
-                        :target org-cli-helper-note-target)))
+                        :target orgface-note-target)))
     (org-roam-capture-
      :node node
      :keys "n"
@@ -240,30 +240,30 @@ top level entry when its target is not an entry."
                         template)))
     node))
 
-(defun org-cli-helper-note (topic body)
+(defun orgface-note (topic body)
   "Capture BODY into the org-roam topic TOPIC, reporting where it landed."
-  (org-cli-helper--require-roam)
+  (orgface--require-roam)
   (let* ((org-capture-last-stored-marker (make-marker))
-         (node (org-cli-helper--note-capture topic body t)))
-    (org-cli-helper--payload
+         (node (orgface--note-capture topic body t)))
+    (orgface--payload
      (list :topic topic
            :id (or (org-roam-node-id node) :null)
-           :file (or (org-cli-helper--stored-file org-capture-last-stored-marker)
+           :file (or (orgface--stored-file org-capture-last-stored-marker)
                      (org-roam-node-file node)
                      :null)))))
 
-(defun org-cli-helper-note-interactive (topic body)
+(defun orgface-note-interactive (topic body)
   "Run an interactive capture of BODY into the org-roam topic TOPIC."
-  (org-cli-helper--require-roam)
-  (org-cli-helper--with-capture-frame
-   (lambda () (org-cli-helper--note-capture topic body nil)))
+  (orgface--require-roam)
+  (orgface--with-capture-frame
+   (lambda () (orgface--note-capture topic body nil)))
   nil)
 
-(defun org-cli-helper-topic (topic)
+(defun orgface-topic (topic)
   "Report the org-roam node titled TOPIC, with nulls if there is none."
-  (org-cli-helper--require-roam)
+  (orgface--require-roam)
   (let ((node (org-roam-node-from-title-or-alias topic)))
-    (org-cli-helper--payload
+    (orgface--payload
      (list :topic topic
            :id (or (and node (org-roam-node-id node)) :null)
            :file (or (and node (org-roam-node-file node)) :null)))))
@@ -276,19 +276,19 @@ top level entry when its target is not an entry."
 ;; their link types, their TODO keywords, their in-buffer settings.  No
 ;; independent parser can promise that.
 
-(defun org-cli-helper--raw-payload (json)
+(defun orgface--raw-payload (json)
   "Encode JSON, already a JSON string, for the CLI to decode.
 
-Distinct from `org-cli-helper--payload', which serialises an Elisp
+Distinct from `orgface--payload', which serialises an Elisp
 object; passing an exported document through that would encode the JSON
 as a JSON string rather than sending it as itself."
   (base64-encode-string (encode-coding-string json 'utf-8) t))
 
-(defun org-cli-helper--visiting (path)
+(defun orgface--visiting (path)
   "The live buffer visiting PATH, or nil."
   (find-buffer-visiting (expand-file-name path)))
 
-(defun org-cli-helper-export (path backend)
+(defun orgface-export (path backend)
   "Export the org file at PATH with the org-export BACKEND, as text.
 
 BACKEND is named as org names it -- \"html\", \"latex\", \"ascii\" -- and
@@ -302,19 +302,19 @@ know about output directories it has no business knowing about.
 
 A buffer already visiting PATH is used in preference to re-reading the
 file, and one opened here is killed again, exactly as
-`org-cli-helper-export-json' does."
-  (org-cli-helper--require (intern (concat "ox-" backend)))
+`orgface-export-json' does."
+  (orgface--require (intern (concat "ox-" backend)))
   (let* ((file (expand-file-name path))
-         (existing (org-cli-helper--visiting file))
+         (existing (orgface--visiting file))
          (buffer (or existing (find-file-noselect file t))))
     (unwind-protect
         (with-current-buffer buffer
           (let ((org-export-with-broken-links t))
-            (org-cli-helper--payload
+            (orgface--payload
              (org-export-as (intern backend)))))
       (unless existing (kill-buffer buffer)))))
 
-(defun org-cli-helper-export-json (path)
+(defun orgface-export-json (path)
   "Export the org file at PATH as ox-json JSON.
 
 A buffer already visiting PATH is used in preference to re-reading the
@@ -324,14 +324,14 @@ wanting the file as stored should read the file.
 
 A buffer opened here is killed again, so that repeated exports do not
 accumulate buffers in a long-lived daemon."
-  (org-cli-helper--require 'ox-json)
+  (orgface--require 'ox-json)
   (let* ((file (expand-file-name path))
-         (existing (org-cli-helper--visiting file))
+         (existing (orgface--visiting file))
          (buffer (or existing (find-file-noselect file t))))
     (unwind-protect
         (with-current-buffer buffer
           (let ((org-export-with-broken-links t))
-            (org-cli-helper--raw-payload
+            (orgface--raw-payload
              ;; Deterministic refs, so that exporting the same document
              ;; twice compares equal.  The CLI recomputes its own refs
              ;; regardless, but a payload that changed every call would
@@ -340,30 +340,30 @@ accumulate buffers in a long-lived daemon."
                             (list :json-deterministic-refs t)))))
       (unless existing (kill-buffer buffer)))))
 
-(defun org-cli-helper-buffer-state (path)
+(defun orgface-buffer-state (path)
   "Report whether Emacs holds PATH, and whether it has unsaved changes.
 
 Asked before writing a file, so that unsaved work is never silently
 overwritten by a store that is only one of several writers."
   (let* ((file (expand-file-name path))
-         (buffer (org-cli-helper--visiting file)))
-    (org-cli-helper--payload
+         (buffer (orgface--visiting file)))
+    (orgface--payload
      (list :path file
            :visiting (if buffer t :false)
            :modified (if (and buffer (buffer-modified-p buffer)) t :false)))))
 
-(defun org-cli-helper-revert (path)
+(defun orgface-revert (path)
   "Reload PATH into its buffer, if Emacs has one.
 
 Called after writing the file from outside, so Emacs is not left showing
 content that is no longer what is on disk."
   (let* ((file (expand-file-name path))
-         (buffer (org-cli-helper--visiting file)))
+         (buffer (orgface--visiting file)))
     (when buffer
       (with-current-buffer buffer
         (revert-buffer :ignore-auto :noconfirm :preserve-modes)))
-    (org-cli-helper--payload
+    (orgface--payload
      (list :path file :reverted (if buffer t :false)))))
 
-(provide 'org-cli-helper-bootstrap)
+(provide 'orgface-bootstrap)
 ;;; bootstrap.el ends here

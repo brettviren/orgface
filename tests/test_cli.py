@@ -16,7 +16,7 @@ from datetime import datetime
 import pytest
 from click.testing import CliRunner
 
-from org_cli_helper.cli import main
+from orgface.cli import main
 
 NOTE = """\
 :PROPERTIES:
@@ -79,7 +79,7 @@ class TestTopLevel:
     def test_version(self, runner):
         result = runner.invoke(main, ["--version"])
         assert result.exit_code == 0
-        assert "org-cli-helper" in result.output
+        assert "orgface" in result.output
 
     def test_missing_config_file_is_reported(self, runner, tmp_path):
         result = runner.invoke(main, ["-c", str(tmp_path / "nope.toml"), "log"])
@@ -190,7 +190,7 @@ class TestNote:
             calls.append((topic, body))
             return {"topic": topic, "file": "/roam/20260804-context_notes.org"}
 
-        monkeypatch.setattr("org_cli_helper.emacs.Emacs.note", note)
+        monkeypatch.setattr("orgface.emacs.Emacs.note", note)
         return calls
 
     def test_dry_run_needs_a_message(self, runner, workspace):
@@ -264,18 +264,18 @@ class TestConfigCommand:
     def test_show_reports_resolved_values(self, runner, workspace):
         result = run(runner, workspace, "config", "show")
         assert result.exit_code == 0
-        assert "daemon.server_name = org-cli-helper" in result.output
+        assert "daemon.server_name = orgface" in result.output
         assert "roam.dailies_directory = daily" in result.output
         assert "note.topic = Context Notes" in result.output
 
     def test_show_env_names(self, runner, workspace):
         result = run(runner, workspace, "config", "show", "--env")
-        assert "ORG_CLI_HELPER_SERVER_NAME" in result.output
+        assert "ORGFACE_SERVER_NAME" in result.output
 
     def test_paths(self, runner, workspace):
         result = run(runner, workspace, "config", "paths")
         assert result.exit_code == 0
-        assert "org-cli-helper" in result.output
+        assert "orgface" in result.output
 
     def test_no_args_shows_help(self, runner, workspace):
         result = run(runner, workspace, "config")
@@ -287,7 +287,7 @@ class TestVisit:
     def test_visits_an_existing_note(self, runner, workspace, tmp_path, monkeypatch):
         visited = []
         monkeypatch.setattr(
-            "org_cli_helper.emacs.Emacs.visit", lambda self, path: visited.append(path)
+            "orgface.emacs.Emacs.visit", lambda self, path: visited.append(path)
         )
         result = run(runner, workspace, "visit", "2026-07-30")
         assert result.exit_code == 0
@@ -299,10 +299,10 @@ class TestVisit:
             def now(cls, tz=None):
                 return datetime(2026, 7, 30)
 
-        monkeypatch.setattr("org_cli_helper.commands.visit.datetime", FixedDatetime)
+        monkeypatch.setattr("orgface.commands.visit.datetime", FixedDatetime)
         visited = []
         monkeypatch.setattr(
-            "org_cli_helper.emacs.Emacs.visit", lambda self, path: visited.append(path)
+            "orgface.emacs.Emacs.visit", lambda self, path: visited.append(path)
         )
         result = run(runner, workspace, "visit")
         assert result.exit_code == 0
@@ -326,7 +326,7 @@ class TestVisit:
 
     def test_a_multi_word_date_needs_no_quoting(self, runner, workspace, monkeypatch):
         monkeypatch.setattr(
-            "org_cli_helper.emacs.Emacs.visit", lambda self, path: None
+            "orgface.emacs.Emacs.visit", lambda self, path: None
         )
         result = run(runner, workspace, "visit", "3", "days", "ago")
         assert result.exit_code == 1
@@ -341,7 +341,7 @@ class TestVisitTopic:
         note.write_text("#+title: Context Notes\n", encoding="utf-8")
         known = {"Context Notes": str(note)}
         monkeypatch.setattr(
-            "org_cli_helper.emacs.Emacs.topic",
+            "orgface.emacs.Emacs.topic",
             lambda self, title: {"topic": title, "file": known.get(title)},
         )
         return note
@@ -350,7 +350,7 @@ class TestVisitTopic:
     def visited(self, monkeypatch):
         seen = []
         monkeypatch.setattr(
-            "org_cli_helper.emacs.Emacs.visit", lambda self, path: seen.append(path)
+            "orgface.emacs.Emacs.visit", lambda self, path: seen.append(path)
         )
         return seen
 

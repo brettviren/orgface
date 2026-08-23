@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from org_cli_helper.templates import (
+from orgface.templates import (
     ROUNDS,
     Template,
     TemplateError,

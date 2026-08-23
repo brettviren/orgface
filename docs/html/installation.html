@@ -32,11 +32,11 @@
 <main>
 <h1 class="title">Installation</h1>
 <p class="filetags"><span class="tag">reference</span> <span class="tag">user</span> <span class="tag">developer</span> </p>
-<p>org-cli-helper uses <a href="https://docs.astral.sh/uv/">uv</a> for development.
+<p>orgface uses <a href="https://docs.astral.sh/uv/">uv</a> for development.
 </p>
 <pre class="src"><code class="language-sh">uv sync                # set up the development area
 uv run pytest          # run the tests
-uv run org-cli-helper  # run the CLI
+uv run orgface  # run the CLI
 </code></pre>
 <h2>Extras</h2>
 <p>The base install is deliberately small: <code>click</code>, <code>jinja2</code> and <code>pydantic</code>.
@@ -57,7 +57,7 @@ the <a href="backend-orgfs.html">org file backend</a> and by <code>org store add
 </dd>
 </dl>
 <pre class="src"><code class="language-sh">uv sync --extra orgfs            # one extra
-pip install &#39;org-cli-helper[orgfs,semantic,service]&#39;
+pip install &#39;orgface[orgfs,semantic,service]&#39;
 </code></pre>
 <p>A command needing an extra that is not installed says which one supplies
 it, rather than failing with an import error.

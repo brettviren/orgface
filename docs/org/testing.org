@@ -39,8 +39,8 @@ configuration are untouched.
 
 An autouse fixture points =XDG_CONFIG_HOME=, =XDG_STATE_HOME= and
 =XDG_CACHE_HOME= at a scratch tree and drops any ambient
-=ORG_CLI_HELPER_*= variable, so a test reads only what it sets. Without it,
-a real =~/.config/org-cli-helper/config.toml= would beat the environment
+=ORGFACE_*= variable, so a test reads only what it sets. Without it,
+a real =~/.config/orgface/config.toml= would beat the environment
 variables a test sets — [[file:configuration.org][configuration]] is layered that way on purpose —
 and the suite would run against the developer's own notes.
 

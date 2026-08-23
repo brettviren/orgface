@@ -40,8 +40,8 @@ go (configuration, resolved once).
 * Two packages
 
 - =org_store= :: the library — model, backends, service, search, sync,
-  renderer, HTTP and MCP. It never imports =org_cli_helper=.
-- =org_cli_helper= :: the CLI. Argument parsing, presentation, Emacs daemon
+  renderer, HTTP and MCP. It never imports =orgface=.
+- =orgface= :: the CLI. Argument parsing, presentation, Emacs daemon
   management, configuration, and the capture commands.
 
 The dependency runs one way, which is what lets the store be used without

@@ -4,12 +4,12 @@
 #+audience: both
 #+status: current
 #+updated: 2026-08-23
-#+source: src/org_cli_helper/emacs.py
-#+source: src/org_cli_helper/elisp.py
-#+source: src/org_cli_helper/commands/daemon.py
+#+source: src/orgface/emacs.py
+#+source: src/orgface/elisp.py
+#+source: src/orgface/commands/daemon.py
 
 Commands that need Emacs talk to a daemon under a private server name,
-=org-cli-helper= by default, so your interactive Emacs is never touched. It
+=orgface= by default, so your interactive Emacs is never touched. It
 is managed the way =ssh= manages a master control connection: started on
 first use, reused by everything after, and shut down by itself once it has
 been idle long enough.

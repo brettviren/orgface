@@ -464,7 +464,7 @@ class SqliteStore:
         except ImportError as exc:  # pragma: no cover - optional extra
             raise StoreError(
                 "semantic search needs the semantic extra: "
-                f"install org-cli-helper[semantic] ({exc})"
+                f"install orgface[semantic] ({exc})"
             ) from exc
         try:
             self._db.enable_load_extension(True)

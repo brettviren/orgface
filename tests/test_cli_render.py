@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from org_cli_helper.cli import main
+from orgface.cli import main
 
 PAGES = {
     "one.org": "#+title: The first\n\nText of the first, linking [[file:two.org][on]].\n",
@@ -30,8 +30,8 @@ def store(tmp_path, monkeypatch) -> Path:
         path = root / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")
-    monkeypatch.setenv("ORG_CLI_HELPER_STORE_BACKEND", "orgfs")
-    monkeypatch.setenv("ORG_CLI_HELPER_STORE_DIRECTORY", str(root))
+    monkeypatch.setenv("ORGFACE_STORE_BACKEND", "orgfs")
+    monkeypatch.setenv("ORGFACE_STORE_DIRECTORY", str(root))
 
     here = tmp_path / "cwd"
     here.mkdir()
@@ -124,7 +124,7 @@ def test_all_writes_to_a_directory_even_for_one_document(
     root = tmp_path / "one-note"
     root.mkdir()
     (root / "only.org").write_text("#+title: Only\n\nText.\n", encoding="utf-8")
-    monkeypatch.setenv("ORG_CLI_HELPER_STORE_DIRECTORY", str(root))
+    monkeypatch.setenv("ORGFACE_STORE_DIRECTORY", str(root))
 
     result = runner.invoke(main, ["render", "-a"])
     assert result.exit_code == 0, result.output

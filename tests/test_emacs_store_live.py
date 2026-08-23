@@ -20,8 +20,8 @@ from pathlib import Path
 
 import pytest
 
-from org_cli_helper.config import Config
-from org_cli_helper.emacs import DaemonError, Emacs
+from orgface.config import Config
+from orgface.emacs import DaemonError, Emacs
 from org_store.backends import EmacsDirectoryStore, OrgExporter
 from org_store.extract import content_hash
 from org_store.model import OrgDocument, walk
@@ -36,7 +36,7 @@ DATA = Path(__file__).parent / "data"
 @pytest.fixture(scope="module")
 def emacs() -> Emacs:
     """A daemon that can export JSON, or a skip saying why not."""
-    client = Emacs(Config(server_name="org-cli-helper-store-test", lifetime=120))
+    client = Emacs(Config(server_name="orgface-store-test", lifetime=120))
     try:
         client.eval("(emacs-version)")
     except DaemonError as exc:  # pragma: no cover - environment dependent

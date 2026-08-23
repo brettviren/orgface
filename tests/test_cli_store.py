@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from org_cli_helper.cli import main
+from orgface.cli import main
 
 DATA = Path(__file__).parent / "data"
 
@@ -24,7 +24,7 @@ DATA = Path(__file__).parent / "data"
 def env(tmp_path, monkeypatch):
     """Point the store at a scratch database, as configuration would."""
     database = tmp_path / "store.sqlite"
-    monkeypatch.setenv("ORG_CLI_HELPER_STORE_DATABASE", str(database))
+    monkeypatch.setenv("ORGFACE_STORE_DATABASE", str(database))
     return database
 
 
@@ -200,7 +200,7 @@ def test_reindex(runner, env, source) -> None:
 
 
 def test_unknown_backend_is_reported(runner, env, monkeypatch, source) -> None:
-    monkeypatch.setenv("ORG_CLI_HELPER_STORE_BACKEND", "postgres")
+    monkeypatch.setenv("ORGFACE_STORE_BACKEND", "postgres")
     result = runner.invoke(main, ["store", "list"])
     assert result.exit_code != 0
     assert "unknown store backend" in result.output
@@ -218,8 +218,8 @@ def test_store_settings_are_configurable(runner, tmp_path, monkeypatch) -> None:
 def test_the_org_file_backend_is_selectable(runner, tmp_path, monkeypatch) -> None:
     """Same commands, files on disk instead of a database."""
     root = tmp_path / "notes"
-    monkeypatch.setenv("ORG_CLI_HELPER_STORE_BACKEND", "orgfs")
-    monkeypatch.setenv("ORG_CLI_HELPER_STORE_DIRECTORY", str(root))
+    monkeypatch.setenv("ORGFACE_STORE_BACKEND", "orgfs")
+    monkeypatch.setenv("ORGFACE_STORE_DIRECTORY", str(root))
 
     source = tmp_path / "fixture.org"
     source.write_text((DATA / "fixture.org").read_text())
@@ -234,8 +234,8 @@ def test_the_org_file_backend_is_selectable(runner, tmp_path, monkeypatch) -> No
 
 
 def test_the_org_file_backend_has_no_search(runner, tmp_path, monkeypatch) -> None:
-    monkeypatch.setenv("ORG_CLI_HELPER_STORE_BACKEND", "orgfs")
-    monkeypatch.setenv("ORG_CLI_HELPER_STORE_DIRECTORY", str(tmp_path / "notes"))
+    monkeypatch.setenv("ORGFACE_STORE_BACKEND", "orgfs")
+    monkeypatch.setenv("ORGFACE_STORE_DIRECTORY", str(tmp_path / "notes"))
     result = runner.invoke(main, ["search", "anything"])
     assert result.exit_code != 0
     assert "no search index" in result.output
@@ -248,8 +248,8 @@ def test_a_hand_written_file_is_already_in_the_store(
     root = tmp_path / "notes"
     root.mkdir()
     (root / "mine.org").write_text("#+title: Written by hand\n\n* A heading\n")
-    monkeypatch.setenv("ORG_CLI_HELPER_STORE_BACKEND", "orgfs")
-    monkeypatch.setenv("ORG_CLI_HELPER_STORE_DIRECTORY", str(root))
+    monkeypatch.setenv("ORGFACE_STORE_BACKEND", "orgfs")
+    monkeypatch.setenv("ORGFACE_STORE_DIRECTORY", str(root))
 
     result = runner.invoke(main, ["store", "list"])
     assert result.exit_code == 0
@@ -259,7 +259,7 @@ def test_a_hand_written_file_is_already_in_the_store(
 @pytest.fixture
 def paired(runner, tmp_path, monkeypatch, source):
     """A sqlite store holding one document, and somewhere to sync it."""
-    monkeypatch.setenv("ORG_CLI_HELPER_STORE_DATABASE", str(tmp_path / "s.sqlite"))
+    monkeypatch.setenv("ORGFACE_STORE_DATABASE", str(tmp_path / "s.sqlite"))
     result = runner.invoke(main, ["store", "add", str(source), "--id", "kept.org"])
     assert result.exit_code == 0, result.output
     return tmp_path / "elsewhere"

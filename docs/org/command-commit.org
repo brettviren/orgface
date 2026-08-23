@@ -4,8 +4,8 @@
 #+audience: user
 #+status: current
 #+updated: 2026-08-23
-#+source: src/org_cli_helper/commands/commit.py
-#+source: src/org_cli_helper/templates.py
+#+source: src/orgface/commands/commit.py
+#+source: src/orgface/templates.py
 
 Record an entry in today's org-roam [[file:daily-notes.org][daily note]]. The first =-m= is the
 entry title; any further =-m= options become body paragraphs.

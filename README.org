@@ -1,4 +1,4 @@
-#+title: org-cli-helper
+#+title: orgface
 #+options: toc:2
 
 Do some Emacs org things quickly from the command line.
@@ -11,11 +11,11 @@ one thing and exit. It manages an =emacs --daemon= the way =ssh= manages a
 master control connection — started on first use, reused by later commands,
 and shut down by itself once it has been idle long enough.
 
-The entry point is =org-cli-helper=. This document assumes you have aliased
+The entry point is =orgface=. This document assumes you have aliased
 it to =org=:
 
 #+begin_src sh
-alias org=org-cli-helper
+alias org=orgface
 #+end_src
 
 * Quick start
@@ -39,20 +39,20 @@ Those pages are themselves a store, so the documentation can be read with
 the tool it documents:
 
 #+begin_src sh
-export ORG_CLI_HELPER_STORE_BACKEND=orgfs
-export ORG_CLI_HELPER_STORE_DIRECTORY=docs/org
+export ORGFACE_STORE_BACKEND=orgfs
+export ORGFACE_STORE_DIRECTORY=docs/org
 org store list
 org store show node-refs.org
 #+end_src
 
 * Installation
 
-org-cli-helper uses [[https://docs.astral.sh/uv/][uv]] for development.
+orgface uses [[https://docs.astral.sh/uv/][uv]] for development.
 
 #+begin_src sh
 uv sync                # set up the development area
 uv run pytest          # run the tests
-uv run org-cli-helper  # run the CLI
+uv run orgface  # run the CLI
 #+end_src
 
 Emacs must provide =org-roam=. Nothing about your notes or your Emacs
@@ -63,7 +63,7 @@ file.
 * The daemon
 
 Commands that need Emacs talk to a daemon under a private server name,
-=org-cli-helper= by default, so your interactive Emacs is never touched. If
+=orgface= by default, so your interactive Emacs is never touched. If
 you would rather share one Emacs, point =daemon.server_name= at it.
 
 - The first command needing Emacs starts the daemon. Cold start costs a few
@@ -150,9 +150,9 @@ properties on the headline. Inactive, because a record of when something was
 written is not something to be done and has no business in your agenda.
 
 #+begin_src org
-* Fixed the thing :home:org_cli_helper:
+* Fixed the thing :home:orgface:
 :PROPERTIES:
-:DIRECTORY: /home/you/dev/org-cli-helper
+:DIRECTORY: /home/you/dev/orgface
 :HOST: yourhost
 :USER: you
 :END:
@@ -169,7 +169,7 @@ The headline tags say where that was:
   directory, so worktrees and submodules are tagged too.
 
 Org accepts only alphanumerics and =_@#= in a tag, so a repository named
-=org-cli-helper= is tagged =org_cli_helper=: runs of anything else collapse
+=orgface= is tagged =orgface=: runs of anything else collapse
 to a single underscore, and a name with nothing usable left in it is not
 tagged at all.
 
@@ -347,7 +347,7 @@ This needs an embedding model. The default expects [[https://github.com/ggml-org
 
 #+begin_src sh
 llama-server -m ~/models/nomic-embed-text-v1.5.Q8_0.gguf --embeddings
-uv sync --extra semantic     # or: pip install 'org-cli-helper[semantic]'
+uv sync --extra semantic     # or: pip install 'orgface[semantic]'
 #+end_src
 
 Passages and questions are embedded differently — nomic-embed-text is
@@ -382,7 +382,7 @@ The =orgfs= backend needs the parser and renderer, which are an optional
 extra so that sqlite-only users need not install them:
 
 #+begin_src sh
-uv sync --extra orgfs        # or: pip install 'org-cli-helper[orgfs]'
+uv sync --extra orgfs        # or: pip install 'orgface[orgfs]'
 #+end_src
 
 *Writing re-renders the whole file.* Everything the model records survives
@@ -492,7 +492,7 @@ The same operations again, over HTTP and as [[https://modelcontextprotocol.io][M
 another program can use the store without shelling out.
 
 #+begin_src sh
-uv sync --extra service      # or: pip install 'org-cli-helper[service]'
+uv sync --extra service      # or: pip install 'orgface[service]'
 
 org serve                    # http://127.0.0.1:8765
 org serve --schema           # print the OpenAPI document, serve nothing
@@ -509,7 +509,7 @@ transport — no socket, no port, nothing else can reach it.
 Point an MCP client at the =org mcp= command:
 
 #+begin_src json
-{"command": "org-cli-helper", "args": ["mcp"]}
+{"command": "orgface", "args": ["mcp"]}
 #+end_src
 
 Twelve tools come out: =list_documents=, =read_document=,
@@ -522,10 +522,10 @@ local tools; it is not something to expose to a network.
 
 * Configuration
 
-org-cli-helper follows the freedesktop XDG conventions. Configuration is
+orgface follows the freedesktop XDG conventions. Configuration is
 read from a file named with =-c/--config=, otherwise from
-=~/.config/org-cli-helper/config.toml=. Cached org-roam locations live
-under =~/.cache/org-cli-helper/=.
+=~/.config/orgface/config.toml=. Cached org-roam locations live
+under =~/.cache/orgface/=.
 
 Layers apply in last-one-wins order:
 
@@ -533,33 +533,33 @@ Layers apply in last-one-wins order:
 
 #+begin_src conf-toml
 [daemon]
-server_name   = "org-cli-helper"  # ORG_CLI_HELPER_SERVER_NAME
-lifetime      = "1h"              # ORG_CLI_HELPER_LIFETIME
-emacs         = "emacs"           # ORG_CLI_HELPER_EMACS
-emacsclient   = "emacsclient"     # ORG_CLI_HELPER_EMACSCLIENT
-start_timeout = "120s"            # ORG_CLI_HELPER_START_TIMEOUT
+server_name   = "orgface"  # ORGFACE_SERVER_NAME
+lifetime      = "1h"              # ORGFACE_LIFETIME
+emacs         = "emacs"           # ORGFACE_EMACS
+emacsclient   = "emacsclient"     # ORGFACE_EMACSCLIENT
+start_timeout = "120s"            # ORGFACE_START_TIMEOUT
 
 [roam]
 # Both are discovered from the daemon and cached when left unset.
-directory         = "~/org/roam"  # ORG_CLI_HELPER_ROAM_DIRECTORY
-dailies_directory = "daily/"      # ORG_CLI_HELPER_DAILIES_DIRECTORY
+directory         = "~/org/roam"  # ORGFACE_ROAM_DIRECTORY
+dailies_directory = "daily/"      # ORGFACE_DAILIES_DIRECTORY
 
 [note]
-topic = "Context Notes"           # ORG_CLI_HELPER_NOTE_TOPIC
+topic = "Context Notes"           # ORGFACE_NOTE_TOPIC
 
 [log]
-pager = "less"                    # ORG_CLI_HELPER_PAGER
+pager = "less"                    # ORGFACE_PAGER
 
 [embed]
-url        = "http://127.0.0.1:8080"   # ORG_CLI_HELPER_EMBED_URL
-model      = "nomic-embed-text-v1.5"   # ORG_CLI_HELPER_EMBED_MODEL
-dimensions = 768                       # ORG_CLI_HELPER_EMBED_DIMENSIONS
+url        = "http://127.0.0.1:8080"   # ORGFACE_EMBED_URL
+model      = "nomic-embed-text-v1.5"   # ORGFACE_EMBED_MODEL
+dimensions = 768                       # ORGFACE_EMBED_DIMENSIONS
 
 [store]
-backend   = "sqlite"       # ORG_CLI_HELPER_STORE_BACKEND: sqlite or orgfs
-database  = "~/.local/state/org-cli-helper/store.sqlite"
-                           # ORG_CLI_HELPER_STORE_DATABASE, for sqlite
-directory = "~/org"        # ORG_CLI_HELPER_STORE_DIRECTORY, for orgfs
+backend   = "sqlite"       # ORGFACE_STORE_BACKEND: sqlite or orgfs
+database  = "~/.local/state/orgface/store.sqlite"
+                           # ORGFACE_STORE_DATABASE, for sqlite
+directory = "~/org"        # ORGFACE_STORE_DIRECTORY, for orgfs
 #+end_src
 
 Durations accept =90s=, =30m=, =1h=, =1h30m=, =2 hours=, =1d=, a bare

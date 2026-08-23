@@ -30,7 +30,7 @@ SCHEMA_DIR = Path(__file__).parent / "schemas"
 SCHEMA_FILE = SCHEMA_DIR / "org-document.schema.json"
 
 SCHEMA_ID = (
-    "https://brettviren.github.io/org-cli-helper/schema/"
+    "https://brettviren.github.io/orgface/schema/"
     f"v{SCHEMA_VERSION}/org-document.schema.json"
 )
 

@@ -1,8 +1,8 @@
-# org-cli-helper: org-store architecture plan
+# orgface: org-store architecture plan
 
 ## 0. What this document is
 
-A design and phased implementation plan for extending `org-cli-helper` from a
+A design and phased implementation plan for extending `orgface` from a
 capture/dailies CLI into an abstracted, multi-backend store for org content,
 with CRUDS operations exposed via Python API, CLI, and MCP.
 
@@ -27,9 +27,9 @@ Before designing anything new, build on what's here. Do not reintroduce a
 second Emacs RPC mechanism, a second CLI framework, or a second config
 system.
 
-- **CLI**: `click`-based, `src/org_cli_helper/cli.py`. A `click.Group`
+- **CLI**: `click`-based, `src/orgface/cli.py`. A `click.Group`
   called `main`, a shared `Context` dataclass carrying `Config`, subcommands
-  registered in `_register()` from `src/org_cli_helper/commands/`. New
+  registered in `_register()` from `src/orgface/commands/`. New
   commands follow this exact pattern — one module per command group under
   `commands/`, added to `_register()`.
 - **Layering rule** (from `CLAUDE.md`, non-negotiable): CLI and UI modules
@@ -38,7 +38,7 @@ system.
   `ui.py`. This maps directly onto the ports-and-adapters shape this plan
   proposes (§3) — the CLI is one adapter among several (CLI, MCP, FastAPI),
   all thin, all calling the same service layer.
-- **Emacs daemon management**: `src/org_cli_helper/emacs.py` already
+- **Emacs daemon management**: `src/orgface/emacs.py` already
   implements a robust ssh-ControlMaster-style daemon: `Emacs.start()`,
   `.stop()`, `.eval(form)`, `.eval_json(form)`, autostart-on-demand, idle
   lifetime, a `bootstrap.el` loaded lazily. **Use this, do not adopt
@@ -49,7 +49,7 @@ system.
   tested (`tests/test_emacs_live.py`), and already solves the hard part —
   getting structured data out of Emacs without reverse-engineering `prin1`
   output — via `elisp.decode_payload`.
-- **Elisp/JSON bridge**: `src/org_cli_helper/elisp.py`. `emacsclient --eval`
+- **Elisp/JSON bridge**: `src/orgface/elisp.py`. `emacsclient --eval`
   prints Elisp's `prin1` representation, which is painful to parse
   faithfully; this repo sidesteps that by having the daemon-side Elisp
   base64-encode a UTF-8 JSON payload and print *that* as a quoted string,
@@ -61,7 +61,7 @@ system.
   something else (`render/` or `orgrender.py`) to avoid confusion; do not
   extend `templates.py` for this purpose.
 - **Config**: XDG-convention, layered env → file → CLI flags
-  (`src/org_cli_helper/config.py`). New settings (store backend selection,
+  (`src/orgface/config.py`). New settings (store backend selection,
   sqlite path, org directory root, embedding model, etc.) belong in this
   existing `Config` dataclass and its `load()` function, following the same
   layering.
@@ -144,7 +144,7 @@ system.
                      ┌────────────────────┼────────────────────┐
              ┌───────▼────────┐  ┌────────▼─────────┐  ┌───────▼─────────┐
              │  CLI adapter   │  │  FastAPI adapter │  │  MCP adapter    │
-             │  (extends the  │  │  (schema +       │  │  (org_cli_helper│
+             │  (extends the  │  │  (schema +       │  │  (orgface│
              │  existing      │  │  optional HTTP)  │  │  .mcp)          │
              │  click app)    │  │                  │  │                 │
              └────────────────┘  └──────────────────┘  └─────────────────┘
@@ -214,13 +214,13 @@ Extend, don't replace, the existing daemon machinery:
 
 1. Add `ox-json` as an Elisp dependency the bootstrap can `require`. Add an
    Elisp function alongside the existing ones in `bootstrap.el` (pattern:
-   look at how `org-cli-helper-info`/`org-cli-helper-commit` are defined),
-   e.g. `org-cli-helper-export-json (path)`, that visits or reuses a buffer
+   look at how `orgface-info`/`orgface-commit` are defined),
+   e.g. `orgface-export-json (path)`, that visits or reuses a buffer
    for `path`, runs `ox-json`'s export, base64-encodes the UTF-8 JSON
    result the same way the existing `commit`/`note` handlers do, and
    returns it.
 2. Add `Emacs.export_json(self, path: Path) -> dict[str, Any]` to
-   `emacs.py`, calling `self.eval_json(elisp.call("org-cli-helper-export-json", str(path)))`.
+   `emacs.py`, calling `self.eval_json(elisp.call("orgface-export-json", str(path)))`.
    This is the entire integration surface with `ox-json` — no new Elisp
    bridge needed, no `pyorg`, no `python-emacs`.
 3. Validate the returned dict against the pydantic model
@@ -374,7 +374,7 @@ rather than being assumed trivial:
   `delete-region`/`insert`, then `save-buffer` — rather than Python editing
   the file on disk. This keeps Emacs's own undo history and any
   buffer-local state (folding, markers) coherent. This needs a new
-  bootstrap.el entry point (e.g. `org-cli-helper-replace-node`) — budget
+  bootstrap.el entry point (e.g. `orgface-replace-node`) — budget
   real design time for this in Phase 5, it is not a small addition.
 - Given the effort/risk here, and that `org-parser`+Jinja2 (§4.4/4.5) is
   independently sufficient for most write traffic, **v1 can treat the
@@ -575,7 +575,7 @@ and does one thing then exits.
 
 ### 7.4 MCP
 
-New module, e.g. `org_cli_helper/mcp.py` or a small `org_store.mcp`
+New module, e.g. `orgface/mcp.py` or a small `org_store.mcp`
 subpackage, exposing CRUDS + search as MCP tools, calling
 `org_store.service` directly (not through the FastAPI HTTP layer — no
 reason to round-trip through HTTP for an in-process MCP server). Worth
@@ -593,10 +593,10 @@ Each phase should be independently mergeable and leave the repo in a
 working, tested state — don't let phases bleed into each other.
 
 **Phase 0 — scaffolding**
-New `org_store` package (top-level module or `src/org_cli_helper/org_store/`
+New `org_store` package (top-level module or `src/orgface/org_store/`
 — decide based on whether this is conceptually a library other tools might
 import independent of the CLI; a top-level `src/org_store/` alongside
-`src/org_cli_helper/` is probably cleaner given the FastAPI/MCP surface).
+`src/orgface/` is probably cleaner given the FastAPI/MCP surface).
 Add `pydantic`, `org-parser`, `jinja2` as dependencies via `uv add`. No
 behavior yet — just structure and CI wiring for schema-drift checks (§4.7).
 
@@ -613,7 +613,7 @@ Implement `StoreBackend` for sqlite (§5.1) against the Phase 1 model
 directly (skip org-file/Emacs backends for now — get CRUD semantics right
 against the simplest backend first). Implement `org_store/service.py`'s
 create/read/replace/delete. Add one CLI command group
-(`org-cli-helper store ...`) to dogfood it early, per this repo's existing
+(`orgface store ...`) to dogfood it early, per this repo's existing
 practice of testing through real usage rather than mocks.
 
 **Phase 3 — symbolic search**
@@ -686,7 +686,7 @@ Collected here so they're not lost in the prose above.
    choose something else for this project specifically — they don't have
    to be the same choice.
 5. **`org_store` package location** (Phase 0): top-level package vs. nested
-   under `org_cli_helper`. Affects how cleanly it can be reused/imported
+   under `orgface`. Affects how cleanly it can be reused/imported
    outside the CLI tool later (e.g., if the FastAPI/MCP surface ever ships
    as its own installable thing).
 6. **LaTeX/footnote-definition upstream fix vs. permanent local

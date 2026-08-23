@@ -10,8 +10,8 @@ from pathlib import Path
 
 import pytest
 
-from org_cli_helper import context
-from org_cli_helper import templates as tmpl
+from orgface import context
+from orgface import templates as tmpl
 
 WHEN = datetime(2026, 8, 4, 13, 45, 2)
 
@@ -29,7 +29,7 @@ class TestOrgTag:
     @pytest.mark.parametrize(
         "name,expected",
         [
-            ("org-cli-helper", "org_cli_helper"),
+            ("orgface", "orgface"),
             ("plain", "plain"),
             ("Mixed_Case9", "Mixed_Case9"),
             ("dots.and spaces", "dots_and_spaces"),

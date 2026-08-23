@@ -14,8 +14,8 @@ from pathlib import Path
 
 import pytest
 
-from org_cli_helper.config import Config
-from org_cli_helper.storage import embedder as build_embedder
+from orgface.config import Config
+from orgface.storage import embedder as build_embedder
 from org_store.backends import SqliteStore
 from org_store.search import SearchQuery
 from org_store.service import OrgStore

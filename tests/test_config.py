@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from org_cli_helper.config import ConfigError, load, parse_duration
+from orgface.config import ConfigError, load, parse_duration
 
 
 class TestParseDuration:
@@ -51,7 +51,7 @@ def isolated(tmp_path, monkeypatch):
 class TestLoad:
     def test_defaults(self, isolated):
         config = load(environ={})
-        assert config.server_name == "org-cli-helper"
+        assert config.server_name == "orgface"
         assert config.lifetime == 3600
         assert config.emacs == "emacs"
         assert config.source is None
@@ -61,7 +61,7 @@ class TestLoad:
         path = isolated / "custom.toml"
         path.write_text('[daemon]\nserver_name = "from-file"\n', encoding="utf-8")
         config = load(
-            path=path, environ={"ORG_CLI_HELPER_SERVER_NAME": "from-env"}
+            path=path, environ={"ORGFACE_SERVER_NAME": "from-env"}
         )
         assert config.server_name == "from-file"
         assert config.source == path
@@ -70,7 +70,7 @@ class TestLoad:
         path = isolated / "custom.toml"
         path.write_text('[daemon]\nlifetime = "5m"\n', encoding="utf-8")
         config = load(
-            path=path, environ={"ORG_CLI_HELPER_SERVER_NAME": "from-env"}
+            path=path, environ={"ORGFACE_SERVER_NAME": "from-env"}
         )
         assert config.server_name == "from-env"
         assert config.lifetime == 300
@@ -81,7 +81,7 @@ class TestLoad:
         config = load(
             path=path,
             overrides={"server_name": "from-cli"},
-            environ={"ORG_CLI_HELPER_SERVER_NAME": "from-env"},
+            environ={"ORGFACE_SERVER_NAME": "from-env"},
         )
         assert config.server_name == "from-cli"
 
@@ -95,7 +95,7 @@ class TestLoad:
         assert config.lifetime == 3600
 
     def test_xdg_config_is_found(self, isolated):
-        target = isolated / "config" / "org-cli-helper" / "config.toml"
+        target = isolated / "config" / "orgface" / "config.toml"
         target.parent.mkdir(parents=True)
         target.write_text('[daemon]\nlifetime = "15m"\n', encoding="utf-8")
         config = load(environ={})

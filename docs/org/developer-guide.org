@@ -7,7 +7,7 @@
 #+source: CLAUDE.md
 #+source: ARCHITECTURE-PLAN.md
 
-For someone changing org-cli-helper. The same pages as the
+For someone changing orgface. The same pages as the
 [[file:user-guide.org][user guide]] and several more, ordered for a reader who needs to know why
 the code is shaped as it is before touching it.
 

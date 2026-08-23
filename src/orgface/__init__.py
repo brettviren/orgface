@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Brett Viren <brett.viren@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""org-cli-helper: do some Emacs org things quickly from the command line."""
+"""orgface: do some Emacs org things quickly from the command line."""
 
 from __future__ import annotations
 

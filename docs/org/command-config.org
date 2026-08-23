@@ -4,7 +4,7 @@
 #+audience: user
 #+status: current
 #+updated: 2026-08-23
-#+source: src/org_cli_helper/commands/config.py
+#+source: src/orgface/commands/config.py
 
 Inspect configuration and cached state. Three subcommands, none of which
 change anything except the cache.

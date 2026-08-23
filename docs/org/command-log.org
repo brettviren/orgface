@@ -4,8 +4,8 @@
 #+audience: user
 #+status: current
 #+updated: 2026-08-23
-#+source: src/org_cli_helper/commands/log.py
-#+source: src/org_cli_helper/dailies.py
+#+source: src/orgface/commands/log.py
+#+source: src/orgface/dailies.py
 
 Show recent [[file:daily-notes.org][daily note]] entries, newest first, through your pager. Each top
 level heading in a daily note is one entry, which makes this the analogue

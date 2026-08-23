@@ -74,8 +74,8 @@ Through the store, not with an editor writing into =docs/org/= directly —
 though that works too, since the files *are* the storage.
 
 #+begin_src sh
-export ORG_CLI_HELPER_STORE_BACKEND=orgfs
-export ORG_CLI_HELPER_STORE_DIRECTORY=docs/org
+export ORGFACE_STORE_BACKEND=orgfs
+export ORGFACE_STORE_DIRECTORY=docs/org
 org store add newpage.org --id newpage.org
 org store list
 org store show node-refs.org

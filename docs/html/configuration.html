@@ -47,34 +47,34 @@ option beats both, and an option left unset does not count as a value, so
 it cannot clobber a lower layer with <code>None</code>.
 </p>
 <p>The file is named with <code>-c/--config</code>, or found at
-<code>~/.config/org-cli-helper/config.toml</code> — see <a href="xdg-locations.html">XDG locations</a>.
+<code>~/.config/orgface/config.toml</code> — see <a href="xdg-locations.html">XDG locations</a>.
 </p>
 <h2>The settings</h2>
 <pre class="src"><code class="language-conf-toml">[daemon]
-server_name   = &#34;org-cli-helper&#34;  # ORG_CLI_HELPER_SERVER_NAME
-lifetime      = &#34;1h&#34;              # ORG_CLI_HELPER_LIFETIME
-emacs         = &#34;emacs&#34;           # ORG_CLI_HELPER_EMACS
-emacsclient   = &#34;emacsclient&#34;     # ORG_CLI_HELPER_EMACSCLIENT
-start_timeout = &#34;120s&#34;            # ORG_CLI_HELPER_START_TIMEOUT
+server_name   = &#34;orgface&#34;  # ORGFACE_SERVER_NAME
+lifetime      = &#34;1h&#34;              # ORGFACE_LIFETIME
+emacs         = &#34;emacs&#34;           # ORGFACE_EMACS
+emacsclient   = &#34;emacsclient&#34;     # ORGFACE_EMACSCLIENT
+start_timeout = &#34;120s&#34;            # ORGFACE_START_TIMEOUT
 
 [roam]
-directory         = &#34;~/org/roam&#34;  # ORG_CLI_HELPER_ROAM_DIRECTORY
-dailies_directory = &#34;daily/&#34;      # ORG_CLI_HELPER_DAILIES_DIRECTORY
+directory         = &#34;~/org/roam&#34;  # ORGFACE_ROAM_DIRECTORY
+dailies_directory = &#34;daily/&#34;      # ORGFACE_DAILIES_DIRECTORY
 
 [note]
-topic = &#34;Context Notes&#34;           # ORG_CLI_HELPER_NOTE_TOPIC
+topic = &#34;Context Notes&#34;           # ORGFACE_NOTE_TOPIC
 
 [log]
-pager = &#34;less&#34;                    # ORG_CLI_HELPER_PAGER
+pager = &#34;less&#34;                    # ORGFACE_PAGER
 
 [embed]
-url        = &#34;http://127.0.0.1:8080&#34;   # ORG_CLI_HELPER_EMBED_URL
-model      = &#34;nomic-embed-text-v1.5&#34;   # ORG_CLI_HELPER_EMBED_MODEL
-dimensions = 768                       # ORG_CLI_HELPER_EMBED_DIMENSIONS
+url        = &#34;http://127.0.0.1:8080&#34;   # ORGFACE_EMBED_URL
+model      = &#34;nomic-embed-text-v1.5&#34;   # ORGFACE_EMBED_MODEL
+dimensions = 768                       # ORGFACE_EMBED_DIMENSIONS
 
 [store]
-backend   = &#34;sqlite&#34;       # ORG_CLI_HELPER_STORE_BACKEND
-database  = &#34;~/.local/state/org-cli-helper/store.sqlite&#34;
+backend   = &#34;sqlite&#34;       # ORGFACE_STORE_BACKEND
+database  = &#34;~/.local/state/orgface/store.sqlite&#34;
 directory = &#34;~/org&#34;        # for the orgfs and emacs backends
 </code></pre>
 <p>An unknown section or key in the file is reported by name rather than

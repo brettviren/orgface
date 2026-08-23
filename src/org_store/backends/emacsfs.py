@@ -38,7 +38,7 @@ class OrgExporter(Protocol):
 
     A port rather than an import: :mod:`org_store` is a library the CLI
     uses, not the other way round, so it declares what it needs and the
-    CLI supplies something that does it.  ``org_cli_helper.emacs.Emacs``
+    CLI supplies something that does it.  ``orgface.emacs.Emacs``
     satisfies this as it stands.
     """
 

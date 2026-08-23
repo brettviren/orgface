@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from org_cli_helper.cli import main
+from orgface.cli import main
 
 DATA = Path(__file__).parent / "data"
 
@@ -18,7 +18,7 @@ DATA = Path(__file__).parent / "data"
 def stocked(tmp_path, monkeypatch, runner):
     """A store holding both fixtures, pointed at by configuration."""
     monkeypatch.setenv(
-        "ORG_CLI_HELPER_STORE_DATABASE", str(tmp_path / "store.sqlite")
+        "ORGFACE_STORE_DATABASE", str(tmp_path / "store.sqlite")
     )
     for name, doc_id in (
         ("fixture.ox-json.json", "fixture.org"),

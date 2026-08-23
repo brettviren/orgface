@@ -4,8 +4,8 @@
 #+audience: user
 #+status: current
 #+updated: 2026-08-23
-#+source: src/org_cli_helper/dailies.py
-#+source: src/org_cli_helper/locations.py
+#+source: src/orgface/dailies.py
+#+source: src/orgface/locations.py
 
 A daily note is the org-roam file for one date, named =YYYY-MM-DD.org= by
 the stock dailies target and living under =org-roam-dailies-directory=.

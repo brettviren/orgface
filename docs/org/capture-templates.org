@@ -4,7 +4,7 @@
 #+audience: both
 #+status: current
 #+updated: 2026-08-23
-#+source: src/org_cli_helper/templates.py
+#+source: src/orgface/templates.py
 #+source: tests/test_templates.py
 
 [[file:command-commit.org][org commit]] writes through =org-roam-dailies-capture-today=, so the

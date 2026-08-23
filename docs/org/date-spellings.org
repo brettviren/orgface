@@ -4,7 +4,7 @@
 #+audience: both
 #+status: current
 #+updated: 2026-08-23
-#+source: src/org_cli_helper/dates.py
+#+source: src/orgface/dates.py
 #+source: tests/test_dates.py
 
 [[file:command-log.org][org log]] and [[file:command-visit.org][org visit]] take dates in the forms people actually type at

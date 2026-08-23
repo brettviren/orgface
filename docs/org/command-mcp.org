@@ -4,7 +4,7 @@
 #+audience: user
 #+status: current
 #+updated: 2026-08-23
-#+source: src/org_cli_helper/commands/serve.py
+#+source: src/orgface/commands/serve.py
 #+source: src/org_store/mcp.py
 
 Speak [[https://modelcontextprotocol.io][MCP]] on stdin and stdout, so an agent can use the store without
@@ -20,7 +20,7 @@ org mcp --list-tools   # what an agent would see
 Point an MCP client at the command:
 
 #+begin_src json
-{"command": "org-cli-helper", "args": ["mcp"]}
+{"command": "orgface", "args": ["mcp"]}
 #+end_src
 
 * The tools are generated

@@ -4,18 +4,18 @@
 #+audience: both
 #+status: current
 #+updated: 2026-08-23
-#+source: src/org_cli_helper/xdgpaths.py
-#+source: src/org_cli_helper/cache.py
+#+source: src/orgface/xdgpaths.py
+#+source: src/orgface/cache.py
 
-org-cli-helper follows the freedesktop XDG base directory convention. Each
+orgface follows the freedesktop XDG base directory convention. Each
 of the three kinds of file has one home, and the distinction between them
 is not cosmetic: it says what is safe to delete.
 
-- Configuration :: =$XDG_CONFIG_HOME/org-cli-helper/= (=~/.config/…=), holding
+- Configuration :: =$XDG_CONFIG_HOME/orgface/= (=~/.config/…=), holding
   =config.toml=. Written by you, never by the tool.
-- State :: =$XDG_STATE_HOME/org-cli-helper/= (=~/.local/state/…=), holding
+- State :: =$XDG_STATE_HOME/orgface/= (=~/.local/state/…=), holding
   a store with nowhere else to live. Deleting it loses content.
-- Cache :: =$XDG_CACHE_HOME/org-cli-helper/= (=~/.cache/…=), holding
+- Cache :: =$XDG_CACHE_HOME/orgface/= (=~/.cache/…=), holding
   org-roam locations. Deleting it costs one round trip to the daemon.
 
 What lives in state is the default sqlite database and the default org

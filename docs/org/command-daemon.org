@@ -4,8 +4,8 @@
 #+audience: user
 #+status: current
 #+updated: 2026-08-23
-#+source: src/org_cli_helper/commands/daemon.py
-#+source: src/org_cli_helper/emacs.py
+#+source: src/orgface/commands/daemon.py
+#+source: src/orgface/emacs.py
 
 The [[file:emacs-daemon.org][daemon]] starts by itself when a command needs it and exits after the
 configured idle lifetime, so these subcommands are for when you want to

@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from org_cli_helper.rendering import (
+from orgface.rendering import (
     DEFAULT_DIRECTORY,
     RenderError,
     destinations,

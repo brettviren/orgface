@@ -5,7 +5,7 @@
 #+status: current
 #+updated: 2026-08-23
 #+source: CLAUDE.md
-#+source: src/org_cli_helper/commands/__init__.py
+#+source: src/orgface/commands/__init__.py
 
 The rule, from =CLAUDE.md= and non-negotiable: *CLI and UI modules contain
 no data processing logic.* Commands parse arguments and call into data

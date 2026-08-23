@@ -16,9 +16,9 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
-from org_cli_helper.cli import main
-from org_cli_helper.config import Config
-from org_cli_helper.emacs import DaemonError, Emacs
+from orgface.cli import main
+from orgface.config import Config
+from orgface.emacs import DaemonError, Emacs
 from org_store.adapters.orgparser import parse
 from org_store.export import render
 from org_store.export.emacs import OrgExportEngine
@@ -27,7 +27,7 @@ pytestmark = pytest.mark.emacs
 
 DATA = Path(__file__).parent / "data"
 
-SERVER = "org-cli-helper-render-test"
+SERVER = "orgface-render-test"
 
 PAGE = "#+title: Rendered by Emacs\n\n* A heading\n\nSome *text* here.\n"
 
@@ -87,9 +87,9 @@ def test_the_command_renders_through_emacs(tmp_path, monkeypatch) -> None:
     root = tmp_path / "notes"
     root.mkdir()
     (root / "notes.org").write_text(PAGE, encoding="utf-8")
-    monkeypatch.setenv("ORG_CLI_HELPER_STORE_BACKEND", "orgfs")
-    monkeypatch.setenv("ORG_CLI_HELPER_STORE_DIRECTORY", str(root))
-    monkeypatch.setenv("ORG_CLI_HELPER_SERVER_NAME", SERVER)
+    monkeypatch.setenv("ORGFACE_STORE_BACKEND", "orgfs")
+    monkeypatch.setenv("ORGFACE_STORE_DIRECTORY", str(root))
+    monkeypatch.setenv("ORGFACE_SERVER_NAME", SERVER)
     monkeypatch.chdir(tmp_path)
 
     result = CliRunner().invoke(main, ["render", "notes.org", "-m", "emacs"])

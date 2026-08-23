@@ -4,7 +4,7 @@
 """Command line entry point.
 
 Argument parsing and process exit only.  Every command delegates to the
-data modules and to :mod:`org_cli_helper.ui` for rendering.
+data modules and to :mod:`orgface.ui` for rendering.
 """
 
 from __future__ import annotations
@@ -57,7 +57,7 @@ pass_context = click.make_pass_decorator(Context)
 )
 @click.option("--emacs", metavar="PROGRAM", help="The emacs executable.")
 @click.option("--emacsclient", metavar="PROGRAM", help="The emacsclient executable.")
-@click.version_option(__version__, "-V", "--version", prog_name="org-cli-helper")
+@click.version_option(__version__, "-V", "--version", prog_name="orgface")
 @click.pass_context
 def main(
     ctx: click.Context,

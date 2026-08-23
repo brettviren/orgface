@@ -28,13 +28,13 @@ def isolated_environment(tmp_path, monkeypatch):
     """Keep every test away from the developer's own org files.
 
     Configuration is layered environment -> file -> command line, so a
-    real ``~/.config/org-cli-helper/config.toml`` beats the environment
+    real ``~/.config/orgface/config.toml`` beats the environment
     variables a test sets and would aim the store at the user's notes.
     Pointing XDG at a scratch tree, and dropping any ambient
-    ``ORG_CLI_HELPER_*`` setting, makes a test read only what it says.
+    ``ORGFACE_*`` setting, makes a test read only what it says.
     """
     for variable in list(os.environ):
-        if variable.startswith("ORG_CLI_HELPER_"):
+        if variable.startswith("ORGFACE_"):
             monkeypatch.delenv(variable, raising=False)
     xdg = tmp_path / "xdg"
     monkeypatch.setenv("XDG_CONFIG_HOME", str(xdg / "config"))

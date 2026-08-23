@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Brett Viren <brett.viren@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""Freedesktop XDG base directory locations for org-cli-helper.
+"""Freedesktop XDG base directory locations for orgface.
 
 Pure path computation.  Nothing here creates directories or touches the
 filesystem except :func:`ensure_dir`, which callers invoke explicitly.
@@ -12,7 +12,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-APP_NAME = "org-cli-helper"
+APP_NAME = "orgface"
 
 
 def _home(env: str, default: str) -> Path:

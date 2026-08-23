@@ -10,7 +10,7 @@ import json
 
 import pytest
 
-from org_cli_helper.elisp import (
+from orgface.elisp import (
     ElispError,
     call,
     decode_payload,

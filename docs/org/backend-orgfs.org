@@ -16,8 +16,8 @@ A file you wrote by hand is already in the store. Nothing has to be
 imported.
 
 #+begin_src sh
-export ORG_CLI_HELPER_STORE_BACKEND=orgfs
-export ORG_CLI_HELPER_STORE_DIRECTORY=~/org/wiki
+export ORGFACE_STORE_BACKEND=orgfs
+export ORGFACE_STORE_DIRECTORY=~/org/wiki
 org store list
 #+end_src
 

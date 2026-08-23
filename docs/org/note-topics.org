@@ -4,8 +4,8 @@
 #+audience: user
 #+status: current
 #+updated: 2026-08-23
-#+source: src/org_cli_helper/commands/note.py
-#+source: src/org_cli_helper/commands/visit.py
+#+source: src/orgface/commands/note.py
+#+source: src/orgface/commands/visit.py
 
 A topic is an org-roam node that [[file:command-note.org][org note]] files entries under, in place of
 a date. The default is one titled =Context Notes=; =-T/--topic= names

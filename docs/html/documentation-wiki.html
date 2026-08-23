@@ -102,8 +102,8 @@ renderer on real prose rather than on a fixture written to please them.
 <p>Through the store, not with an editor writing into <code>docs/org/</code> directly —
 though that works too, since the files <strong>are</strong> the storage.
 </p>
-<pre class="src"><code class="language-sh">export ORG_CLI_HELPER_STORE_BACKEND=orgfs
-export ORG_CLI_HELPER_STORE_DIRECTORY=docs/org
+<pre class="src"><code class="language-sh">export ORGFACE_STORE_BACKEND=orgfs
+export ORGFACE_STORE_DIRECTORY=docs/org
 org store add newpage.org --id newpage.org
 org store list
 org store show node-refs.org

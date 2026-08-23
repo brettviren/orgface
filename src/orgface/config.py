@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Brett Viren <brett.viren@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""Layered configuration for org-cli-helper.
+"""Layered configuration for orgface.
 
 Settings are declared once in :data:`SETTINGS` and resolved in
 last-one-wins order:
@@ -9,7 +9,7 @@ last-one-wins order:
     built-in defaults -> environment variables -> config file -> CLI options
 
 The config file is TOML, either named explicitly or found at
-``$XDG_CONFIG_HOME/org-cli-helper/config.toml``.
+``$XDG_CONFIG_HOME/orgface/config.toml``.
 """
 
 from __future__ import annotations
@@ -153,8 +153,8 @@ SETTINGS: tuple[Setting, ...] = (
         "server_name",
         "daemon",
         "server_name",
-        "ORG_CLI_HELPER_SERVER_NAME",
-        "org-cli-helper",
+        "ORGFACE_SERVER_NAME",
+        "orgface",
         parse_str,
         "Emacs server name used for the managed daemon.",
     ),
@@ -162,7 +162,7 @@ SETTINGS: tuple[Setting, ...] = (
         "lifetime",
         "daemon",
         "lifetime",
-        "ORG_CLI_HELPER_LIFETIME",
+        "ORGFACE_LIFETIME",
         "1h",
         parse_duration,
         "Idle time before the daemon exits; 'never' disables expiry.",
@@ -171,7 +171,7 @@ SETTINGS: tuple[Setting, ...] = (
         "emacs",
         "daemon",
         "emacs",
-        "ORG_CLI_HELPER_EMACS",
+        "ORGFACE_EMACS",
         "emacs",
         parse_str,
         "The emacs executable used to start the daemon.",
@@ -180,7 +180,7 @@ SETTINGS: tuple[Setting, ...] = (
         "emacsclient",
         "daemon",
         "emacsclient",
-        "ORG_CLI_HELPER_EMACSCLIENT",
+        "ORGFACE_EMACSCLIENT",
         "emacsclient",
         parse_str,
         "The emacsclient executable used to talk to the daemon.",
@@ -189,7 +189,7 @@ SETTINGS: tuple[Setting, ...] = (
         "start_timeout",
         "daemon",
         "start_timeout",
-        "ORG_CLI_HELPER_START_TIMEOUT",
+        "ORGFACE_START_TIMEOUT",
         "120s",
         parse_duration,
         "How long to wait for a starting daemon to become ready.",
@@ -198,7 +198,7 @@ SETTINGS: tuple[Setting, ...] = (
         "roam_directory",
         "roam",
         "directory",
-        "ORG_CLI_HELPER_ROAM_DIRECTORY",
+        "ORGFACE_ROAM_DIRECTORY",
         None,
         parse_path,
         "org-roam-directory; discovered from the daemon when unset.",
@@ -207,7 +207,7 @@ SETTINGS: tuple[Setting, ...] = (
         "dailies_directory",
         "roam",
         "dailies_directory",
-        "ORG_CLI_HELPER_DAILIES_DIRECTORY",
+        "ORGFACE_DAILIES_DIRECTORY",
         None,
         parse_str,
         "org-roam-dailies-directory; discovered from the daemon when unset.",
@@ -216,7 +216,7 @@ SETTINGS: tuple[Setting, ...] = (
         "note_topic",
         "note",
         "topic",
-        "ORG_CLI_HELPER_NOTE_TOPIC",
+        "ORGFACE_NOTE_TOPIC",
         "Context Notes",
         parse_str,
         "org-roam topic 'note' captures into; -T/--topic overrides it.",
@@ -225,7 +225,7 @@ SETTINGS: tuple[Setting, ...] = (
         "pager",
         "log",
         "pager",
-        "ORG_CLI_HELPER_PAGER",
+        "ORGFACE_PAGER",
         None,
         parse_str,
         "Pager for 'log' output; falls back to $PAGER then less/more.",
@@ -234,7 +234,7 @@ SETTINGS: tuple[Setting, ...] = (
         "store_backend",
         "store",
         "backend",
-        "ORG_CLI_HELPER_STORE_BACKEND",
+        "ORGFACE_STORE_BACKEND",
         "sqlite",
         parse_str,
         "Which store backend holds org content.",
@@ -243,7 +243,7 @@ SETTINGS: tuple[Setting, ...] = (
         "store_database",
         "store",
         "database",
-        "ORG_CLI_HELPER_STORE_DATABASE",
+        "ORGFACE_STORE_DATABASE",
         None,
         parse_path,
         "Sqlite file for the 'sqlite' store; defaults under the XDG state dir.",
@@ -252,7 +252,7 @@ SETTINGS: tuple[Setting, ...] = (
         "embed_url",
         "embed",
         "url",
-        "ORG_CLI_HELPER_EMBED_URL",
+        "ORGFACE_EMBED_URL",
         "http://127.0.0.1:8080",
         parse_str,
         "Where llama-server serves the embedding model.",
@@ -261,7 +261,7 @@ SETTINGS: tuple[Setting, ...] = (
         "embed_model",
         "embed",
         "model",
-        "ORG_CLI_HELPER_EMBED_MODEL",
+        "ORGFACE_EMBED_MODEL",
         "nomic-embed-text-v1.5",
         parse_str,
         "Which embedding model; recorded with every vector it produces.",
@@ -270,7 +270,7 @@ SETTINGS: tuple[Setting, ...] = (
         "embed_dimensions",
         "embed",
         "dimensions",
-        "ORG_CLI_HELPER_EMBED_DIMENSIONS",
+        "ORGFACE_EMBED_DIMENSIONS",
         768,
         parse_int,
         "How many numbers the embedding model returns per vector.",
@@ -279,7 +279,7 @@ SETTINGS: tuple[Setting, ...] = (
         "store_directory",
         "store",
         "directory",
-        "ORG_CLI_HELPER_STORE_DIRECTORY",
+        "ORGFACE_STORE_DIRECTORY",
         None,
         parse_path,
         "Org file directory for the 'orgfs' store; defaults under XDG state.",
@@ -293,7 +293,7 @@ _BY_NAME = {setting.name: setting for setting in SETTINGS}
 class Config:
     """Fully resolved configuration."""
 
-    server_name: str = "org-cli-helper"
+    server_name: str = "orgface"
     lifetime: int | None = 3600
     emacs: str = "emacs"
     emacsclient: str = "emacsclient"

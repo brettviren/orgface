@@ -23,10 +23,10 @@ from pathlib import Path
 
 import pytest
 
-from org_cli_helper import context, elisp
-from org_cli_helper.config import Config
-from org_cli_helper.emacs import Emacs
-from org_cli_helper.templates import Template, fill
+from orgface import context, elisp
+from orgface.config import Config
+from orgface.emacs import Emacs
+from orgface.templates import Template, fill
 
 pytestmark = pytest.mark.emacs
 

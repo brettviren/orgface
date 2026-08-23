@@ -9,7 +9,7 @@ from datetime import datetime
 
 import pytest
 
-from org_cli_helper.dates import DateError, day_bounds, parse, parse_bound
+from orgface.dates import DateError, day_bounds, parse, parse_bound
 
 NOW = datetime(2026, 7, 31, 14, 30, 0)
 

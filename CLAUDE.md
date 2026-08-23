@@ -1,4 +1,4 @@
-# org-cli-helper
+# orgface
 
 Do some Emacs org things quickly from the command line.
 
@@ -6,7 +6,7 @@ Do some Emacs org things quickly from the command line.
 The main entry is a command line program based on Click:
 
 ```
-org-cli-helper [general-options] <command> [command-options-and-arguments]
+orgface [general-options] <command> [command-options-and-arguments]
 ```
 
 CLI commands do something and then exit. With some exceptions, every command emits a help message if given neither options nor arguments. An explicit `-h/--help` is accepted by every command and exits ignoring other arguments.
@@ -18,13 +18,13 @@ The implementation is well factored and layered. CLI and UI modules contain no d
 Tests live in `tests/` and run with `uv run pytest`. Write tests for new functionality. Keep tests focused and independent; avoid mocking internals.
 
 
-org-cli-helper uses `uv` for development.
+orgface uses `uv` for development.
 
 ```
 uv sync              # update development area after changes to pyproject.toml
 uv run pytest        # run unit tests
-uv run org-cli-helper  # run CLI
+uv run orgface       # run CLI
 ```
 
 
-org-cli-helper follows freedesktop's XDG convention to locate configuration files, hold state, and use file cache. It accepts a `config.toml` on the command line or looks for one at `~/.config/org-cli-helper/config.toml`. Configuration is layered in last-one-wins order: environment variables → config file → command line options.
+orgface follows freedesktop's XDG convention to locate configuration files, hold state, and use file cache. It accepts a `config.toml` on the command line or looks for one at `~/.config/orgface/config.toml`. Configuration is layered in last-one-wins order: environment variables → config file → command line options.

@@ -1,4 +1,4 @@
-#+title: org-cli-helper documentation
+#+title: orgface documentation
 
 - [[file:org/][As org files]]
 - [[file:html/index.html][As html files]]

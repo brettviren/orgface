@@ -4,14 +4,14 @@
 #+audience: user
 #+status: current
 #+updated: 2026-08-23
-#+source: src/org_cli_helper/commands/serve.py
+#+source: src/orgface/commands/serve.py
 #+source: src/org_store/api.py
 
 Serve the store over HTTP: the same operations [[file:command-store.org][org store]] and
 [[file:command-search.org][org search]] offer, as a typed JSON API.
 
 #+begin_src sh
-uv sync --extra service      # or: pip install 'org-cli-helper[service]'
+uv sync --extra service      # or: pip install 'orgface[service]'
 
 org serve                    # http://127.0.0.1:8765
 org serve --host 0.0.0.0 --port 9000

@@ -4,7 +4,7 @@
 #+audience: user
 #+status: current
 #+updated: 2026-08-23
-#+source: src/org_cli_helper/commands/store.py
+#+source: src/orgface/commands/store.py
 #+source: tests/test_cli_store.py
 
 The command surface of [[file:content-store.org][the content store]].

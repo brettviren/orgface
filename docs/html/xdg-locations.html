@@ -32,21 +32,21 @@
 <main>
 <h1 class="title">XDG locations</h1>
 <p class="filetags"><span class="tag">reference</span> <span class="tag">user</span> <span class="tag">config</span> </p>
-<p>org-cli-helper follows the freedesktop XDG base directory convention. Each
+<p>orgface follows the freedesktop XDG base directory convention. Each
 of the three kinds of file has one home, and the distinction between them
 is not cosmetic: it says what is safe to delete.
 </p>
 <dl>
 <dt>Configuration</dt>
-<dd><code>$XDG_CONFIG_HOME/org-cli-helper/</code> (<code>~/.config/…</code>), holding
+<dd><code>$XDG_CONFIG_HOME/orgface/</code> (<code>~/.config/…</code>), holding
 <code>config.toml</code>. Written by you, never by the tool.
 </dd>
 <dt>State</dt>
-<dd>=$XDG_STATE_HOME/org-cli-helper/= (<code>~/.local/state/…</code>), holding
+<dd>=$XDG_STATE_HOME/orgface/= (<code>~/.local/state/…</code>), holding
 a store with nowhere else to live. Deleting it loses content.
 </dd>
 <dt>Cache</dt>
-<dd>=$XDG_CACHE_HOME/org-cli-helper/= (<code>~/.cache/…</code>), holding
+<dd>=$XDG_CACHE_HOME/orgface/= (<code>~/.cache/…</code>), holding
 org-roam locations. Deleting it costs one round trip to the daemon.
 </dd>
 </dl>

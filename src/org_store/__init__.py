@@ -9,7 +9,7 @@ ingestion path -- Emacs/``ox-json``, or ``org-parser`` without Emacs --
 produces that same shape, so everything above it (storage, search, sync,
 and the CLI/MCP adapters) is written once against one model.
 
-This package deliberately does not import :mod:`org_cli_helper`; it is a
+This package deliberately does not import :mod:`orgface`; it is a
 library the CLI uses, not the other way round.
 """
 

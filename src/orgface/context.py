@@ -6,7 +6,7 @@
 ``org note`` records not only what was written but where and when: the
 working directory, the host, the user, and the time to the second.  Those
 facts are gathered here and turned into an ordinary capture template body,
-so a note is selected, filled and escaped by :mod:`org_cli_helper.templates`
+so a note is selected, filled and escaped by :mod:`orgface.templates`
 by exactly the same route as a commit.
 
 Nothing here reads a clock or an environment on its own behalf --
@@ -49,7 +49,7 @@ def org_tag(text: str) -> str:
     """Reduce TEXT to something org will accept as a headline tag.
 
     Org allows only alphanumerics and ``_@#`` in a tag, so a directory
-    named ``org-cli-helper`` cannot be one as it stands; runs of anything
+    named ``orgface`` cannot be one as it stands; runs of anything
     else collapse to a single underscore.  Returns ``""`` when nothing
     usable is left.
     """
@@ -162,7 +162,7 @@ def note_template(
     """Build the capture template that records CONTEXT.
 
     The result is shaped like any other capture template, which is the
-    point: :func:`~org_cli_helper.templates.fill` puts a ``-m`` title in
+    point: :func:`~orgface.templates.fill` puts a ``-m`` title in
     the ``%^{Title}`` prompt and the body at ``%?``, escaping both, and
     left unfilled that same prompt asks Emacs' user for the title.
 

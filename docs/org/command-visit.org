@@ -4,7 +4,7 @@
 #+audience: user
 #+status: current
 #+updated: 2026-08-23
-#+source: src/org_cli_helper/commands/visit.py
+#+source: src/orgface/commands/visit.py
 
 Open a note in Emacs, in a frame of its own, without waiting for you to
 close it.

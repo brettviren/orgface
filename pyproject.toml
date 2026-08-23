@@ -1,5 +1,5 @@
 [project]
-name = "org-cli-helper"
+name = "orgface"
 version = "0.1.0"
 description = "Do some Emacs org things quickly from the command line"
 readme = {file = "README.org", content-type = "text/org"}
@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.scripts]
-org-cli-helper = "org_cli_helper:main"
+orgface = "orgface:main"
 
 [project.optional-dependencies]
 orgfs = [
@@ -38,7 +38,7 @@ requires = ["setuptools>=77.0.3"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.package-data]
-org_cli_helper = ["*.el"]
+orgface = ["*.el"]
 org_store = [
     "schemas/*.json",
     "render/templates/*.j2",
@@ -50,7 +50,7 @@ dev = [
     "pytest>=8",
     # The tests cover every backend and both service front ends, so a
     # development area needs the extras a user picks and chooses.
-    "org-cli-helper[orgfs,semantic,service]",
+    "orgface[orgfs,semantic,service]",
 ]
 
 [tool.pytest.ini_options]

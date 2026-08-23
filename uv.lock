@@ -773,7 +773,7 @@ wheels = [
 ]
 
 [[package]]
-name = "org-cli-helper"
+name = "orgface"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
@@ -796,7 +796,7 @@ service = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "org-cli-helper", extra = ["orgfs", "semantic", "service"] },
+    { name = "orgface", extra = ["orgfs", "semantic", "service"] },
     { name = "pytest" },
 ]
 
@@ -814,7 +814,7 @@ provides-extras = ["orgfs", "semantic", "service"]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "org-cli-helper", extras = ["orgfs", "semantic", "service"] },
+    { name = "orgface", extras = ["orgfs", "semantic", "service"] },
     { name = "pytest", specifier = ">=8" },
 ]
 

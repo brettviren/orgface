@@ -4,8 +4,8 @@
 #+audience: both
 #+status: current
 #+updated: 2026-08-23
-#+source: src/org_cli_helper/config.py
-#+source: src/org_cli_helper/commands/config.py
+#+source: src/orgface/config.py
+#+source: src/orgface/commands/config.py
 #+source: tests/test_config.py
 
 Every setting is declared once, in =SETTINGS= in =config.py=, with its
@@ -25,36 +25,36 @@ option beats both, and an option left unset does not count as a value, so
 it cannot clobber a lower layer with =None=.
 
 The file is named with =-c/--config=, or found at
-=~/.config/org-cli-helper/config.toml= — see [[file:xdg-locations.org][XDG locations]].
+=~/.config/orgface/config.toml= — see [[file:xdg-locations.org][XDG locations]].
 
 * The settings
 
 #+begin_src conf-toml
 [daemon]
-server_name   = "org-cli-helper"  # ORG_CLI_HELPER_SERVER_NAME
-lifetime      = "1h"              # ORG_CLI_HELPER_LIFETIME
-emacs         = "emacs"           # ORG_CLI_HELPER_EMACS
-emacsclient   = "emacsclient"     # ORG_CLI_HELPER_EMACSCLIENT
-start_timeout = "120s"            # ORG_CLI_HELPER_START_TIMEOUT
+server_name   = "orgface"  # ORGFACE_SERVER_NAME
+lifetime      = "1h"              # ORGFACE_LIFETIME
+emacs         = "emacs"           # ORGFACE_EMACS
+emacsclient   = "emacsclient"     # ORGFACE_EMACSCLIENT
+start_timeout = "120s"            # ORGFACE_START_TIMEOUT
 
 [roam]
-directory         = "~/org/roam"  # ORG_CLI_HELPER_ROAM_DIRECTORY
-dailies_directory = "daily/"      # ORG_CLI_HELPER_DAILIES_DIRECTORY
+directory         = "~/org/roam"  # ORGFACE_ROAM_DIRECTORY
+dailies_directory = "daily/"      # ORGFACE_DAILIES_DIRECTORY
 
 [note]
-topic = "Context Notes"           # ORG_CLI_HELPER_NOTE_TOPIC
+topic = "Context Notes"           # ORGFACE_NOTE_TOPIC
 
 [log]
-pager = "less"                    # ORG_CLI_HELPER_PAGER
+pager = "less"                    # ORGFACE_PAGER
 
 [embed]
-url        = "http://127.0.0.1:8080"   # ORG_CLI_HELPER_EMBED_URL
-model      = "nomic-embed-text-v1.5"   # ORG_CLI_HELPER_EMBED_MODEL
-dimensions = 768                       # ORG_CLI_HELPER_EMBED_DIMENSIONS
+url        = "http://127.0.0.1:8080"   # ORGFACE_EMBED_URL
+model      = "nomic-embed-text-v1.5"   # ORGFACE_EMBED_MODEL
+dimensions = 768                       # ORGFACE_EMBED_DIMENSIONS
 
 [store]
-backend   = "sqlite"       # ORG_CLI_HELPER_STORE_BACKEND
-database  = "~/.local/state/org-cli-helper/store.sqlite"
+backend   = "sqlite"       # ORGFACE_STORE_BACKEND
+database  = "~/.local/state/orgface/store.sqlite"
 directory = "~/org"        # for the orgfs and emacs backends
 #+end_src
 

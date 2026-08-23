@@ -1,4 +1,4 @@
-#+title: org-cli-helper documentation
+#+title: orgface documentation
 #+filetags: :guide:user:developer:
 #+summary: The way in: two guides, a glossary, and the full map of these pages.
 #+audience: both
@@ -7,7 +7,7 @@
 #+source: README.org
 #+source: docs/org
 
-org-cli-helper does some Emacs org things quickly from the command line: it
+orgface does some Emacs org things quickly from the command line: it
 captures notes into org-roam through a private Emacs daemon, and it keeps
 org content in a store you can list, search, edit a piece at a time, and
 serve to other programs.
@@ -17,7 +17,7 @@ meet. Two guides give a reading order through them.
 
 * Start here
 
-- [[file:overview.org][What org-cli-helper is]] :: the tool in one page. Read this first.
+- [[file:overview.org][What orgface is]] :: the tool in one page. Read this first.
 - [[file:user-guide.org][User guide]] :: using the commands, in order.
 - [[file:developer-guide.org][Developer guide]] :: changing the code, in order.
 - [[file:glossary.org][Glossary]] :: the words these pages use precisely.
@@ -29,7 +29,7 @@ plain inventory.
 
 ** Orientation and setup
 
-- [[file:overview.org][What org-cli-helper is]] :: the two halves and how they meet.
+- [[file:overview.org][What orgface is]] :: the two halves and how they meet.
 - [[file:installation.org][Installation]] :: =uv=, and which extra buys which feature.
 - [[file:configuration.org][Configuration]] :: the layered settings and their spellings.
 - [[file:xdg-locations.org][XDG locations]] :: config, state and cache, and what may be deleted.

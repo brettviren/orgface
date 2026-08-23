@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Brett Viren <brett.viren@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""Lifecycle management for the Emacs daemon backing org-cli-helper.
+"""Lifecycle management for the Emacs daemon backing orgface.
 
 Modelled on ssh's master control: the first command that needs Emacs starts
 a daemon under a private server name, later commands reuse it, and the
@@ -120,14 +120,14 @@ class Emacs:
         """Shut the daemon down; False if it was not running."""
         if not self.is_running():
             return False
-        form = "(org-cli-helper-expire)" if self._bootstrapped() else "(kill-emacs)"
+        form = "(orgface-expire)" if self._bootstrapped() else "(kill-emacs)"
         # The daemon dies mid-request, so a nonzero exit here is expected.
         self._run(self._client_argv("-e", form), timeout=60)
         return True
 
     def _bootstrapped(self) -> bool:
         result = self._run(
-            self._client_argv("-e", "(featurep 'org-cli-helper-bootstrap)"),
+            self._client_argv("-e", "(featurep 'orgface-bootstrap)"),
             timeout=30,
         )
         return result.returncode == 0 and result.stdout.strip() == "t"
@@ -140,8 +140,8 @@ class Emacs:
         lifetime = "nil" if self.config.lifetime is None else str(self.config.lifetime)
         return (
             "(progn"
-            f" (unless (featurep 'org-cli-helper-bootstrap) (load {load} nil t))"
-            f" (org-cli-helper-touch {lifetime})"
+            f" (unless (featurep 'orgface-bootstrap) (load {load} nil t))"
+            f" (orgface-touch {lifetime})"
             f" {form})"
         )
 
@@ -169,19 +169,19 @@ class Emacs:
 
     def info(self) -> dict[str, Any]:
         """org-roam locations and dailies capture templates."""
-        return self.eval_json("(org-cli-helper-info)")
+        return self.eval_json("(orgface-info)")
 
     def commit(self, keys: str, body: str) -> dict[str, Any]:
         """Capture BODY into today's daily note via template KEYS."""
-        return self.eval_json(elisp.call("org-cli-helper-commit", keys, body))
+        return self.eval_json(elisp.call("orgface-commit", keys, body))
 
     def note(self, topic: str, body: str) -> dict[str, Any]:
         """Capture BODY into the org-roam topic TOPIC, creating it if new."""
-        return self.eval_json(elisp.call("org-cli-helper-note", topic, body))
+        return self.eval_json(elisp.call("orgface-note", topic, body))
 
     def topic(self, title: str) -> dict[str, Any]:
         """Locate the org-roam node titled TITLE; ``file`` is None if absent."""
-        return self.eval_json(elisp.call("org-cli-helper-topic", title))
+        return self.eval_json(elisp.call("orgface-topic", title))
 
     # -- the org store ------------------------------------------------------
 
@@ -193,7 +193,7 @@ class Emacs:
         command already uses, so there is no second bridge to maintain.
         """
         return self.eval_json(
-            elisp.call("org-cli-helper-export-json", str(path))
+            elisp.call("orgface-export-json", str(path))
         )
 
     def export(self, path: Path, backend: str) -> str:
@@ -204,18 +204,18 @@ class Emacs:
         every exporter the person has rather than a list fixed here.
         """
         return self.eval_json(
-            elisp.call("org-cli-helper-export", str(path), backend)
+            elisp.call("orgface-export", str(path), backend)
         )
 
     def buffer_state(self, path: Path) -> dict[str, Any]:
         """Whether Emacs holds PATH, and whether it has unsaved changes."""
         return self.eval_json(
-            elisp.call("org-cli-helper-buffer-state", str(path))
+            elisp.call("orgface-buffer-state", str(path))
         )
 
     def revert(self, path: Path) -> dict[str, Any]:
         """Reload PATH into its Emacs buffer, if there is one."""
-        return self.eval_json(elisp.call("org-cli-helper-revert", str(path)))
+        return self.eval_json(elisp.call("orgface-revert", str(path)))
 
     def status(self) -> dict[str, Any]:
         """Liveness and identity of the daemon, without starting one."""
@@ -232,13 +232,13 @@ class Emacs:
     def capture_interactive(self, keys: str | None, gui: bool = False) -> None:
         """Hand the terminal (or a new frame) to an interactive dailies capture."""
         self._interactive(
-            elisp.call("org-cli-helper-capture-interactive", keys or ""), gui=gui
+            elisp.call("orgface-capture-interactive", keys or ""), gui=gui
         )
 
     def note_interactive(self, topic: str, body: str, gui: bool = False) -> None:
         """Hand the terminal (or a new frame) to an interactive topic note."""
         self._interactive(
-            elisp.call("org-cli-helper-note-interactive", topic, body), gui=gui
+            elisp.call("orgface-note-interactive", topic, body), gui=gui
         )
 
     def _interactive(self, form: str, gui: bool = False) -> None:

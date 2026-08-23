@@ -49,6 +49,6 @@
 
 * Related
 
-- [[file:overview.org][What org-cli-helper is]] :: the tool in one page.
+- [[file:overview.org][What orgface is]] :: the tool in one page.
 - [[file:user-guide.org][User guide]] :: these terms in use.
 - [[file:developer-guide.org][Developer guide]] :: where each term lives in the code.

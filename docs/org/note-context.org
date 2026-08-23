@@ -4,7 +4,7 @@
 #+audience: both
 #+status: current
 #+updated: 2026-08-23
-#+source: src/org_cli_helper/context.py
+#+source: src/orgface/context.py
 #+source: tests/test_context.py
 
 [[file:command-note.org][org note]] records not only what was written but where and when. Four facts
@@ -28,7 +28,7 @@ A =.git= *file* counts as well as a directory, so worktrees and submodules
 are tagged too.
 
 Org accepts only alphanumerics and =_@#= in a tag, so a repository named
-=org-cli-helper= is tagged =org_cli_helper=: runs of anything else collapse
+=orgface= is tagged =orgface=: runs of anything else collapse
 to a single underscore, and a name with nothing usable left in it is not
 tagged at all.
 

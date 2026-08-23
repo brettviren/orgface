@@ -7,12 +7,12 @@
 #+source: pyproject.toml
 #+source: README.org
 
-org-cli-helper uses [[https://docs.astral.sh/uv/][uv]] for development.
+orgface uses [[https://docs.astral.sh/uv/][uv]] for development.
 
 #+begin_src sh
 uv sync                # set up the development area
 uv run pytest          # run the tests
-uv run org-cli-helper  # run the CLI
+uv run orgface  # run the CLI
 #+end_src
 
 * Extras
@@ -29,7 +29,7 @@ Anything that only some users need is an optional extra.
 
 #+begin_src sh
 uv sync --extra orgfs            # one extra
-pip install 'org-cli-helper[orgfs,semantic,service]'
+pip install 'orgface[orgfs,semantic,service]'
 #+end_src
 
 A command needing an extra that is not installed says which one supplies

@@ -4,13 +4,13 @@
 #+audience: developer
 #+status: current
 #+updated: 2026-08-23
-#+source: src/org_cli_helper
+#+source: src/orgface
 #+source: src/org_store
 
 Two packages under =src/=. The dependency runs one way: =org_store= never
-imports =org_cli_helper=.
+imports =orgface=.
 
-* org_cli_helper — the CLI
+* orgface — the CLI
 
 - =cli.py= :: the click group, the shared context, command registration.
 - =commands/= :: one module per command group, doing parsing and
