@@ -262,6 +262,8 @@ the capture commands above and needs no Emacs daemon.
 #+begin_src sh
 org store add notes.org                     # add an org file (no Emacs needed)
 org store add exported.json --id notes.org  # or canonical JSON from ox-json
+org store add a.org b.org c.org            # several at once, in order
+org store add notes.org --id notes.org  # name it yourself, not by its full path
 org store list                              # one line per document
 org store show notes.org                    # summary
 org store show notes.org --json             # the canonical document

@@ -73,11 +73,91 @@ def test_add_reads_an_org_file(runner, env, tmp_path) -> None:
     source.write_text((DATA / "fixture.org").read_text())
     result = runner.invoke(main, ["store", "add", str(source)])
     assert result.exit_code == 0, result.output
-    assert result.output.strip() == "notes.org"
+    doc_id = str(source.resolve())
+    assert result.output.strip() == doc_id
 
-    shown = runner.invoke(main, ["store", "show", "notes.org"])
+    shown = runner.invoke(main, ["store", "show", doc_id])
     assert "Canonical model fixture" in shown.output
     assert "54 nodes" in shown.output
+
+
+def test_add_takes_several_files_in_turn(runner, env, tmp_path) -> None:
+    names = ("a.org", "b.org", "c.org")
+    paths = []
+    for name in names:
+        path = tmp_path / name
+        path.write_text((DATA / "fixture.org").read_text())
+        paths.append(str(path.resolve()))
+    result = runner.invoke(main, ["store", "add", *paths])
+    assert result.exit_code == 0, result.output
+    assert result.output.split() == paths
+    listed = runner.invoke(main, ["store", "list"]).output
+    assert all(path in listed for path in paths)
+
+
+def test_same_name_in_different_directories_are_different(
+    runner, env, tmp_path
+) -> None:
+    """The full path names a file, not its basename."""
+    for sub in ("one", "two"):
+        (tmp_path / sub).mkdir()
+        (tmp_path / sub / "notes.org").write_text(f"* {sub}\n")
+    first = tmp_path / "one" / "notes.org"
+    second = tmp_path / "two" / "notes.org"
+    result = runner.invoke(
+        main, ["store", "add", str(first), str(second)], catch_exceptions=False
+    )
+    assert result.exit_code == 0, result.output
+    assert "warning" not in result.output
+    assert result.output.split() == [str(first.resolve()), str(second.resolve())]
+
+
+def test_add_stops_at_the_first_bad_file(runner, env, tmp_path) -> None:
+    good = tmp_path / "good.org"
+    good.write_text((DATA / "fixture.org").read_text())
+    bad = tmp_path / "bad.json"
+    bad.write_text("{not json")
+    never = tmp_path / "never.org"
+    never.write_text("* x\n")
+    result = runner.invoke(main, ["store", "add", str(good), str(bad), str(never)])
+    assert result.exit_code != 0
+    listed = runner.invoke(main, ["store", "list"]).output
+    assert "good.org" in listed
+    assert "never.org" not in listed
+
+
+def test_add_existing_is_a_warning_and_the_rest_carry_on(
+    runner, env, tmp_path
+) -> None:
+    first, second = tmp_path / "first.org", tmp_path / "second.org"
+    first.write_text("* x\n")
+    second.write_text("* y\n")
+    add(runner, first)
+    result = runner.invoke(
+        main, ["store", "add", str(first), str(second)], catch_exceptions=False
+    )
+    assert result.exit_code == 0, result.output
+    assert "warning:" in result.output and "already exists" in result.output
+    assert "second.org" in result.output.splitlines()[-1]
+    assert "second.org" in runner.invoke(main, ["store", "list"]).output
+
+
+def test_add_existing_alone_is_still_just_a_warning(runner, env, tmp_path) -> None:
+    only = tmp_path / "only.org"
+    only.write_text("* x\n")
+    add(runner, only)
+    result = runner.invoke(main, ["store", "add", str(only)])
+    assert result.exit_code == 0
+    assert "warning:" in result.output
+
+
+def test_add_id_needs_a_single_source(runner, env, tmp_path) -> None:
+    one, two = tmp_path / "one.org", tmp_path / "two.org"
+    one.write_text("* x\n")
+    two.write_text("* y\n")
+    result = runner.invoke(main, ["store", "add", str(one), str(two), "--id", "k"])
+    assert result.exit_code != 0
+    assert "--id" in result.output
 
 
 def test_org_and_json_sources_agree(runner, env, tmp_path) -> None:

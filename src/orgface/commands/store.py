@@ -29,27 +29,49 @@ def store() -> None:
 
 @store.command(context_settings=HELP, no_args_is_help=True)
 @click.argument(
-    "source", type=click.Path(exists=True, dir_okay=False, path_type=Path)
+    "sources",
+    metavar="SOURCE...",
+    nargs=-1,
+    required=True,
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
 )
 @click.option(
     "--id",
     "doc_id",
     metavar="ID",
-    help="Store under this id instead of a generated one.",
+    help="Store under this id instead of a generated one "
+    "(only with a single SOURCE). The default is the file's full path.",
 )
 @pass_context
-def add(ctx: Context, source: Path, doc_id: str | None) -> None:
-    """Add a document to the store.
+def add(ctx: Context, sources: tuple[Path, ...], doc_id: str | None) -> None:
+    """Add one or more documents to the store.
 
-    SOURCE is either an org file, read with the standalone parser and so
-    needing no Emacs, or a JSON file in the canonical schema such as
+    Each SOURCE is either an org file, read with the standalone parser and
+    so needing no Emacs, or a JSON file in the canonical schema such as
     ox-json's exporter produces. Refs are recomputed on the way in, so
     whatever produced the file, the nodes end up addressable the same way.
+
+    Sources are added in the order given, one id printed per line. Unless
+    --id says otherwise a document is named by its file's full path, so two
+    files of the same name in different directories are different
+    documents. One whose id is already in the store is skipped with a warning and the run
+    carries on. The first that cannot be read stops the run; those before
+    it stay added.
     """
+    if doc_id is not None and len(sources) > 1:
+        raise click.UsageError("--id names one document; give a single SOURCE.")
+    from org_store.store import DocumentExists
+
     with opened_store(ctx) as store_:
-        click.echo(
-            store_.create(_read(source), path_hint=doc_id or source.name)
-        )
+        for source in sources:
+            try:
+                added = store_.create(
+                    _read(source), path_hint=doc_id or str(source.resolve())
+                )
+            except DocumentExists as exc:
+                click.echo(f"warning: {source}: {exc}; skipped", err=True)
+                continue
+            click.echo(added)
 
 
 def _read(source: Path):
