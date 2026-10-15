@@ -9,7 +9,14 @@ from pathlib import Path
 
 import pytest
 
-from orgface.config import ConfigError, load, parse_duration
+from orgface.config import (
+    ConfigError,
+    defaults,
+    init_file,
+    load,
+    parse_duration,
+    to_toml,
+)
 
 
 class TestParseDuration:
@@ -141,3 +148,27 @@ class TestLoad:
         path.write_text('[daemon]\nlifetime = "banana"\n', encoding="utf-8")
         with pytest.raises(ConfigError, match="daemon.lifetime"):
             load(path=path, environ={})
+
+
+class TestToToml:
+    def test_round_trips_through_load(self, isolated):
+        original = load(
+            overrides={"pager": 'less -R "quoted"\\x', "lifetime": "never"},
+            environ={},
+        )
+        path = isolated / "round.toml"
+        path.write_text(to_toml(original.values(), env=True), encoding="utf-8")
+        again = load(path=path, environ={})
+        assert again.values() == original.values()
+
+    def test_unset_values_are_commented_out(self):
+        text = to_toml(defaults())
+        assert "# directory =" in text
+
+    def test_init_file_writes_once(self, isolated):
+        path = isolated / "new" / "config.toml"
+        assert init_file(path)
+        assert load(path=path, environ={}).values() == load(environ={}).values()
+        path.write_text("", encoding="utf-8")
+        assert not init_file(path)
+        assert path.read_text(encoding="utf-8") == ""

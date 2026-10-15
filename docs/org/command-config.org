@@ -6,12 +6,13 @@
 #+updated: 2026-08-23
 #+source: src/orgface/commands/config.py
 
-Inspect configuration and cached state. Three subcommands, none of which
-change anything except the cache.
+Inspect configuration and cached state. Four subcommands; only =init=
+and =clear-cache= change anything.
 
 #+begin_src sh
 org config show          # the resolved configuration
 org config show --env    # also name each environment variable
+org config init          # create the default config file if absent
 org config paths         # the XDG locations in use
 org config clear-cache   # forget the cached org-roam locations
 #+end_src
@@ -19,13 +20,27 @@ org config clear-cache   # forget the cached org-roam locations
 * show
 
 Prints the config file actually loaded — or the XDG path it looked at and
-did not find — then every setting as =section.key = value=, in the order
-they are declared. With =--env= each line also carries the environment
+did not find — then every setting as TOML, one table per section, in the
+order they are declared. Unset settings appear as commented-out keys. With
+=--env= each line also carries, as a trailing comment, the environment
 variable that would set it.
+
+The output is a valid config file, so a variant is easy to start:
+
+#+begin_src sh
+org config show > other.toml   # then edit other.toml
+org -c other.toml store ...
+#+end_src
 
 This is the fastest answer to "why is it using *that* store": the value
 printed is the one the command would use, after all
 [[file:configuration.org][layers]] have been applied.
+
+* init
+
+Creates the configuration directory and writes a =config.toml= holding
+every setting at its built-in default, each preceded by a comment saying
+what it does. If the file already exists it is left untouched.
 
 * paths
 

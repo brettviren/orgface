@@ -9,7 +9,7 @@ import click
 
 from .. import cache, xdgpaths
 from ..cli import Context, pass_context
-from ..config import SETTINGS
+from ..config import init_file, to_toml
 
 HELP = {"help_option_names": ["-h", "--help"]}
 
@@ -26,14 +26,18 @@ def show(ctx: Context, env: bool) -> None:
     """Print the resolved configuration."""
     resolved = ctx.config
     source = resolved.source or f"{xdgpaths.config_file()} (absent)"
-    click.echo(f"# config file: {source}")
-    for setting in SETTINGS:
-        value = getattr(resolved, setting.name)
-        shown = "" if value is None else value
-        line = f"{setting.section}.{setting.key} = {shown}"
-        if env:
-            line = f"{line:<48} # {setting.env}"
-        click.echo(line)
+    text = to_toml(resolved.values(), header=[f"config file: {source}"], env=env)
+    click.echo(text, nl=False)
+
+
+@config.command(context_settings=HELP)
+def init() -> None:
+    """Create the default config file if it does not exist."""
+    path = xdgpaths.config_file()
+    if init_file(path):
+        click.echo(f"created {path}")
+    else:
+        click.echo(f"{path} already exists; left unchanged")
 
 
 @config.command(context_settings=HELP)

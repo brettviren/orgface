@@ -14,6 +14,7 @@ The config file is TOML, either named explicitly or found at
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import tomllib
@@ -310,12 +311,90 @@ class Config:
     embed_dimensions: int = 768
     source: Path | None = None  # config file actually loaded, if any
 
+    def values(self) -> dict[str, Any]:
+        """Return every setting's resolved value, keyed by setting name."""
+        return {s.name: getattr(self, s.name) for s in SETTINGS}
+
     def describe(self) -> list[tuple[str, str, Any]]:
         """Return ``(dotted_key, env_var, value)`` for each setting."""
         return [
             (f"{s.section}.{s.key}", s.env, getattr(self, s.name))
             for s in SETTINGS
         ]
+
+
+def _toml_value(setting: Setting, value: Any) -> str | None:
+    """Render one value as a TOML literal; None means "leave it unset"."""
+    if value is None:
+        # An absent duration means "no expiry", which must be said
+        # explicitly or the file would fall back to the default.
+        return '"never"' if setting.coerce is parse_duration else None
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, int):
+        return str(value)
+    # JSON string escapes are a subset of TOML basic-string escapes.
+    return json.dumps(str(value), ensure_ascii=False)
+
+
+def to_toml(
+    values: dict[str, Any],
+    header: list[str] | None = None,
+    env: bool = False,
+    comments: bool = False,
+) -> str:
+    """Render setting values, keyed by setting name, as a TOML document.
+
+    Settings are grouped into one table per section, in declaration
+    order.  Unset values are written as commented-out keys so the file
+    still names every setting.  ``env`` appends each environment
+    variable as a trailing comment; ``comments`` precedes each key with
+    its help text.  The result always parses back with :func:`read_file`.
+    """
+    sections: dict[str, list[Setting]] = {}
+    for setting in SETTINGS:
+        sections.setdefault(setting.section, []).append(setting)
+
+    lines = [f"# {text}" for text in header or []]
+    for section, settings in sections.items():
+        if lines:
+            lines.append("")
+        lines.append(f"[{section}]")
+        for setting in settings:
+            if comments:
+                lines.append(f"# {setting.help}")
+            literal = _toml_value(setting, values.get(setting.name))
+            line = (
+                f"# {setting.key} ="
+                if literal is None
+                else f"{setting.key} = {literal}"
+            )
+            if env:
+                line = f"{line:<40} # {setting.env}"
+            lines.append(line)
+    return "\n".join(lines) + "\n"
+
+
+def defaults() -> dict[str, Any]:
+    """The built-in default of every setting, keyed by setting name."""
+    return {s.name: s.default for s in SETTINGS}
+
+
+def init_file(path: Path) -> bool:
+    """Write a default config file at ``path`` unless one exists.
+
+    Returns True when the file was created, False when it already existed.
+    """
+    if path.exists():
+        return False
+    path.parent.mkdir(parents=True, exist_ok=True)
+    text = to_toml(
+        defaults(),
+        header=["orgface configuration", "Settings left commented out are unset."],
+        comments=True,
+    )
+    path.write_text(text, encoding="utf-8")
+    return True
 
 
 def _from_environ(environ: dict[str, str]) -> dict[str, Any]:

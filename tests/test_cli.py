@@ -264,9 +264,36 @@ class TestConfigCommand:
     def test_show_reports_resolved_values(self, runner, workspace):
         result = run(runner, workspace, "config", "show")
         assert result.exit_code == 0
-        assert "daemon.server_name = orgface" in result.output
-        assert "roam.dailies_directory = daily" in result.output
-        assert "note.topic = Context Notes" in result.output
+        assert 'server_name = "orgface"' in result.output
+        assert 'dailies_directory = "daily"' in result.output
+        assert 'topic = "Context Notes"' in result.output
+
+    def test_show_output_is_loadable_toml(self, runner, workspace, tmp_path):
+        for args in (("config", "show"), ("config", "show", "--env")):
+            result = run(runner, workspace, *args)
+            saved = tmp_path / "saved.toml"
+            saved.write_text(result.output, encoding="utf-8")
+            again = run(runner, saved, *args)
+            assert again.exit_code == 0, again.output
+            assert again.output.splitlines()[1:] == result.output.splitlines()[1:]
+
+    def test_init_creates_default_config(self, runner, workspace, tmp_path):
+        target = tmp_path / "xdgconfig" / "orgface" / "config.toml"
+        assert not target.exists()
+        result = runner.invoke(main, ["config", "init"])
+        assert result.exit_code == 0, result.output
+        assert target.exists()
+        loaded = runner.invoke(main, ["-c", str(target), "config", "show"])
+        assert loaded.exit_code == 0, loaded.output
+
+    def test_init_leaves_existing_config_alone(self, runner, workspace, tmp_path):
+        target = tmp_path / "xdgconfig" / "orgface" / "config.toml"
+        target.parent.mkdir(parents=True)
+        target.write_text('[note]\ntopic = "Mine"\n', encoding="utf-8")
+        result = runner.invoke(main, ["config", "init"])
+        assert result.exit_code == 0
+        assert "already exists" in result.output
+        assert target.read_text(encoding="utf-8") == '[note]\ntopic = "Mine"\n'
 
     def test_show_env_names(self, runner, workspace):
         result = run(runner, workspace, "config", "show", "--env")
@@ -387,4 +414,4 @@ class TestDaemonCommand:
         result = run(
             runner, workspace, "-s", "other-server", "config", "show"
         )
-        assert "daemon.server_name = other-server" in result.output
+        assert 'server_name = "other-server"' in result.output

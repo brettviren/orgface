@@ -249,8 +249,9 @@ daemon. Visiting a daily note does not.
 
 ** org config
 
-=org config show= prints the resolved configuration and where it came from,
-=org config paths= the XDG locations in use, and =org config clear-cache=
+=org config show= prints the resolved configuration, as loadable TOML, and
+where it came from, =org config init= creates a default config file if none
+exists, =org config paths= the XDG locations in use, and =org config clear-cache=
 forgets the cached org-roam locations.
 
 ** org store

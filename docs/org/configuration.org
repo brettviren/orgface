@@ -71,9 +71,12 @@ preference.
 
 * Seeing what is in effect
 
-=org config show= prints the resolved value of every setting, its dotted
-key, its environment variable, and which file it came from — the fastest
-way to find out why a command is using a store you did not expect. See
+=org config show= prints the resolved value of every setting as a loadable
+TOML file, optionally with its environment variable, and which file it came
+from — the fastest
+way to find out why a command is using a store you did not expect.
+=org config init= writes a commented default file to the XDG location if
+none is there yet. See
 [[file:command-config.org][org config]].
 
 * Related
