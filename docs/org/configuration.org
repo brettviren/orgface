@@ -77,6 +77,17 @@ which is how one machine tries them in another order. The =ORGFACE_EMBED_*=
 variables fill in what each service in a file leaves out — an API key
 given that way goes to every service.
 
+=batch= is how many texts go in one request (32 by default) and
+=parallel= how many requests are in flight at once (1). Either may be more
+than a service allows. A request that fails in a way suggesting so lowers
+the number, logged as a warning, and embedding carries on with the lower
+one: a busy answer (HTTP 429 or 503), or timeouts and dropped connections
+while several requests are out, halve =parallel=; a refused batch (HTTP
+413, or a 400, 422 or 500 that might be about size) halves =batch=, down to
+one. A busy service with only one request out is waited for, honouring
+=Retry-After=, up to five times. Setting them to what the service allows
+avoids paying for the discovery on every run.
+
 * The settings
 
 #+begin_src conf-toml
@@ -104,6 +115,8 @@ dimensions = 768                       # ORGFACE_EMBED_DIMENSIONS
 # api_key  = "..."                     # ORGFACE_EMBED_API_KEY; prefer the env var
 # api_key_passname = "embed/key"       # ORGFACE_EMBED_API_KEY_PASSNAME; first line of `pass embed/key`
 # identity = "nomic-embed-text"        # ORGFACE_EMBED_IDENTITY; stored with vectors, defaults to model
+batch      = 32                        # ORGFACE_EMBED_BATCH; texts per request
+parallel   = 1                         # ORGFACE_EMBED_PARALLEL; requests at once
 
 [store]
 backend   = "sqlite"       # ORGFACE_STORE_BACKEND

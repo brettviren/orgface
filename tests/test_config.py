@@ -296,6 +296,19 @@ class TestEmbedServices:
         with pytest.raises(ConfigError, match=r"embed\[1\]\.dimensions"):
             load(path=path, environ={})
 
+    def test_batch_and_parallel(self, isolated):
+        (default,) = load(environ={}).embed
+        assert (default.batch, default.parallel) == (32, 1)
+        path = self.write(isolated, "[[embed]]\nbatch = 8\nparallel = 4\n")
+        (service,) = load(path=path, environ={}).embed
+        assert (service.batch, service.parallel) == (8, 4)
+
+    @pytest.mark.parametrize("key", ["batch", "parallel"])
+    def test_batch_and_parallel_must_be_positive(self, isolated, key):
+        path = self.write(isolated, f"[[embed]]\n{key} = 0\n")
+        with pytest.raises(ConfigError, match=f"{key}: must be at least 1"):
+            load(path=path, environ={})
+
     def test_services_round_trip(self, isolated):
         path = self.write(
             isolated,

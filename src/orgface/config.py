@@ -129,6 +129,14 @@ def parse_int(value: Any) -> int | None:
         raise ConfigError(f"invalid whole number: {value!r}") from exc
 
 
+def parse_count(value: Any) -> int | None:
+    """A whole number of at least one."""
+    number = parse_int(value)
+    if number is not None and number < 1:
+        raise ConfigError(f"must be at least 1: {value!r}")
+    return number
+
+
 def parse_bool(value: Any) -> bool:
     if isinstance(value, bool):
         return value
@@ -333,6 +341,26 @@ EMBED_SETTINGS: tuple[Setting, ...] = (
         "Which model this is, whatever the service calls it; vectors are kept"
         " per identity. Defaults to model.",
     ),
+    Setting(
+        "batch",
+        "embed",
+        "batch",
+        "ORGFACE_EMBED_BATCH",
+        32,
+        parse_count,
+        "Texts sent in one request; lowered, with a warning, if the service"
+        " refuses that many.",
+    ),
+    Setting(
+        "parallel",
+        "embed",
+        "parallel",
+        "ORGFACE_EMBED_PARALLEL",
+        1,
+        parse_count,
+        "Requests in flight at once; lowered, with a warning, if the service"
+        " cannot keep up.",
+    ),
 )
 
 _EMBED_BY_KEY = {setting.key: setting for setting in EMBED_SETTINGS}
@@ -348,6 +376,8 @@ class EmbedService:
     api_key: str | None = None
     api_key_passname: str | None = None
     identity: str = "nomic-embed-text-v1.5"
+    batch: int = 32
+    parallel: int = 1
 
     def values(self) -> dict[str, Any]:
         """Every setting's value, keyed by setting name."""

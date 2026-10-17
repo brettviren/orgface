@@ -56,6 +56,12 @@ between machines can hold what each embedded with its own model.
 - =org store embed status= :: the vectors each identity has, then every
   configured service with its identity, url, model and whether it answers.
 
+Texts are sent =batch= to a request, =parallel= requests at a time, and
+both are lowered with a warning when a service turns out not to manage
+them (see [[file:configuration.org][Configuration]]). More in parallel mostly helps a remote service,
+where each request spends much of its time on the network, or a
+=llama-server= started with =--parallel=.
+
 Be careful an identity is true. Two different models under one identity
 mix two vector spaces and search quietly returns nonsense. A model whose
 width differs from the vectors already under its identity is refused.

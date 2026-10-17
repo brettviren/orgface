@@ -90,6 +90,8 @@ def embedder(service: EmbedService):
         dimensions=service.dimensions,
         api_key=embed_api_key(service),
         identity=service.identity,
+        batch=service.batch,
+        parallel=service.parallel,
     )
 
 

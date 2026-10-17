@@ -577,6 +577,8 @@ dimensions = 768                       # ORGFACE_EMBED_DIMENSIONS
 # api_key  = "..."                     # ORGFACE_EMBED_API_KEY; prefer the env var
 # api_key_passname = "embed/key"       # ORGFACE_EMBED_API_KEY_PASSNAME; first line of `pass embed/key`
 # identity = "nomic-embed-text"        # ORGFACE_EMBED_IDENTITY; stored with vectors, defaults to model
+batch      = 32                        # ORGFACE_EMBED_BATCH; texts per request
+parallel   = 1                         # ORGFACE_EMBED_PARALLEL; requests at once
 
 [store]
 backend   = "sqlite"       # ORGFACE_STORE_BACKEND: sqlite or orgfs
