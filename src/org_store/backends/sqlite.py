@@ -387,20 +387,27 @@ class SqliteStore:
         if not self._has_vectors():
             return []
 
-        wanted = embedder.embed_query(query.text or "")
+        wanted = _pack(embedder.embed_query(query.text or ""))
         # Ask for more than needed: the qualifiers below filter after the
         # nearest-neighbour search, which knows nothing about them.
         depth = max(query.top_k * 8, 64)
         rows = self._db.execute(
-            f"SELECT rowid AS vec_id, distance FROM {VEC_TABLE}"
+            "SELECT rowid AS vec_id,"
+            "       vec_distance_cosine(embedding, ?) AS cosine_distance"
+            f" FROM {VEC_TABLE}"
             " WHERE embedding MATCH ? AND k = ?"
             " ORDER BY distance",
-            (_pack(wanted), depth),
+            (wanted, wanted, depth),
         ).fetchall()
         if not rows:
             return []
 
-        found = {row["vec_id"]: row["distance"] for row in rows}
+        # A zero vector has no direction, so no cosine: call it unrelated.
+        found = {
+            row["vec_id"]: 1.0 if row["cosine_distance"] is None
+            else row["cosine_distance"]
+            for row in rows
+        }
         marks = ", ".join("?" * len(found))
         meta = self._db.execute(
             "SELECT e.doc_id AS doc_id, e.ref AS ref, e.vec_id AS vec_id,"
@@ -416,9 +423,10 @@ class SqliteStore:
                 doc_id=row["doc_id"],
                 ref=row["ref"],
                 type=row["type"],
-                # Distance counts up as similarity falls; flipped so that a
-                # score reads the way it does for the text search.
-                score=-found[row["vec_id"]],
+                # Cosine similarity: 1 for the same direction, 0 for
+                # unrelated, and independent of how the model scales its
+                # vectors, so it reads the same whichever model is in use.
+                score=1.0 - found[row["vec_id"]],
                 excerpt=self._excerpt(row["doc_id"], row["ref"]),
             )
             for row in meta

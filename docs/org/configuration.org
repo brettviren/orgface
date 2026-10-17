@@ -52,6 +52,7 @@ url        = "http://127.0.0.1:8080"   # ORGFACE_EMBED_URL
 model      = "nomic-embed-text-v1.5"   # ORGFACE_EMBED_MODEL
 dimensions = 768                       # ORGFACE_EMBED_DIMENSIONS
 # api_key  = "..."                     # ORGFACE_EMBED_API_KEY; prefer the env var
+# api_key_passname = "embed/key"       # ORGFACE_EMBED_API_KEY_PASSNAME; first line of `pass embed/key`
 
 [store]
 backend   = "sqlite"       # ORGFACE_STORE_BACKEND
@@ -69,6 +70,14 @@ preference.
   number of seconds, or =never= (=none=, =inf=, =0=) to disable expiry.
 - Paths :: =~= and =$VARIABLES= are expanded.
 - Booleans :: =1/true/yes/on= and =0/false/no/off=.
+
+* Keeping the API key out of the file
+
+Rather than writing =embed.api_key= into the config file, set
+=embed.api_key_passname= to the name of a [[https://www.passwordstore.org/][pass]] entry. When no
+=embed.api_key= is set, the first line printed by =pass <passname>= is
+used as the key. It is read only when the embedding service is actually
+contacted, so commands that never embed do not prompt for a passphrase.
 
 * Seeing what is in effect
 

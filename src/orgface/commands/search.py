@@ -9,7 +9,7 @@ import click
 
 from .. import ui
 from ..cli import Context, pass_context
-from . import HELP, colour_option, opened_store
+from . import HELP, colour_option, hyperlink_option, opened_store
 
 
 @click.command(context_settings=HELP, no_args_is_help=True)
@@ -70,6 +70,7 @@ from . import HELP, colour_option, opened_store
     help="Return at most N results.",
 )
 @colour_option
+@hyperlink_option
 @pass_context
 def search(
     ctx: Context,
@@ -82,6 +83,7 @@ def search(
     doc_ids: tuple[str, ...],
     top_k: int,
     colour: str,
+    hyperlink: str,
 ) -> None:
     """Search the store for TEXT.
 
@@ -95,7 +97,12 @@ def search(
     With -s/--semantic the words are matched by meaning instead, against
     embeddings built by `org store embed`. That needs the model running,
     and only finds what has been embedded. --scope does not apply: a
-    vector is of the whole node, not of its heading or its body.
+    vector is of the whole node, not of its heading or its body. Each
+    hit is led by its cosine similarity to the query, from 1 down.
+
+    In a terminal that renders links, such as kitty, each document name is
+    a link to its file. --hyperlink=always forces them on, for a terminal
+    this does not recognise, and never turns them off.
     """
     from org_store.search import SearchQuery
 
@@ -118,7 +125,28 @@ def search(
         raise SystemExit(1)
 
     use_colour = ui.resolve_colour(colour)
-    ui.write(ui.format_search_results(results, use_colour) + "\n", use_colour)
+    files = None
+    if ui.resolve_hyperlinks(hyperlink):
+        files = _document_files(ctx, {result.doc_id for result in results})
+    text = ui.format_search_results(
+        results, use_colour, scores=semantic, files=files
+    )
+    ui.write(text + "\n", use_colour)
+
+
+def _document_files(ctx: Context, doc_ids: set[str]) -> dict:
+    """The file behind each document id that has one."""
+    from ..storage import StorageError, document_file
+
+    files = {}
+    for doc_id in doc_ids:
+        try:
+            found = document_file(ctx.config, doc_id)
+        except StorageError:
+            return {}
+        if found is not None:
+            files[doc_id] = found
+    return files
 
 
 def _properties(pairs: tuple[str, ...]) -> dict[str, str] | None:

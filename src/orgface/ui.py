@@ -11,9 +11,10 @@ from __future__ import annotations
 
 import os
 import shutil
+import socket
 import subprocess
 import sys
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 
 import click
@@ -200,11 +201,27 @@ def format_node(summary, colour: bool = False) -> str:
     return head + "\n\n" + indent(summary.text)
 
 
-def format_search_results(results: Sequence, colour: bool = False) -> str:
-    """One block per hit: where it is, then the matching text."""
+def format_search_results(
+    results: Sequence,
+    colour: bool = False,
+    scores: bool = False,
+    files: Mapping[str, Path] | None = None,
+) -> str:
+    """One block per hit: where it is, then the matching text.
+
+    ``scores`` leads each hit with its score, for searches where the
+    number means something on its own, such as semantic similarity.
+    ``files`` maps a document id to the file holding it; an id found there
+    is written as a terminal hyperlink to that file.
+    """
+    files = files or {}
     lines = []
     for result in results:
-        head = style(f"{result.doc_id}:{result.ref}", "yellow", colour)
+        head = style(f"{result.score:.3f}  ", "green", colour) if scores else ""
+        where = style(result.doc_id, "yellow", colour)
+        if result.doc_id in files:
+            where = hyperlink(where, file_uri(files[result.doc_id]))
+        head += where + style(f":{result.ref}", "yellow", colour)
         head += style(f"  ({result.type})", "cyan", colour)
         lines.append(head)
         excerpt = " ".join(result.excerpt.split())
@@ -248,6 +265,60 @@ def resolve_colour(mode: str, stream=None) -> bool:
         return False
     stream = stream or sys.stdout
     return bool(getattr(stream, "isatty", lambda: False)())
+
+
+#: TERM_PROGRAM values of terminals known to render OSC 8 hyperlinks.
+_HYPERLINK_PROGRAMS = frozenset({"WezTerm", "vscode", "ghostty", "iTerm.app"})
+
+
+def resolve_hyperlinks(
+    mode: str, stream=None, environ: Mapping[str, str] | None = None
+) -> bool:
+    """Interpret --hyperlink=auto|always|never.
+
+    There is no way to ask a terminal whether it renders OSC 8 links, and
+    one that does not may print the escape as junk, so ``auto`` trusts
+    only terminals that announce themselves in the environment.  Inside
+    tmux or screen the outer terminal is unknown, so ``auto`` says no.
+    """
+    if mode == "always":
+        return True
+    if mode == "never":
+        return False
+    environ = os.environ if environ is None else environ
+    stream = stream or sys.stdout
+    if not getattr(stream, "isatty", lambda: False)():
+        return False
+    term = environ.get("TERM", "")
+    if environ.get("TMUX") or term.startswith(("screen", "tmux")):
+        return False
+    if term == "xterm-kitty" or environ.get("KITTY_WINDOW_ID"):
+        return True
+    if term.startswith(("foot", "alacritty")) or environ.get("WT_SESSION"):
+        return True
+    if environ.get("TERM_PROGRAM") in _HYPERLINK_PROGRAMS:
+        return True
+    if environ.get("KONSOLE_VERSION"):
+        return True
+    vte = environ.get("VTE_VERSION", "")
+    return vte.isdigit() and int(vte) >= 5000
+
+
+def file_uri(path: Path) -> str:
+    """A file:// URI naming this host, as OSC 8 asks, so a terminal
+    attached over ssh can tell the file is not local to it."""
+    return f"file://{socket.gethostname()}{Path(path).absolute().as_posix()}"
+
+
+def hyperlink(text: str, uri: str | None) -> str:
+    """TEXT made a clickable link to URI with the OSC 8 escape.
+
+    A terminal that renders these shows only TEXT; whether to emit them
+    at all is :func:`resolve_hyperlinks`'s question, not this one's.
+    """
+    if not uri:
+        return text
+    return f"\033]8;;{uri}\033\\{text}\033]8;;\033\\"
 
 
 def pager_argv(configured: str | None) -> list[str] | None:

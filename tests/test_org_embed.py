@@ -160,6 +160,22 @@ def test_an_api_key_is_sent_as_a_bearer_token(service) -> None:
     assert seen[-1]["auth"] == "Bearer sekrit"
 
 
+def test_a_callable_api_key_is_fetched_once(service) -> None:
+    url, seen = service
+    fetched = []
+
+    def fetch() -> str:
+        fetched.append(1)
+        return "late"
+
+    embedder = LlamaCppEmbedder(url=url, dimensions=4, api_key=fetch)
+    assert fetched == []
+    embedder.embed_query("hi")
+    embedder.embed_query("again")
+    assert seen[-1]["auth"] == "Bearer late"
+    assert fetched == [1]
+
+
 def test_no_api_key_sends_no_authorization(service) -> None:
     url, seen = service
     LlamaCppEmbedder(url=url, dimensions=4).embed_query("hi")
@@ -273,6 +289,16 @@ def test_results_are_ordered_by_nearness(store: OrgStore) -> None:
     results = find(store, "hello print python")
     scores = [result.score for result in results]
     assert scores == sorted(scores, reverse=True)
+
+
+def test_scores_are_cosine_similarity(store: OrgStore) -> None:
+    """Same direction scores 1; sharing no words scores 0, never below."""
+    store.embed()
+    results = find(store, "footnote")
+    assert results[0].score == pytest.approx(1.0)
+    assert "footnote" in results[0].excerpt
+    assert results[-1].score == pytest.approx(0.0)
+    assert all(0.0 <= result.score <= 1.0 + 1e-6 for result in results)
 
 
 def test_the_query_is_embedded_as_a_query(

@@ -343,6 +343,7 @@ Word search finds nothing for "physics equations" in a note that says
 =\begin{equation} \nabla \cdot \mathbf{E}=...= — semantic search finds
 it. The same =-t=, =-T=, =-p= and =-d= qualifiers apply. =--scope= does
 not: a vector is of the whole node, not of its heading or its body.
+Each hit is led by its cosine similarity to the query, from 1 down.
 
 This needs an embedding model. The default expects [[https://github.com/ggml-org/llama.cpp][llama.cpp]]'s
 =llama-server= on =127.0.0.1:8080= serving nomic-embed-text, and the
@@ -558,6 +559,7 @@ url        = "http://127.0.0.1:8080"   # ORGFACE_EMBED_URL
 model      = "nomic-embed-text-v1.5"   # ORGFACE_EMBED_MODEL
 dimensions = 768                       # ORGFACE_EMBED_DIMENSIONS
 # api_key  = "..."                     # ORGFACE_EMBED_API_KEY; prefer the env var
+# api_key_passname = "embed/key"       # ORGFACE_EMBED_API_KEY_PASSNAME; first line of `pass embed/key`
 
 [store]
 backend   = "sqlite"       # ORGFACE_STORE_BACKEND: sqlite or orgfs

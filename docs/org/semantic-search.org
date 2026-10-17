@@ -21,6 +21,10 @@ Word search finds nothing for "physics equations" in a note that says
 The same =-t=, =-T=, =-p= and =-d= qualifiers apply. =--scope= does not: a
 vector is of the whole node, not of its heading or its body.
 
+Each hit is led by its cosine similarity to the query: 1 for the same
+meaning, near 0 for unrelated. What counts as a good match varies by
+model, so compare scores within one search rather than across models.
+
 * Embedding is a separate step, on purpose
 
 It costs a call to a model that may not be running, and storing a document
@@ -54,4 +58,4 @@ uv sync --extra semantic
 
 - [[file:command-search.org][org search]] :: the word-matching default.
 - [[file:embeddings.org][Embeddings in the store]] :: how vectors are kept and invalidated.
-- [[file:configuration.org][Configuration]] :: =embed.url=, =embed.model=, =embed.dimensions=, =embed.api_key=.
+- [[file:configuration.org][Configuration]] :: =embed.url=, =embed.model=, =embed.dimensions=, =embed.api_key=, =embed.api_key_passname=.

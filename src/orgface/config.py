@@ -288,6 +288,15 @@ SETTINGS: tuple[Setting, ...] = (
         secret=True,
     ),
     Setting(
+        "embed_api_key_passname",
+        "embed",
+        "api_key_passname",
+        "ORGFACE_EMBED_API_KEY_PASSNAME",
+        None,
+        parse_str,
+        "pass(1) entry whose first line is the API key, used when api_key is unset.",
+    ),
+    Setting(
         "store_directory",
         "store",
         "directory",
@@ -321,6 +330,7 @@ class Config:
     embed_model: str = "nomic-embed-text-v1.5"
     embed_dimensions: int = 768
     embed_api_key: str | None = None
+    embed_api_key_passname: str | None = None
     source: Path | None = None  # config file actually loaded, if any
 
     def values(self) -> dict[str, Any]:

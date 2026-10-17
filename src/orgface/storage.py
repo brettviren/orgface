@@ -50,6 +50,23 @@ def location(config: Config) -> Path:
     return xdgpaths.state_dir() / chosen.default
 
 
+def document_file(config: Config, doc_id: str) -> Path | None:
+    """The file on disk a document id names, if there is one.
+
+    An id is a path for some backends and not others: one added to sqlite
+    is usually the absolute path it was read from, while the directory
+    backends name files relative to their root.  Whichever it is, only a
+    file that exists is returned, so a stale or synthetic id gives None.
+    """
+    candidate = Path(doc_id).expanduser()
+    if not candidate.is_absolute():
+        root = location(config)
+        if not root.is_dir():
+            return None
+        candidate = root / candidate
+    return candidate if candidate.is_file() else None
+
+
 def embedder(config: Config):
     """The embedding model configuration names.
 
@@ -63,8 +80,32 @@ def embedder(config: Config):
         url=config.embed_url,
         model=config.embed_model,
         dimensions=config.embed_dimensions,
-        api_key=config.embed_api_key,
+        api_key=embed_api_key(config),
     )
+
+
+def embed_api_key(config: Config):
+    """The embedding service's API key, or a callable that fetches it.
+
+    An explicit ``embed.api_key`` wins.  Otherwise ``embed.api_key_passname``
+    names a pass(1) entry, read only when the service is first contacted
+    so that commands which never embed do not trigger a password prompt.
+    """
+    if config.embed_api_key or not config.embed_api_key_passname:
+        return config.embed_api_key
+    passname = config.embed_api_key_passname
+
+    def fetch() -> str:
+        from org_store.embed import EmbeddingError
+
+        from .passstore import PassError, lookup
+
+        try:
+            return lookup(passname)
+        except PassError as exc:
+            raise EmbeddingError(f"embedding API key: {exc}") from exc
+
+    return fetch
 
 
 def open_spec(config: Config, spec: str) -> OrgStore:

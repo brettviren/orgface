@@ -44,6 +44,18 @@ meaningful — a heading match ranks above a passing mention in prose.
 
 Finding nothing is reported on standard error and exits non-zero.
 
+* Clickable file names
+
+In a terminal that renders OSC 8 hyperlinks — kitty, WezTerm, foot,
+Ghostty, Konsole, VTE-based terminals and others — a =DOC_ID= that names a
+file on disk is written as a link to that file. A terminal cannot be asked
+whether it supports them, so =--hyperlink=auto= trusts only one that
+announces itself in the environment, and says no in a pipe or inside tmux
+or screen. =--hyperlink=always= forces links on and =never= turns them off.
+
+=REF= is not linked: it is orgface's own name for a position in the
+document, not an org =:ID:=, so Emacs has nothing to look it up by.
+
 * Which stores can answer
 
 Search runs over whichever indexes the active backend keeps. A backend that

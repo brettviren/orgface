@@ -126,3 +126,88 @@ def test_search_reaches_both_documents(runner, stocked) -> None:
     result = runner.invoke(main, ["search", "head*"])
     assert result.exit_code == 0
     assert "fixture.org:" in result.output
+
+
+def test_scores_are_shown_only_when_asked() -> None:
+    from org_store.search import SearchResult
+
+    from orgface.ui import format_search_results
+
+    hit = SearchResult(doc_id="a.org", ref="1", type="headline", score=0.87654)
+    assert "0.877" not in format_search_results([hit])
+    assert format_search_results([hit], scores=True).startswith("0.877  a.org:1")
+
+
+# -- hyperlinks -------------------------------------------------------------
+
+
+def test_a_document_with_a_file_is_linked(runner, tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("ORGFACE_STORE_DATABASE", str(tmp_path / "store.sqlite"))
+    source = tmp_path / "linked.org"
+    source.write_text((DATA / "fixture.org").read_text())
+    assert runner.invoke(main, ["store", "add", str(source)]).exit_code == 0
+
+    result = runner.invoke(main, ["search", "--hyperlink=always", "footnote"])
+    assert result.exit_code == 0, result.output
+    assert f"\033]8;;file://" in result.output
+    assert f"{source}\033\\{source}\033]8;;\033\\:org" in result.output
+
+
+def test_links_are_off_unless_asked_outside_a_terminal(runner, stocked) -> None:
+    result = runner.invoke(main, ["search", "footnote"])
+    assert "\033]8" not in result.output
+
+
+def test_an_id_with_no_file_is_not_linked(runner, stocked) -> None:
+    result = runner.invoke(main, ["search", "--hyperlink=always", "footnote"])
+    assert result.exit_code == 0, result.output
+    assert "\033]8" not in result.output
+
+
+class Terminal:
+    def isatty(self) -> bool:
+        return True
+
+
+@pytest.mark.parametrize(
+    "environ,expected",
+    [
+        ({"TERM": "xterm-kitty"}, True),
+        ({"TERM": "xterm-256color", "KITTY_WINDOW_ID": "1"}, True),
+        ({"TERM": "xterm-256color", "TERM_PROGRAM": "WezTerm"}, True),
+        ({"TERM": "xterm-256color", "VTE_VERSION": "7600"}, True),
+        ({"TERM": "xterm-256color", "VTE_VERSION": "4800"}, False),
+        ({"TERM": "xterm-256color"}, False),
+        ({"TERM": "tmux-256color", "KITTY_WINDOW_ID": "1"}, False),
+        ({"TERM": "xterm-kitty", "TMUX": "/tmp/tmux"}, False),
+    ],
+)
+def test_auto_trusts_only_terminals_that_announce_themselves(
+    environ, expected
+) -> None:
+    from orgface.ui import resolve_hyperlinks
+
+    assert resolve_hyperlinks("auto", Terminal(), environ) is expected
+
+
+def test_auto_is_off_in_a_pipe() -> None:
+    import io
+
+    from orgface.ui import resolve_hyperlinks
+
+    assert not resolve_hyperlinks("auto", io.StringIO(), {"TERM": "xterm-kitty"})
+    assert resolve_hyperlinks("always", io.StringIO(), {})
+    assert not resolve_hyperlinks("never", Terminal(), {"TERM": "xterm-kitty"})
+
+
+def test_a_relative_id_is_found_under_a_directory_store(tmp_path) -> None:
+    from orgface.config import load
+    from orgface.storage import document_file
+
+    (tmp_path / "notes.org").write_text("* hi\n")
+    config = load(
+        overrides={"store_backend": "orgfs", "store_directory": str(tmp_path)},
+        environ={},
+    )
+    assert document_file(config, "notes.org") == tmp_path / "notes.org"
+    assert document_file(config, "absent.org") is None

@@ -58,3 +58,12 @@ colour_option = click.option(
     show_default=True,
     help="Colourise the output.",
 )
+
+#: Shared by every command that can write file names as terminal links.
+hyperlink_option = click.option(
+    "--hyperlink",
+    type=click.Choice(["auto", "always", "never"]),
+    default="auto",
+    show_default=True,
+    help="Write file names as clickable links, where the terminal supports it.",
+)

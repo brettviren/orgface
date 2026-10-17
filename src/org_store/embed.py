@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 import urllib.error
 import urllib.request
+from collections.abc import Callable
 from typing import Protocol, runtime_checkable
 
 
@@ -65,7 +66,8 @@ class LlamaCppEmbedder:
     so there is nothing to install on this side and the model can be
     started, stopped and shared independently of this tool.  The ``url``
     may be given with or without its trailing ``/v1``; an ``api_key``, when
-    given, is sent as a bearer token.
+    given, is sent as a bearer token; it may be a callable, called once
+    on first contact, so a costly lookup is skipped when no vector is needed.
     """
 
     #: What nomic-embed-text expects in front of the two kinds of text.
@@ -79,14 +81,26 @@ class LlamaCppEmbedder:
         dimensions: int = 768,
         timeout: float = 60.0,
         batch: int = 32,
-        api_key: str | None = None,
+        api_key: str | Callable[[], str | None] | None = None,
     ) -> None:
         self.url = url.rstrip("/").removesuffix("/v1")
-        self.api_key = api_key
+        self._api_key = api_key
         self._name = model
         self._dimensions = dimensions
         self.timeout = timeout
         self.batch = max(1, batch)
+
+    @property
+    def api_key(self) -> str | None:
+        """The bearer token, fetched on first use when given as a callable.
+
+        Fetching late means a key kept somewhere costly to reach, such as
+        a password manager that may prompt, is only asked for when the
+        model is actually contacted.
+        """
+        if callable(self._api_key):
+            self._api_key = self._api_key()
+        return self._api_key
 
     @property
     def name(self) -> str:
