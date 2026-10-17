@@ -11,10 +11,13 @@ refreshed on demand rather than expiring on a timer.
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
 from . import xdgpaths
+
+log = logging.getLogger(__name__)
 
 VERSION = 1
 
@@ -37,7 +40,9 @@ def _read() -> dict[str, Any]:
 
 def get(key: str) -> dict[str, Any] | None:
     value = _read().get(key)
-    return value if isinstance(value, dict) else None
+    found = isinstance(value, dict)
+    log.debug("cache %s for %s in %s", "hit" if found else "miss", key, path())
+    return value if found else None
 
 
 def put(key: str, value: dict[str, Any]) -> None:
@@ -50,8 +55,9 @@ def put(key: str, value: dict[str, Any]) -> None:
         with tmp.open("w", encoding="utf-8") as stream:
             json.dump({"version": VERSION, "entries": entries}, stream, indent=1)
         tmp.replace(target)
-    except OSError:
-        pass  # a warm cache is an optimisation, never a requirement
+    except OSError as exc:
+        # A warm cache is an optimisation, never a requirement.
+        log.debug("could not write the cache %s: %s", target, exc)
 
 
 def clear() -> bool:

@@ -10,7 +10,11 @@ fetched only when something actually needs it.
 
 from __future__ import annotations
 
+import logging
 import subprocess
+import time
+
+log = logging.getLogger(__name__)
 
 
 class PassError(Exception):
@@ -23,12 +27,21 @@ def lookup(passname: str, program: str = "pass") -> str:
     By convention the first line of a pass entry is the secret itself and
     any further lines are notes about it.
     """
+    log.debug(
+        "running %s %s; gpg may be waiting for a passphrase if this stalls",
+        program, passname,
+    )
+    started = time.monotonic()
     try:
         result = subprocess.run(
             [program, passname], capture_output=True, text=True, check=False
         )
     except OSError as exc:
         raise PassError(f"cannot run {program}: {exc}") from exc
+    log.debug(
+        "%s %s exited %d after %.2fs",
+        program, passname, result.returncode, time.monotonic() - started,
+    )
     if result.returncode != 0:
         detail = result.stderr.strip() or f"exit status {result.returncode}"
         raise PassError(f"{program} {passname}: {detail}")

@@ -21,6 +21,7 @@ blank lines and table alignment come back normalised.  See
 
 from __future__ import annotations
 
+import logging
 import re
 from collections.abc import Iterable
 from pathlib import Path
@@ -36,6 +37,8 @@ SUFFIX = ".org"
 
 #: Characters that have no business in a generated filename.
 _UNSAFE = re.compile(r"[^A-Za-z0-9._-]+")
+
+log = logging.getLogger(__name__)
 
 
 class OrgDirectoryStore:
@@ -92,7 +95,9 @@ class OrgDirectoryStore:
         took the program down over one unreadable file would be worse
         than one that costs a fork per read.
         """
-        return parse_file(self._existing(doc_id))
+        path = self._existing(doc_id)
+        log.debug("parsing %s", path)
+        return parse_file(path)
 
     def replace_document(self, doc_id: DocId, doc: OrgDocument) -> None:
         """Rewrite a document's file from the canonical model.
@@ -157,6 +162,7 @@ class OrgDirectoryStore:
         return path
 
     def _write(self, path: Path, doc: OrgDocument) -> None:
+        log.debug("writing %s", path)
         path.parent.mkdir(parents=True, exist_ok=True)
         text = render_document(doc)
         if text and not text.endswith("\n"):

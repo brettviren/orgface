@@ -592,6 +592,21 @@ expiry.
 Setting =roam.directory= and =roam.dailies_directory= explicitly lets
 =org log= run without ever consulting Emacs.
 
+* Logging
+
+=-l/--log-sink= names where log messages go — =stderr= (the default),
+=stdout=, or a file path — and =-L/--log-level= how many: =debug=,
+=info= (the default), =warning=, =error= or =critical=.
+
+#+begin_src sh
+org -L debug store embed status
+#+end_src
+
+At =debug= every step is logged, with millisecond timestamps, as it
+begins: the last line before a stall names what is being waited on — an
+=emacsclient= or =pass= run, or a request to an embedding service and its
+timeout.
+
 * Notes and limitations
 
 *Your message text is never expanded.* Splicing text into a capture

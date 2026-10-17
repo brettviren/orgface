@@ -9,6 +9,7 @@ them into text.  No file reading, no Emacs, no policy.
 
 from __future__ import annotations
 
+import logging
 import os
 import shutil
 import socket
@@ -20,6 +21,8 @@ from pathlib import Path
 import click
 
 from .dailies import Entry
+
+log = logging.getLogger(__name__)
 
 # git's own default; -R keeps ANSI colour, -F/-X avoid clearing short output.
 LESS_DEFAULTS = "FRX"
@@ -392,6 +395,7 @@ def page(
         write(text, colour)
         return
 
+    log.debug("paging through %s", " ".join(argv))
     env = dict(os.environ)
     env.setdefault("LESS", LESS_DEFAULTS)
     env.setdefault("LV", "-c")

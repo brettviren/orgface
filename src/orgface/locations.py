@@ -10,12 +10,15 @@ while still defaulting to whatever the user's init file says.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 
 from . import cache
 from .config import Config
 from .emacs import Emacs
+
+log = logging.getLogger(__name__)
 
 
 class LocationError(Exception):
@@ -87,9 +90,11 @@ def resolve(
     if not refresh:
         configured = _from_config(config)
         if configured is not None:
+            log.debug("org-roam locations from configuration")
             return configured
         cached = _from_cache(config)
         if cached is not None:
+            log.debug("org-roam locations from the cache")
             return cached
 
     if not allow_daemon:
@@ -98,6 +103,7 @@ def resolve(
             "set roam.directory and roam.dailies_directory in config.toml"
         )
 
+    log.debug("asking the Emacs daemon for org-roam locations")
     emacs = emacs or Emacs(config)
     locations = from_info(emacs.info())
     store(config, locations)

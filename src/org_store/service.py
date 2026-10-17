@@ -16,6 +16,7 @@ models an adapter would have to walk.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any
@@ -30,6 +31,8 @@ from .search import SearchQuery, SearchResult
 from .store import DocId, InvalidDocument, NodeNotFound, StoreBackend, StoreError
 from .text import document_title, node_text
 from .tree import find
+
+log = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -206,6 +209,7 @@ class OrgStore:
             return answer(query)
         answer = self._capability("semantic_search", "keeps no search index")
         have = self._capability("embedded_identities", "keeps no embeddings")()
+        log.debug("identities with vectors: %s", ", ".join(sorted(have)) or "none")
         embedder = self.choose_embedder(query.identity, among=have)
         return answer(query, embedder)
 
@@ -247,10 +251,18 @@ class OrgStore:
             if (identity is None or embedder.name == identity)
             and (among is None or embedder.name in among)
         ]
+        log.debug(
+            "%d of %d embedding service(s) to try%s",
+            len(candidates), len(self.embedders),
+            f" for {identity}" if identity else "",
+        )
         if not candidates:
             raise EmbeddingError(self._nothing_to_try(identity, among))
         for embedder in candidates:
             if embedder.available():
+                log.debug(
+                    "using %s at %s", embedder.name, getattr(embedder, "url", "?")
+                )
                 return embedder
         names = ", ".join(
             f"{embedder.name} at {getattr(embedder, 'url', '?')}"

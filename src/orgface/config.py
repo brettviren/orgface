@@ -18,6 +18,7 @@ one directory shared between machines can hold every machine's settings.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 import socket
@@ -28,6 +29,8 @@ from pathlib import Path
 from typing import Any
 
 from . import xdgpaths
+
+log = logging.getLogger(__name__)
 
 
 class ConfigError(Exception):
@@ -582,6 +585,7 @@ def load(
     if path is not None and not path.exists():
         raise ConfigError(f"{path}: no such config file")
     host = host_file(base, host_name(environ))
+    log.debug("looking for config at %s and %s", base, host)
     sources = tuple(
         candidate
         for candidate in dict.fromkeys((base, host))
@@ -600,6 +604,7 @@ def load(
     # another host's.  The environment fills in what a service leaves out.
     under = _from_environ(dict(environ), EMBED_SETTINGS)
     services = raw.pop(EMBED, None) or [{}]
+    log.debug("%d embedding service(s) configured", len(services))
     embed = tuple(
         _embed_service(service, under, index)
         for index, service in enumerate(services)

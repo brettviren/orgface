@@ -15,6 +15,7 @@ an edit here.
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 from org_store.backends import Backend, get, open_backend
@@ -23,6 +24,8 @@ from org_store.store import StoreError
 
 from . import xdgpaths
 from .config import Config, EmbedService
+
+log = logging.getLogger(__name__)
 
 
 class StorageError(Exception):
@@ -138,6 +141,7 @@ def open_spec(config: Config, spec: str) -> OrgStore:
         from .emacs import Emacs
 
         emacs = Emacs(config)
+    log.debug("opening the %s store at %s", chosen.name, target)
     try:
         return OrgStore(
             open_backend(chosen.name, target, emacs), embedders(config)
@@ -160,6 +164,7 @@ def open_store(config: Config) -> OrgStore:
     so selecting sqlite never brings the daemon machinery with it.
     """
     chosen = backend(config)
+    log.debug("opening the %s store at %s", chosen.name, location(config))
     emacs = None
     if chosen.needs_emacs:
         from .emacs import Emacs

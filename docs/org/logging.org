@@ -1,0 +1,44 @@
+#+title: Logging
+#+filetags: :reference:user:
+#+summary: Where log messages go, how many of them, and reading them to find a stall.
+#+audience: both
+#+status: current
+#+updated: 2026-10-17
+#+source: src/orgface/logs.py
+#+source: src/orgface/cli.py
+
+Two options before the command choose where log messages go and how many:
+
+#+begin_src sh
+org -L debug store embed status          # every step, on standard error
+org -l /tmp/org.log -L debug search -s x # the same, into a file
+org -l stdout -L warning store list      # only problems, mixed into the output
+#+end_src
+
+- =-l/--log-sink SINK= :: =stderr= (the default), =stdout=, or otherwise a
+  file path, appended to and created with its directory if need be.
+- =-L/--log-level LEVEL= :: =debug=, =info= (the default), =warning=,
+  =error= or =critical=; messages less severe than it are dropped.
+
+At =info= little is said beyond things worth knowing anyway, such as an
+Emacs daemon being started or a store's old vectors being dropped. At
+=debug= each step is logged as it begins and ends: config files read,
+the store opened, every =emacsclient= and =pass= run with how long it
+took, every request to an embedding service with its timeout.
+
+* Finding what is slow or stuck
+
+Every line carries a timestamp to the millisecond, and a slow step is
+logged as it begins. So the last line shown before a stall names what is
+being waited on, and the gap between two lines is how long a step took.
+=org store embed status=, for example, logs each service as it is
+checked, the API key being fetched — where =pass= may be waiting on a
+GPG passphrase prompt — and the request with its timeout.
+
+Each line names the module it came from, =orgface.*= for the command
+line tool and =org_store.*= for the store library.
+
+* Related
+
+- [[file:configuration.org][Configuration]] :: the settings proper; logging is chosen per run.
+- [[file:semantic-search.org][Semantic search]] :: what =embed status= checks.

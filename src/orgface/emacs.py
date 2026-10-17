@@ -12,9 +12,11 @@ process is required on this side.
 
 from __future__ import annotations
 
+import logging
 import os
 import shutil
 import subprocess
+import time
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -22,6 +24,17 @@ from typing import Any
 
 from . import elisp
 from .config import Config
+
+log = logging.getLogger(__name__)
+
+#: How much of a command line a debug line shows; forms can be long.
+_SHOWN = 160
+
+
+def _brief(argv: Sequence[str]) -> str:
+    """ARGV as one line, cut short: enough to see what was asked."""
+    text = " ".join(argv)
+    return text if len(text) <= _SHOWN else text[:_SHOWN] + "..."
 
 BOOTSTRAP = Path(__file__).with_name("bootstrap.el")
 
@@ -83,10 +96,12 @@ class Emacs:
     def _run(
         self, argv: Sequence[str], timeout: int | None = None
     ) -> subprocess.CompletedProcess[str]:
+        log.debug("running %s (timeout %ss)", _brief(argv), timeout)
+        started = time.monotonic()
         try:
             # Nonzero is routine here (no daemon yet, Elisp error), so the
             # caller inspects returncode rather than catching an exception.
-            return subprocess.run(
+            result = subprocess.run(
                 list(argv),
                 capture_output=True,
                 text=True,
@@ -97,6 +112,11 @@ class Emacs:
             raise DaemonError(f"timed out running {argv[0]}: {exc}") from exc
         except OSError as exc:
             raise DaemonError(f"could not run {argv[0]}: {exc}") from exc
+        log.debug(
+            "%s exited %d after %.2fs",
+            argv[0], result.returncode, time.monotonic() - started,
+        )
+        return result
 
     # -- daemon state -------------------------------------------------------
 
@@ -106,6 +126,7 @@ class Emacs:
 
     def start(self) -> None:
         """Start the daemon, waiting for it to become ready."""
+        log.info("starting Emacs daemon %r", self.config.server_name)
         emacs = self._require(self.config.emacs)
         argv = [emacs, f"--daemon={self.config.server_name}"]
         result = self._run(argv, timeout=self.config.start_timeout)
@@ -120,6 +141,7 @@ class Emacs:
         """Shut the daemon down; False if it was not running."""
         if not self.is_running():
             return False
+        log.info("stopping Emacs daemon %r", self.config.server_name)
         form = "(orgface-expire)" if self._bootstrapped() else "(kill-emacs)"
         # The daemon dies mid-request, so a nonzero exit here is expected.
         self._run(self._client_argv("-e", form), timeout=60)
@@ -154,6 +176,7 @@ class Emacs:
         result = self._run(argv, timeout=self.config.start_timeout)
 
         if result.returncode != 0 and autostart and _missing_daemon(result.stderr):
+            log.debug("no daemon %r answered; starting one", self.config.server_name)
             self.start()
             result = self._run(argv, timeout=self.config.start_timeout)
 
@@ -251,6 +274,7 @@ class Emacs:
         self.eval("t")
 
         argv = self._client_argv("-c" if gui else "-t", "-e", form)
+        log.debug("interactive %s; waiting for its frame to close", _brief(argv))
         try:
             # Inherits this terminal: emacsclient -t blocks with a live frame
             # until the capture finalises and the frame is deleted.

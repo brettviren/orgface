@@ -50,6 +50,7 @@ Each topic followed by everything beneath it.
 - [[file:installation.org][Installation]]
   - [[file:configuration.org][Configuration]]
     - [[file:xdg-locations.org][XDG locations]]
+    - [[file:logging.org][Logging]]
     - [[file:command-config.org][org config]]
 - [[file:emacs-daemon.org][The Emacs daemon]]
   - [[file:command-daemon.org][org daemon]]

@@ -9,12 +9,15 @@ data modules and to :mod:`orgface.ui` for rendering.
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import click
 
-from . import __version__
+from . import __version__, logs
 from .config import Config, ConfigError, load
+
+log = logging.getLogger(__name__)
 
 CONTEXT_SETTINGS = {
     "help_option_names": ["-h", "--help"],
@@ -57,6 +60,22 @@ pass_context = click.make_pass_decorator(Context)
 )
 @click.option("--emacs", metavar="PROGRAM", help="The emacs executable.")
 @click.option("--emacsclient", metavar="PROGRAM", help="The emacsclient executable.")
+@click.option(
+    "-l",
+    "--log-sink",
+    metavar="SINK",
+    default="stderr",
+    show_default=True,
+    help="Where log messages go: 'stderr', 'stdout', or a file path.",
+)
+@click.option(
+    "-L",
+    "--log-level",
+    type=click.Choice(logs.LEVELS, case_sensitive=False),
+    default="info",
+    show_default=True,
+    help="The least severe log messages to show; 'debug' shows the steps taken.",
+)
 @click.version_option(__version__, "-V", "--version", prog_name="orgface")
 @click.pass_context
 def main(
@@ -66,6 +85,8 @@ def main(
     lifetime: str | None,
     emacs: str | None,
     emacsclient: str | None,
+    log_sink: str,
+    log_level: str,
 ) -> None:
     """Do some Emacs org things quickly from the command line.
 
@@ -73,6 +94,12 @@ def main(
     first use and shut down after it has been idle for the configured
     lifetime.
     """
+    try:
+        logs.setup(log_sink, log_level)
+    except logs.LogError as exc:
+        raise click.ClickException(str(exc)) from exc
+    log.debug("orgface %s: %s", __version__, ctx.invoked_subcommand)
+
     overrides = {
         "server_name": server_name,
         "lifetime": lifetime,
@@ -83,6 +110,10 @@ def main(
         config = load(path=config_path, overrides=overrides)
     except ConfigError as exc:
         raise click.ClickException(str(exc)) from exc
+    log.debug(
+        "configuration from %s",
+        ", ".join(str(source) for source in config.sources) or "defaults only",
+    )
     ctx.obj = Context(config)
 
 

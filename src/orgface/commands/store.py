@@ -13,6 +13,7 @@ otherwise.
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 
 import click
@@ -20,6 +21,8 @@ import click
 from .. import ui
 from ..cli import Context, pass_context
 from . import HELP, colour_option, identity_option, opened_store
+
+log = logging.getLogger(__name__)
 
 
 @click.group(context_settings=HELP, no_args_is_help=True)
@@ -276,8 +279,11 @@ def embed_status(ctx: Context) -> None:
 
     with opened_store(ctx) as store_:
         status = store_.embedding_status()
-    services = [
-        (service, model.probe())
-        for service, model in zip(ctx.config.embed, embedders(ctx.config))
-    ]
+    total = len(ctx.config.embed)
+    services = []
+    for number, (service, model) in enumerate(
+        zip(ctx.config.embed, embedders(ctx.config)), start=1
+    ):
+        log.debug("checking service %d of %d: %s", number, total, service.url)
+        services.append((service, model.probe()))
     click.echo(ui.format_embed_status(status, services))

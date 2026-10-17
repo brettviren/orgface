@@ -22,8 +22,10 @@ from __future__ import annotations
 import contextlib
 import hashlib
 import json
+import logging
 import sqlite3
 import struct
+import time
 import uuid
 from collections.abc import Iterable
 from dataclasses import astuple, fields
@@ -36,6 +38,8 @@ from ..extract import Index, content_hash, index_document
 from ..model import OrgDocument
 from ..search import SearchQuery, SearchResult, match_expression
 from ..store import DocId, DocumentExists, DocumentNotFound, StoreError
+
+log = logging.getLogger(__name__)
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS documents (
@@ -179,6 +183,7 @@ class SqliteStore:
     """
 
     def __init__(self, database: Path | str) -> None:
+        log.debug("opening sqlite store %s", database)
         self.database = database
         if database != ":memory:":
             Path(database).parent.mkdir(parents=True, exist_ok=True)
@@ -235,6 +240,7 @@ class SqliteStore:
         self._write(doc_id, doc, path=row["path"])
 
     def delete_document(self, doc_id: DocId) -> None:
+        log.debug("deleting %s", doc_id)
         if not self._exists(doc_id):
             raise DocumentNotFound(doc_id)
         with self._db:
@@ -386,11 +392,20 @@ class SqliteStore:
         wanted = self._embeddable(doc_ids)
         removed = self._drop_orphans()
         stale = self._stale(space, wanted)
+        log.debug(
+            "%s: %d node(s) to embed of %d, %d orphan vector(s) removed",
+            embedder.name, len(stale), len(wanted), removed,
+        )
         tally = {"nodes": len(wanted), "embedded": 0, "removed": removed}
         if not stale:
             return tally
 
+        started = time.monotonic()
         vectors = embedder.embed_documents([text for *_, text in stale])
+        log.debug(
+            "%s: %d vector(s) made in %.1fs",
+            embedder.name, len(vectors), time.monotonic() - started,
+        )
         with self._db:
             for (doc_id, ref, digest, _), vector in zip(stale, vectors, strict=True):
                 self._store_vector(space, doc_id, ref, digest, vector)
@@ -409,6 +424,7 @@ class SqliteStore:
         # Ask for more than needed: the qualifiers below filter after the
         # nearest-neighbour search, which knows nothing about them.
         depth = max(query.top_k * 8, 64)
+        log.debug("nearest %d in %s", depth, vec_table(space))
         rows = self._db.execute(
             "SELECT rowid AS vec_id,"
             "       vec_distance_cosine(embedding, ?) AS cosine_distance"
@@ -454,6 +470,7 @@ class SqliteStore:
 
     def embedding_status(self) -> dict[str, Any]:
         """How many nodes there are, and how many vectors each identity has."""
+        log.debug("counting nodes and vectors")
         total = self._db.execute(
             "SELECT count(*) AS n FROM fts_nodes"
         ).fetchone()["n"]
@@ -500,6 +517,10 @@ class SqliteStore:
         }
         if "model" not in columns:
             return
+        log.warning(
+            "%s: dropping vectors from before vector spaces; run embed again",
+            self.database,
+        )
         old = self._db.execute(
             "SELECT 1 FROM sqlite_master WHERE name = ?", (OLD_VEC_TABLE,)
         ).fetchone()
@@ -532,7 +553,12 @@ class SqliteStore:
             self._load_vec()
             return row["space_id"]
         if not create:
+            log.debug("no vector space for %s", embedder.name)
             return None
+        log.info(
+            "making a %d-wide vector space for %s",
+            embedder.dimensions, embedder.name,
+        )
         self._load_vec()
         with self._db:
             cursor = self._db.execute(
@@ -550,6 +576,7 @@ class SqliteStore:
         """Load sqlite-vec into this connection, once."""
         if self._vec_loaded:
             return
+        log.debug("loading sqlite-vec")
         try:
             import sqlite_vec
         except ImportError as exc:  # pragma: no cover - optional extra
@@ -619,6 +646,7 @@ class SqliteStore:
         Judged against the whole store, not just the documents being
         embedded, so embedding a subset leaves the rest alone.
         """
+        log.debug("looking for vectors of nodes that are gone")
         keep = {(doc_id, ref) for doc_id, ref, _, _ in self._embeddable(None)}
         doomed = [
             row
@@ -763,6 +791,7 @@ class SqliteStore:
 
     def _write(self, doc_id: DocId, doc: OrgDocument, path: str | None) -> None:
         """Store DOC and rebuild its derived rows, as one transaction."""
+        log.debug("writing %s and its index", doc_id)
         payload = json.dumps(doc.dump(), sort_keys=True)
         # Over the rendered org text, so that this store's hashes are
         # comparable with a file-backed store's.  See extract.content_hash.

@@ -436,7 +436,7 @@ def test_embed_uses_the_first_service_that_answers(
     runner.invoke(main, ["-c", str(services), "store", "add", str(source)])
     result = runner.invoke(main, ["-c", str(services), "store", "embed"])
     assert result.exit_code == 0, result.output
-    assert result.output.startswith("nomic: embedded ")
+    assert result.stdout.startswith("nomic: embedded ")
     assert {request["model"] for request in seen} == {"near"}
 
 
@@ -447,7 +447,7 @@ def test_embed_by_identity(runner, services, source, service) -> None:
         main, ["-c", str(services), "store", "embed", "-i", "other"]
     )
     assert result.exit_code == 0, result.output
-    assert result.output.startswith("other: embedded ")
+    assert result.stdout.startswith("other: embedded ")
     assert {request["model"] for request in seen} == {"other"}
 
 

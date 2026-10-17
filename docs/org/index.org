@@ -33,6 +33,7 @@ plain inventory.
 - [[file:installation.org][Installation]] :: =uv=, and which extra buys which feature.
 - [[file:configuration.org][Configuration]] :: the layered settings and their spellings.
 - [[file:xdg-locations.org][XDG locations]] :: config, state and cache, and what may be deleted.
+- [[file:logging.org][Logging]] :: =-l= and =-L=, and finding what a slow command is waiting on.
 - [[file:emacs-daemon.org][The Emacs daemon]] :: the private, self-expiring Emacs.
 
 ** Capturing notes

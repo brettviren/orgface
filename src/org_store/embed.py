@@ -19,12 +19,16 @@ implements both the same way.
 from __future__ import annotations
 
 import json
+import logging
+import time
 import urllib.error
 import urllib.request
 from collections.abc import Callable
 from typing import Protocol, runtime_checkable
 
 from .store import StoreError
+
+log = logging.getLogger(__name__)
 
 
 class EmbeddingError(StoreError):
@@ -126,7 +130,12 @@ class LlamaCppEmbedder:
         model is actually contacted.
         """
         if callable(self._api_key):
+            log.debug("%s: fetching the API key", self.url)
+            started = time.monotonic()
             self._api_key = self._api_key()
+            log.debug(
+                "%s: API key fetched in %.2fs", self.url, time.monotonic() - started
+            )
         return self._api_key
 
     @property
@@ -162,10 +171,16 @@ class LlamaCppEmbedder:
         of the configured width.  Uses the shorter ``probe_timeout``, so
         an unreachable service is passed over quickly.
         """
+        log.debug(
+            "probing %s for model %s (identity %s), timeout %.0fs",
+            self.url, self.model, self._name, self.probe_timeout,
+        )
         try:
             self._post(["ping"], timeout=self.probe_timeout)
         except EmbeddingError as exc:
+            log.debug("probe of %s failed: %s", self.url, exc)
             return str(exc)
+        log.debug("probe of %s answered", self.url)
         return None
 
     # -- internals ----------------------------------------------------------
@@ -180,10 +195,14 @@ class LlamaCppEmbedder:
         request = urllib.request.Request(
             f"{self.url}/v1/embeddings", data=payload, headers=headers
         )
+        timeout = timeout or self.timeout
+        log.debug(
+            "POST %s/v1/embeddings: %d input(s), model %s, timeout %.0fs",
+            self.url, len(inputs), self.model, timeout,
+        )
+        started = time.monotonic()
         try:
-            with urllib.request.urlopen(
-                request, timeout=timeout or self.timeout
-            ) as response:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
                 answer = json.loads(response.read().decode("utf-8"))
         except urllib.error.URLError as exc:
             raise EmbeddingError(
@@ -194,6 +213,9 @@ class LlamaCppEmbedder:
         except json.JSONDecodeError as exc:
             raise EmbeddingError(f"{self.url}: answer was not JSON: {exc}") from exc
 
+        log.debug(
+            "%s answered in %.2fs", self.url, time.monotonic() - started
+        )
         rows = answer.get("data")
         if not isinstance(rows, list) or len(rows) != len(inputs):
             raise EmbeddingError(

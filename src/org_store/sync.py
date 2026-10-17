@@ -23,12 +23,15 @@ and its own indexes rebuilt, exactly as if they had been written by hand.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from enum import Enum
 
 from .service import OrgStore
 from .store import DocId, DocumentNotFound
+
+log = logging.getLogger(__name__)
 
 
 class Outcome(str, Enum):
@@ -100,8 +103,11 @@ def sync(
     wanted = list(doc_ids) if doc_ids is not None else list(source.list())
     seen = set(wanted)
 
+    log.debug("syncing %d document(s)%s", len(wanted), " (dry run)" if dry_run else "")
     for doc_id in wanted:
-        report.changes.append(_one(source, dest, doc_id, dry_run=dry_run))
+        change = _one(source, dest, doc_id, dry_run=dry_run)
+        log.debug("%s: %s %s", doc_id, change.outcome.value, change.detail or "")
+        report.changes.append(change)
 
     if prune and doc_ids is None:
         for doc_id in dest.list():
