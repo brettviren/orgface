@@ -27,6 +27,10 @@ def config_home() -> Path:
     return _home("XDG_CONFIG_HOME", ".config")
 
 
+def data_home() -> Path:
+    return _home("XDG_DATA_HOME", ".local/share")
+
+
 def state_home() -> Path:
     return _home("XDG_STATE_HOME", ".local/state")
 
@@ -49,6 +53,10 @@ def config_dir() -> Path:
 
 def config_file() -> Path:
     return config_dir() / "config.toml"
+
+
+def data_dir() -> Path:
+    return data_home() / APP_NAME
 
 
 def state_dir() -> Path:

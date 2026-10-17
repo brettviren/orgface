@@ -49,3 +49,18 @@ def lookup(passname: str, program: str = "pass") -> str:
     if not secret:
         raise PassError(f"{program} {passname}: first line is empty")
     return secret
+
+
+def secret(
+    value: str | None, passname: str | None, program: str = "pass"
+) -> str | None:
+    """The secret itself if given, else the one in pass entry ``passname``.
+
+    An explicit value wins.  None means neither was configured, which is
+    for the caller to report since only it knows what the secret is for.
+    """
+    if value:
+        return value
+    if passname:
+        return lookup(passname, program)
+    return None

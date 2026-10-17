@@ -9,7 +9,16 @@ import click
 
 from .. import cache, xdgpaths
 from ..cli import Context, pass_context
-from ..config import host_file, host_name, init_file, to_toml
+from ..config import (
+    ConfigError,
+    host_file,
+    host_name,
+    init_file,
+    resolve_section,
+    table_lines,
+    to_toml,
+)
+from ..sources import registry
 
 HELP = {"help_option_names": ["-h", "--help"]}
 
@@ -29,7 +38,8 @@ def show(ctx: Context, env: bool, secrets: bool) -> None:
     """Print the resolved configuration.
 
     The header names each config file that was read, in the order they
-    were applied: the config file, then this host's file beside it.
+    were applied: the config file, then this host's file beside it.  The
+    settings of each `slurp` and `orger` source follow.
     """
     resolved = ctx.config
     header = [f"config file: {source}" for source in resolved.sources]
@@ -42,6 +52,18 @@ def show(ctx: Context, env: bool, secrets: bool) -> None:
         secrets=secrets,
     )
     click.echo(text, nl=False)
+    for kind in ("slurp", "orger"):
+        for source in registry(kind).values():
+            if not source.settings:
+                continue
+            try:
+                values = resolve_section(resolved, source.section, source.settings)
+            except ConfigError as exc:
+                raise click.ClickException(str(exc)) from exc
+            lines = table_lines(
+                f"[{source.section}]", source.settings, values, env=env, secrets=secrets
+            )
+            click.echo("\n" + "\n".join(lines))
 
 
 @config.command(context_settings=HELP)

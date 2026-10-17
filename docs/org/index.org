@@ -51,6 +51,12 @@ plain inventory.
 - [[file:command-config.org][org config]] :: what is set, where, and clearing the cache.
 - [[file:command-daemon.org][org daemon]] :: taking charge of the Emacs daemon.
 
+** Sources
+
+- [[file:sources.org][Sources]] :: what they are, their settings and secrets, and adding your own.
+- [[file:command-slurp.org][org slurp]] :: fetch from outside into durable local files.
+- [[file:command-orger.org][org orger]] :: make org content from data on this computer.
+
 ** Using the store
 
 - [[file:content-store.org][The content store]] :: what it is for, and its four ideas.

@@ -1,0 +1,73 @@
+#+title: org slurp
+#+filetags: :command:user:sources:
+#+summary: Fetch data from an outside source into durable local files.
+#+audience: user
+#+status: current
+#+updated: 2026-10-17
+#+source: src/orgface/commands/slurp.py
+#+source: src/orgface/sources/github/
+
+Gets data from a [[file:sources.org][source]] and keeps it on this computer. A source is a
+subcommand, so what there is to slurp is what =--list= shows.
+
+#+begin_src sh
+org slurp --list                          # the sources, installed or not
+org slurp github recent                   # GitHub's API, into a dated file
+org slurp github archive export.tar.gz    # an account export's metadata
+#+end_src
+
+What is kept is the exporter's own output, not a digest of it. A fix to
+the code that reads it then needs no new fetch, and the old files stay
+valid whatever the service does later.
+
+* github
+
+Needs the =github= extra. GitHub is slurped two ways, because it offers
+two kinds of data, and both are worth having: the API is fresh but
+remembers only recent events, and the account export has everything.
+
+** recent
+
+Asks the API through ghexport and writes =ghexport-DATE.json=. Another
+fetch on the same day replaces it; other days are kept, so the directory
+grows by one file a day at most. The file appears all at once.
+
+The token is the first that is found of =--token=, the environment
+(=ORGFACE_SLURP_GITHUB_TOKEN=), =token= in the config, and the first line of
+the pass entry =token_passname=. Prefer the last two: a token on the
+command line can be seen by other users while the command runs.
+
+=--include events= fetches only a part of the data, =--traffic= adds
+repository traffic, which is slow and only allowed on repositories you can
+push to.
+
+** archive
+
+Takes the =.tar.gz= GitHub emails after you request it under Settings,
+Account, Export account data. Nearly all of it is the git repositories,
+which are of no use here, so only the JSON files at the top level are kept
+and the archive can then be deleted. Reading it takes a few seconds, as a
+gzip archive can only be read through.
+
+The JSON files already in the directory are replaced, and only after the
+whole archive has been read, so a bad archive changes nothing.
+
+** Settings
+
+#+begin_src conf-toml
+[slurp.github]
+# token            = "..."                # prefer the environment or pass
+# token_passname   = "github/token"       # first line of `pass github/token`
+recent_directory   = "~/.local/share/orgface/slurp/github/recent"
+archive_directory  = "~/.local/share/orgface/slurp/github/archive"
+include_traffic    = false
+#+end_src
+
+The directories default to the paths shown, under the XDG data directory.
+[[file:command-orger.org][=org orger github=]] reads them through HPI, whose own configuration has to
+name the same directories (=export_path= and =gdpr_dir= of its =github=).
+
+* Related
+
+- [[file:sources.org][Sources]] :: configuration, secrets, and adding your own.
+- [[file:command-orger.org][org orger]] :: making org from what is kept.

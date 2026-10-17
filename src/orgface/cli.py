@@ -123,9 +123,11 @@ def _register() -> None:
         daemon,
         log,
         note,
+        orger,
         render,
         search,
         serve,
+        slurp,
         store,
         visit,
     )
@@ -142,6 +144,8 @@ def _register() -> None:
     main.add_command(render.render)
     main.add_command(serve.serve)
     main.add_command(serve.mcp)
+    main.add_command(slurp.slurp)
+    main.add_command(orger.orger)
 
 
 _register()

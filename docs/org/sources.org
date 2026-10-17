@@ -1,0 +1,115 @@
+#+title: Sources
+#+filetags: :concept:user:developer:sources:
+#+summary: What a source is, how it is configured, and how to add one from outside orgface.
+#+audience: both
+#+status: current
+#+updated: 2026-10-17
+#+source: src/orgface/sources/__init__.py
+#+source: src/orgface/commands/sourcegroup.py
+
+A /source/ is somewhere data comes from, such as GitHub. It can have two
+halves, which are separate commands because they have separate jobs:
+
+- [[file:command-slurp.org][=slurp=]] fetches from the outside world and keeps what it got, in the
+  exporter's own form, typically dated JSON files. It is the only step
+  that needs the network or a password.
+- [[file:command-orger.org][=orger=]] makes org content from data already on this computer. That
+  is usually what a slurp kept, but it can be something that needs no
+  slurping, such as a shell history, so a source may have an =orger= half
+  and no =slurp= half.
+
+#+begin_src sh
+org slurp --list          # every slurp source, and whether it is installed
+org orger --list
+org slurp github recent
+org orger github --to github.org
+#+end_src
+
+The files a slurp keeps are the durable record. Everything after them can
+be regenerated, so the cache of whichever library reads them is
+disposable, and a parser fixed later can be run over old files.
+
+* Installing what a source needs
+
+A source whose dependencies are missing is still listed, marked =missing=,
+with how to get them. Bundled sources name their dependencies as an extra
+of the same name in =pyproject.toml=:
+
+#+begin_src sh
+uv tool install -e '.[github]'
+#+end_src
+
+* Configuring a source
+
+Each source has its own table, =[slurp.NAME]= or =[orger.NAME]=. The layers
+are those of the [[file:configuration.org][rest of the configuration]], and every setting has an
+environment variable named =ORGFACE_KIND_NAME_KEY=, such as
+=ORGFACE_SLURP_GITHUB_TOKEN=.
+
+A misspelt key in the table of a source that is installed is an error that
+lists the keys it has. A table for a source that is not installed on this
+computer is left alone, so one config file can be shared between computers.
+=org config show= prints the table of every source.
+
+** Secrets
+
+A setting that is a secret, such as a token, can be given on the command
+line, in the environment, or in the config file. Beside it is always a
+setting of the same name ending in =_passname=, naming an entry of
+[[https://www.passwordstore.org/][pass]] whose first line is the secret. The entry is read only when the secret
+is needed, and only if no secret was given directly.
+
+* Sources from outside orgface
+
+A package can provide a source without being part of orgface. It makes a
+=Source= and names it as an entry point, which is all orgface needs to find
+it:
+
+#+begin_src toml
+[project.entry-points."orgface.slurp"]
+inspirehep = "orgface_inspirehep:SLURP"
+
+[project.entry-points."orgface.orger"]
+inspirehep = "orgface_inspirehep:ORGER"
+#+end_src
+
+#+begin_src python
+import click
+from orgface.cli import pass_context
+from orgface.config import parse_path, resolve_section
+from orgface.sources import Source, setting
+
+SETTINGS = (
+    setting("slurp", "inspirehep", "directory", None, parse_path, "Where dumps go."),
+)
+
+@click.command("inspirehep")
+@pass_context
+def command(ctx):
+    """Fetch my papers from InspireHEP."""
+    settings = resolve_section(ctx.config, "slurp.inspirehep", SETTINGS)
+    ...
+
+SLURP = Source(kind="slurp", name="inspirehep", summary="My papers",
+               command=command, settings=SETTINGS, requires=("requests",))
+#+end_src
+
+- The entry point name must be the source's name; a mismatch is skipped
+  with a warning, as is a package that fails to import.
+- =setting()= fixes the table and environment variable names, so every
+  source spells them alike.
+- =requires= lists modules that must be importable. Importing the package
+  must not need them, or the listing could not say they are missing.
+- A bundled source of the same name wins.
+- A bad value or misspelt key found by =resolve_section= is reported as a
+  clean error without the source catching it.
+
+Bundled sources are subpackages of =orgface.sources= exposing =SLURP= and/or
+=ORGER=; there is no list to add them to. Keep the logic in a module that
+does not use Click and the commands thin, as the rest of orgface does.
+
+* Related
+
+- [[file:command-slurp.org][org slurp]] :: the fetching half.
+- [[file:command-orger.org][org orger]] :: the org-making half.
+- [[file:configuration.org][Configuration]] :: the layers.

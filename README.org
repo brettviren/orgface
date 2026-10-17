@@ -254,6 +254,23 @@ where it came from, =org config init= creates a default config file if none
 exists, =org config paths= the XDG locations in use, and =org config clear-cache=
 forgets the cached org-roam locations.
 
+** org slurp and org orger
+
+Two command trees whose subcommands are /sources/ of data. =org slurp=
+fetches from outside into durable local files; =org orger= makes org from
+data already on this computer. Each source has its own table of the
+config file and its own optional dependencies.
+
+#+begin_src sh
+org slurp --list                          # sources, and whether installed
+org slurp github recent                   # GitHub's API, into a dated file
+org slurp github archive export.tar.gz    # keep an account export's JSON
+org orger github --to github.org
+#+end_src
+
+Sources can also be provided by other packages; see the wiki's
+[[file:docs/org/sources.org][Sources]] page.
+
 ** org store
 
 The store keeps org documents in a canonical, schema-validated JSON form
@@ -579,6 +596,10 @@ dimensions = 768                       # ORGFACE_EMBED_DIMENSIONS
 # identity = "nomic-embed-text"        # ORGFACE_EMBED_IDENTITY; stored with vectors, defaults to model
 batch      = 32                        # ORGFACE_EMBED_BATCH; texts per request
 parallel   = 1                         # ORGFACE_EMBED_PARALLEL; requests at once
+
+[slurp.github]                    # each source has its own table
+# token_passname = "github/token" # ORGFACE_SLURP_GITHUB_TOKEN_PASSNAME; see `org config show`
+recent_directory = "~/.local/share/orgface/slurp/github/recent"
 
 [store]
 backend   = "sqlite"       # ORGFACE_STORE_BACKEND: sqlite or orgfs

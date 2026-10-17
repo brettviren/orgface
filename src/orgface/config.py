@@ -23,8 +23,8 @@ import os
 import re
 import socket
 import tomllib
-from collections.abc import Callable
-from dataclasses import dataclass, fields
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass, field, fields
 from pathlib import Path
 from typing import Any
 
@@ -402,6 +402,10 @@ class Config:
     store_directory: Path | None = None
     embed: tuple[EmbedService, ...] = (EmbedService(),)  # in the order to try
     sources: tuple[Path, ...] = ()  # config files actually loaded, in order
+    #: Raw ``[slurp.NAME]`` and ``[orger.NAME]`` tables keyed by "slurp.NAME".
+    #: A source declares its own settings, so these are only checked and
+    #: coerced when the source is used; see :func:`resolve_section`.
+    source_tables: Mapping[str, Mapping[str, Any]] = field(default_factory=dict)
 
     def values(self) -> dict[str, Any]:
         """Return every setting's resolved value, keyed by setting name.
@@ -460,21 +464,36 @@ def to_toml(
     for title, settings, table in tables:
         if lines:
             lines.append("")
-        lines.append(title)
-        for setting in settings:
-            if comments:
-                lines.append(f"# {setting.help}")
-            literal = _toml_value(setting, table.get(setting.name))
-            if literal is None:
-                line = f"# {setting.key} ="
-            elif setting.secret and not secrets:
-                line = f"# {setting.key} = (set, withheld)"
-            else:
-                line = f"{setting.key} = {literal}"
-            if env:
-                line = f"{line:<40} # {setting.env}"
-            lines.append(line)
+        lines += table_lines(
+            title, settings, table, env=env, comments=comments, secrets=secrets
+        )
     return "\n".join(lines) + "\n"
+
+
+def table_lines(
+    title: str,
+    settings: tuple[Setting, ...],
+    table: dict[str, Any],
+    env: bool = False,
+    comments: bool = False,
+    secrets: bool = False,
+) -> list[str]:
+    """Render one TOML table, as :func:`to_toml` does for each of its own."""
+    lines = [title]
+    for setting in settings:
+        if comments:
+            lines.append(f"# {setting.help}")
+        literal = _toml_value(setting, table.get(setting.name))
+        if literal is None:
+            line = f"# {setting.key} ="
+        elif setting.secret and not secrets:
+            line = f"# {setting.key} = (set, withheld)"
+        else:
+            line = f"{setting.key} = {literal}"
+        if env:
+            line = f"{line:<40} # {setting.env}"
+        lines.append(line)
+    return lines
 
 
 def defaults() -> dict[str, Any]:
@@ -521,6 +540,25 @@ def _embed_table(contents: Any, path: Path) -> dict[str, Any]:
     return values
 
 
+#: Top-level tables holding one sub-table per source: ``[slurp.github]``.
+SOURCE_KINDS = ("slurp", "orger")
+
+#: Where :func:`_from_file` keeps the source tables among the setting values.
+SOURCE_TABLES = "source_tables"
+
+
+def _source_tables(kind: str, contents: Any, path: Path) -> dict[str, dict[str, Any]]:
+    """The tables of one kind, keyed by their dotted name."""
+    if not isinstance(contents, dict):
+        raise ConfigError(f"{path}: [{kind}] must be a table")
+    tables: dict[str, dict[str, Any]] = {}
+    for name, table in contents.items():
+        if not isinstance(table, dict):
+            raise ConfigError(f"{path}: [{kind}.{name}] must be a table")
+        tables[f"{kind}.{name}"] = dict(table)
+    return tables
+
+
 def _from_file(data: dict[str, Any], path: Path) -> dict[str, Any]:
     """Raw setting values, keyed by setting name.
 
@@ -533,6 +571,12 @@ def _from_file(data: dict[str, Any], path: Path) -> dict[str, Any]:
 
     values: dict[str, Any] = {}
     for section, contents in data.items():
+        if section in SOURCE_KINDS:
+            values[SOURCE_TABLES] = {
+                **values.get(SOURCE_TABLES, {}),
+                **_source_tables(section, contents, path),
+            }
+            continue
         if section == EMBED:
             tables = contents if isinstance(contents, list) else [contents]
             values[EMBED] = [_embed_table(table, path) for table in tables]
@@ -624,8 +668,14 @@ def load(
 
     raw: dict[str, Any] = {}
     raw.update(_from_environ(dict(environ)))
+    source_tables: dict[str, dict[str, Any]] = {}
     for source in sources:
-        raw.update(read_file(source))
+        values = read_file(source)
+        # Unlike the rest, a source's table merges key by key across the
+        # files, so a host file can change one value and inherit the rest.
+        for name, table in values.pop(SOURCE_TABLES, {}).items():
+            source_tables.setdefault(name, {}).update(table)
+        raw.update(values)
     if overrides:
         raw.update({k: v for k, v in overrides.items() if v is not None})
 
@@ -654,4 +704,53 @@ def load(
         **{k: v for k, v in resolved.items() if k in known},
         embed=embed,
         sources=sources,
+        source_tables=source_tables,
     )
+
+
+def check_section(config: Config, section: str, settings: tuple[Setting, ...]) -> None:
+    """Raise :class:`ConfigError` for a key in the table that is not a setting.
+
+    A misspelt key, or a right one in the wrong table, would otherwise be
+    ignored without a word.
+    """
+    known = {setting.key for setting in settings}
+    for key in config.source_tables.get(section, {}):
+        if key not in known:
+            raise ConfigError(
+                f"[{section}]: unknown key {key!r}; known keys: "
+                f"{', '.join(sorted(known)) or 'none'}"
+            )
+
+
+def resolve_section(
+    config: Config,
+    section: str,
+    settings: tuple[Setting, ...],
+    overrides: dict[str, Any] | None = None,
+    environ: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    """Resolve the settings of one source, keyed by setting name.
+
+    ``section`` is the dotted table name, e.g. ``"slurp.github"``.  The
+    layers are the same as for the rest of the configuration: defaults,
+    then environment variables, then the config files, then ``overrides``
+    (command line values; those that are None are ignored).  A key in the
+    file that the source does not declare is an error, which is how a
+    misspelt setting gets noticed.
+    """
+    environ = os.environ if environ is None else environ
+    check_section(config, section, settings)
+    by_key = {setting.key: setting for setting in settings}
+    table = config.source_tables.get(section, {})
+
+    raw: dict[str, Any] = _from_environ(dict(environ), settings)
+    raw.update({by_key[key].name: value for key, value in table.items()})
+    if overrides:
+        raw.update({k: v for k, v in overrides.items() if v is not None})
+    return {
+        setting.name: _coerce(
+            setting, raw.get(setting.name, setting.default), f"{section}.{setting.key}"
+        )
+        for setting in settings
+    }

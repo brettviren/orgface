@@ -1,0 +1,51 @@
+#+title: org orger
+#+filetags: :command:user:sources:
+#+summary: Make org content from data already on this computer.
+#+audience: user
+#+status: current
+#+updated: 2026-10-17
+#+source: src/orgface/commands/orger.py
+#+source: src/orgface/sources/github/
+
+Makes org content from a [[file:sources.org][source]]. Nothing here uses the network: the data is
+what [[file:command-slurp.org][=org slurp=]] kept, or anything else already on this computer.
+
+#+begin_src sh
+org orger --list
+org orger github                    # writes github.org in this directory
+org orger github --to ~/org/gh.org
+org orger github --stdout           # print instead, to look first
+#+end_src
+
+* github
+
+Needs the =github= extra. It does what =python -m orger.modules.github=
+does, with orgface's configuration and command line. The file is
+regenerated whole each time and made read-only, because an edit would be
+lost. It refuses to write while an editor has the file open, which it
+sees from the editor's lock or swap file.
+
+The data is read through HPI, so HPI's configuration (=~/.config/my=, or
+=$MY_CONFIG=) must point its =github= =export_path= and =gdpr_dir= at the
+directories [[file:command-slurp.org][=org slurp github=]] fills. A module in that directory's =my/=
+package, such as a replacement for =my.github.all=, is found before HPI's
+own, which needs nothing in the environment.
+
+Converting every body with pandoc is what takes the time: with a
+thousand events about ten seconds, against a fifth of a second with
+=--no-pandoc=.
+
+** Settings
+
+#+begin_src conf-toml
+[orger.github]
+output      = "~/org/github.org"   # default: github.org in the current directory
+pandoc      = true
+timestamps  = "inactive"           # inactive, active, plain or none
+# hpi_config = "~/.config/my"      # the directory holding HPI's my/config
+#+end_src
+
+* Related
+
+- [[file:sources.org][Sources]] :: configuration, secrets, and adding your own.
+- [[file:command-slurp.org][org slurp]] :: getting the data in the first place.
