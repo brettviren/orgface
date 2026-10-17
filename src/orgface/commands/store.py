@@ -246,15 +246,13 @@ def sync(
 )
 @pass_context
 def embed(ctx: Context, status: bool) -> None:
-    """Build the embeddings that `org search --semantic` needs.
+    """
+    Build the embeddings from added file that `org search --semantic` needs.
 
     Only text that changed since it was last embedded is sent to the
-    model, so running this again after an edit is cheap. Changing the
-    model invalidates everything the old one produced: vectors from two
-    models do not mean the same thing.
+    model, so running this again after an edit is cheap.
 
-    This is separate from writing on purpose. Embedding needs a model
-    running, and storing a document should not fail because one is not.
+    Note, changing the model will invalidate all vectors.
     """
     with opened_store(ctx) as store_:
         if status:

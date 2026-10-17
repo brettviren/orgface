@@ -147,6 +147,7 @@ class Setting:
     default: Any
     coerce: Callable[[Any], Any]
     help: str
+    secret: bool = False  # withheld from displayed configuration
 
 
 SETTINGS: tuple[Setting, ...] = (
@@ -256,7 +257,7 @@ SETTINGS: tuple[Setting, ...] = (
         "ORGFACE_EMBED_URL",
         "http://127.0.0.1:8080",
         parse_str,
-        "Where llama-server serves the embedding model.",
+        "Base URL of an OpenAI-compatible embeddings service (with or without /v1).",
     ),
     Setting(
         "embed_model",
@@ -275,6 +276,16 @@ SETTINGS: tuple[Setting, ...] = (
         768,
         parse_int,
         "How many numbers the embedding model returns per vector.",
+    ),
+    Setting(
+        "embed_api_key",
+        "embed",
+        "api_key",
+        "ORGFACE_EMBED_API_KEY",
+        None,
+        parse_str,
+        "Bearer token for the embeddings service; prefer the environment variable.",
+        secret=True,
     ),
     Setting(
         "store_directory",
@@ -309,6 +320,7 @@ class Config:
     embed_url: str = "http://127.0.0.1:8080"
     embed_model: str = "nomic-embed-text-v1.5"
     embed_dimensions: int = 768
+    embed_api_key: str | None = None
     source: Path | None = None  # config file actually loaded, if any
 
     def values(self) -> dict[str, Any]:
@@ -342,6 +354,7 @@ def to_toml(
     header: list[str] | None = None,
     env: bool = False,
     comments: bool = False,
+    secrets: bool = False,
 ) -> str:
     """Render setting values, keyed by setting name, as a TOML document.
 
@@ -349,7 +362,9 @@ def to_toml(
     order.  Unset values are written as commented-out keys so the file
     still names every setting.  ``env`` appends each environment
     variable as a trailing comment; ``comments`` precedes each key with
-    its help text.  The result always parses back with :func:`read_file`.
+    its help text.  Secret settings are written commented out, value
+    withheld, unless ``secrets`` is true.  The result always parses back
+    with :func:`read_file`.
     """
     sections: dict[str, list[Setting]] = {}
     for setting in SETTINGS:
@@ -364,11 +379,12 @@ def to_toml(
             if comments:
                 lines.append(f"# {setting.help}")
             literal = _toml_value(setting, values.get(setting.name))
-            line = (
-                f"# {setting.key} ="
-                if literal is None
-                else f"{setting.key} = {literal}"
-            )
+            if literal is None:
+                line = f"# {setting.key} ="
+            elif setting.secret and not secrets:
+                line = f"# {setting.key} = (set, withheld)"
+            else:
+                line = f"{setting.key} = {literal}"
             if env:
                 line = f"{line:<40} # {setting.env}"
             lines.append(line)

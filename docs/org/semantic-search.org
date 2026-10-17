@@ -54,4 +54,4 @@ uv sync --extra semantic
 
 - [[file:command-search.org][org search]] :: the word-matching default.
 - [[file:embeddings.org][Embeddings in the store]] :: how vectors are kept and invalidated.
-- [[file:configuration.org][Configuration]] :: =embed.url=, =embed.model=, =embed.dimensions=.
+- [[file:configuration.org][Configuration]] :: =embed.url=, =embed.model=, =embed.dimensions=, =embed.api_key=.

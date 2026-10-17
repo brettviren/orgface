@@ -165,6 +165,18 @@ class TestToToml:
         text = to_toml(defaults())
         assert "# directory =" in text
 
+    def test_secrets_are_withheld_unless_asked(self, isolated):
+        values = load(overrides={"embed_api_key": "sekrit"}, environ={}).values()
+        assert "sekrit" not in to_toml(values)
+        assert "# api_key = (set, withheld)" in to_toml(values)
+        path = isolated / "secret.toml"
+        path.write_text(to_toml(values, secrets=True), encoding="utf-8")
+        assert load(path=path, environ={}).embed_api_key == "sekrit"
+
+    def test_api_key_comes_from_the_environment(self, isolated):
+        config = load(environ={"ORGFACE_EMBED_API_KEY": "from-env"})
+        assert config.embed_api_key == "from-env"
+
     def test_init_file_writes_once(self, isolated):
         path = isolated / "new" / "config.toml"
         assert init_file(path)

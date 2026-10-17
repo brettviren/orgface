@@ -51,6 +51,7 @@ pager = "less"                    # ORGFACE_PAGER
 url        = "http://127.0.0.1:8080"   # ORGFACE_EMBED_URL
 model      = "nomic-embed-text-v1.5"   # ORGFACE_EMBED_MODEL
 dimensions = 768                       # ORGFACE_EMBED_DIMENSIONS
+# api_key  = "..."                     # ORGFACE_EMBED_API_KEY; prefer the env var
 
 [store]
 backend   = "sqlite"       # ORGFACE_STORE_BACKEND

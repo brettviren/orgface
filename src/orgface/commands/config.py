@@ -21,12 +21,20 @@ def config() -> None:
 
 @config.command(context_settings=HELP)
 @click.option("--env", is_flag=True, help="Also show the environment variable names.")
+@click.option(
+    "--secrets", is_flag=True, help="Include secret values such as API keys."
+)
 @pass_context
-def show(ctx: Context, env: bool) -> None:
+def show(ctx: Context, env: bool, secrets: bool) -> None:
     """Print the resolved configuration."""
     resolved = ctx.config
     source = resolved.source or f"{xdgpaths.config_file()} (absent)"
-    text = to_toml(resolved.values(), header=[f"config file: {source}"], env=env)
+    text = to_toml(
+        resolved.values(),
+        header=[f"config file: {source}"],
+        env=env,
+        secrets=secrets,
+    )
     click.echo(text, nl=False)
 
 

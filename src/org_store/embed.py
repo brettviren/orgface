@@ -58,11 +58,14 @@ class Embedder(Protocol):
 
 
 class LlamaCppEmbedder:
-    """An embedding model served by ``llama-server``.
+    """An embedding model behind an OpenAI-compatible ``/v1/embeddings``.
 
-    Talks to the OpenAI-compatible ``/v1/embeddings`` endpoint over plain
-    HTTP, so there is nothing to install on this side and the model can be
-    started, stopped and shared independently of this tool.
+    Written for ``llama-server`` but equally happy with any service that
+    speaks the same protocol, such as a LiteLLM proxy.  Talks plain HTTP,
+    so there is nothing to install on this side and the model can be
+    started, stopped and shared independently of this tool.  The ``url``
+    may be given with or without its trailing ``/v1``; an ``api_key``, when
+    given, is sent as a bearer token.
     """
 
     #: What nomic-embed-text expects in front of the two kinds of text.
@@ -76,8 +79,10 @@ class LlamaCppEmbedder:
         dimensions: int = 768,
         timeout: float = 60.0,
         batch: int = 32,
+        api_key: str | None = None,
     ) -> None:
-        self.url = url.rstrip("/")
+        self.url = url.rstrip("/").removesuffix("/v1")
+        self.api_key = api_key
         self._name = model
         self._dimensions = dimensions
         self.timeout = timeout
@@ -114,10 +119,11 @@ class LlamaCppEmbedder:
 
     def _post(self, inputs: list[str]) -> list[list[float]]:
         payload = json.dumps({"input": inputs, "model": self._name}).encode("utf-8")
+        headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
         request = urllib.request.Request(
-            f"{self.url}/v1/embeddings",
-            data=payload,
-            headers={"Content-Type": "application/json"},
+            f"{self.url}/v1/embeddings", data=payload, headers=headers
         )
         try:
             with urllib.request.urlopen(request, timeout=self.timeout) as response:

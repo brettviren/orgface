@@ -23,7 +23,8 @@ Prints the config file actually loaded — or the XDG path it looked at and
 did not find — then every setting as TOML, one table per section, in the
 order they are declared. Unset settings appear as commented-out keys. With
 =--env= each line also carries, as a trailing comment, the environment
-variable that would set it.
+variable that would set it. Secret settings, such as =embed.api_key=, are
+shown commented out with their value withheld unless =--secrets= is given.
 
 The output is a valid config file, so a variant is easy to start:
 

@@ -12,7 +12,10 @@ is covered separately, under the ``embed`` marker.
 
 from __future__ import annotations
 
+import json
 import math
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 import pytest
@@ -107,6 +110,60 @@ def test_an_absent_model_is_reported_not_hidden() -> None:
     assert embedder.available() is False
     with pytest.raises(EmbeddingError, match="no embedding model"):
         embedder.embed_query("anything")
+
+
+@pytest.fixture
+def service():
+    """A minimal OpenAI-style embeddings endpoint recording what it is sent."""
+    seen: list[dict] = []
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_POST(self) -> None:
+            body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+            seen.append({"path": self.path, "auth": self.headers.get("Authorization")})
+            if self.path != "/v1/embeddings":
+                self.send_error(404)
+                return
+            rows = [
+                {"index": i, "embedding": [0.0] * 4}
+                for i in range(len(body["input"]))
+            ]
+            answer = json.dumps({"data": rows}).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(answer)))
+            self.end_headers()
+            self.wfile.write(answer)
+
+        def log_message(self, *args) -> None:
+            pass
+
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    yield f"http://127.0.0.1:{server.server_port}", seen
+    server.shutdown()
+    server.server_close()
+
+
+@pytest.mark.parametrize("suffix", ["", "/", "/v1", "/v1/"])
+def test_the_url_may_include_v1(service, suffix: str) -> None:
+    url, seen = service
+    embedder = LlamaCppEmbedder(url=url + suffix, dimensions=4)
+    assert len(embedder.embed_query("hello")) == 4
+    assert seen[-1]["path"] == "/v1/embeddings"
+
+
+def test_an_api_key_is_sent_as_a_bearer_token(service) -> None:
+    url, seen = service
+    LlamaCppEmbedder(url=url, dimensions=4, api_key="sekrit").embed_query("hi")
+    assert seen[-1]["auth"] == "Bearer sekrit"
+
+
+def test_no_api_key_sends_no_authorization(service) -> None:
+    url, seen = service
+    LlamaCppEmbedder(url=url, dimensions=4).embed_query("hi")
+    assert seen[-1]["auth"] is None
 
 
 # -- building the index -----------------------------------------------------

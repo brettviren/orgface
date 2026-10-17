@@ -63,6 +63,7 @@ def embedder(config: Config):
         url=config.embed_url,
         model=config.embed_model,
         dimensions=config.embed_dimensions,
+        api_key=config.embed_api_key,
     )
 
 
