@@ -23,6 +23,8 @@ org store rm notes.org
 org store reindex                           # rebuild the derived tables
 org store sync orgfs:~/org                  # copy to another store
 org store embed                             # build embedding vectors
+org store embed -i IDENTITY                 # ... with that model identity
+org store embed status                      # vectors per identity, services
 #+end_src
 
 * add

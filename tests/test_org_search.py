@@ -239,7 +239,7 @@ def test_results_point_at_real_nodes(store: OrgStore, stored: str) -> None:
 
 def test_semantic_search_needs_a_model(store: OrgStore) -> None:
     """Refused rather than silently answered with a text search instead."""
-    with pytest.raises(StoreError, match="no embedding model"):
+    with pytest.raises(StoreError, match="no embedding service is configured"):
         store.search(SearchQuery(text="x", semantic=True))
 
 

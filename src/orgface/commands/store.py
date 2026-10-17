@@ -19,7 +19,7 @@ import click
 
 from .. import ui
 from ..cli import Context, pass_context
-from . import HELP, colour_option, opened_store
+from . import HELP, colour_option, identity_option, opened_store
 
 
 @click.group(context_settings=HELP, no_args_is_help=True)
@@ -238,37 +238,46 @@ def sync(
         raise SystemExit(1)
 
 
-@store.command(context_settings=HELP)
-@click.option(
-    "--status",
-    is_flag=True,
-    help="Report how much of the store is embedded and do nothing else.",
-)
+@store.group(context_settings=HELP, invoke_without_command=True)
+@identity_option
 @pass_context
-def embed(ctx: Context, status: bool) -> None:
+@click.pass_context
+def embed(click_ctx: click.Context, ctx: Context, identity: str | None) -> None:
     """
-    Build the embeddings from added file that `org search --semantic` needs.
+    Build the embeddings from added files that `org search --semantic` needs.
+
+    The configured [[embed]] services are tried in order, and the first
+    that answers is used; -i/--identity tries only those of that model
+    identity. Vectors are kept per identity, so embedding with one model
+    leaves another's alone.
 
     Only text that changed since it was last embedded is sent to the
     model, so running this again after an edit is cheap.
-
-    Note, changing the model will invalidate all vectors.
     """
+    if click_ctx.invoked_subcommand is not None:
+        return
     with opened_store(ctx) as store_:
-        if status:
-            counts = store_.embedding_status()
-            click.echo(
-                f"{counts['embedded']} of {counts['nodes']} nodes embedded, "
-                f"{counts['pending']} pending"
-            )
-            return
-        from org_store.embed import EmbeddingError
-
-        try:
-            done = store_.embed()
-        except EmbeddingError as exc:
-            raise click.ClickException(str(exc)) from exc
+        done = store_.embed(identity=identity)
     click.echo(
-        f"embedded {done['embedded']} node(s), "
+        f"{done['identity']}: embedded {done['embedded']} node(s), "
         f"removed {done['removed']}, {done['nodes']} in the store"
     )
+
+
+@embed.command("status", context_settings=HELP)
+@pass_context
+def embed_status(ctx: Context) -> None:
+    """Show the vectors each identity has, and which services answer.
+
+    Every configured [[embed]] service is tried, so this can take as long
+    as the slowest one takes to answer or time out.
+    """
+    from ..storage import embedders
+
+    with opened_store(ctx) as store_:
+        status = store_.embedding_status()
+    services = [
+        (service, model.probe())
+        for service, model in zip(ctx.config.embed, embedders(ctx.config))
+    ]
+    click.echo(ui.format_embed_status(status, services))

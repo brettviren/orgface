@@ -9,7 +9,7 @@ import click
 
 from .. import cache, xdgpaths
 from ..cli import Context, pass_context
-from ..config import init_file, to_toml
+from ..config import host_file, host_name, init_file, to_toml
 
 HELP = {"help_option_names": ["-h", "--help"]}
 
@@ -26,12 +26,18 @@ def config() -> None:
 )
 @pass_context
 def show(ctx: Context, env: bool, secrets: bool) -> None:
-    """Print the resolved configuration."""
+    """Print the resolved configuration.
+
+    The header names each config file that was read, in the order they
+    were applied: the config file, then this host's file beside it.
+    """
     resolved = ctx.config
-    source = resolved.source or f"{xdgpaths.config_file()} (absent)"
+    header = [f"config file: {source}" for source in resolved.sources]
+    if not header:
+        header = [f"config file: {xdgpaths.config_file()} (absent)"]
     text = to_toml(
         resolved.values(),
-        header=[f"config file: {source}"],
+        header=header,
         env=env,
         secrets=secrets,
     )
@@ -51,7 +57,9 @@ def init() -> None:
 @config.command(context_settings=HELP)
 def paths() -> None:
     """Print the XDG locations in use."""
-    click.echo(f"config: {xdgpaths.config_file()}")
+    config_file = xdgpaths.config_file()
+    click.echo(f"config: {config_file}")
+    click.echo(f"host:   {host_file(config_file, host_name())}")
     click.echo(f"state:  {xdgpaths.state_dir()}")
     click.echo(f"cache:  {xdgpaths.cache_dir()}")
 

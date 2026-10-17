@@ -24,9 +24,15 @@ import urllib.request
 from collections.abc import Callable
 from typing import Protocol, runtime_checkable
 
+from .store import StoreError
 
-class EmbeddingError(Exception):
-    """The embedding model could not be reached or did not answer usefully."""
+
+class EmbeddingError(StoreError):
+    """The embedding model could not be reached or did not answer usefully.
+
+    A store error, so that every adapter already reporting those reports
+    this too rather than each having to know embedding can fail.
+    """
 
 
 @runtime_checkable
@@ -40,7 +46,9 @@ class Embedder(Protocol):
         Stored vectors are only comparable with others from the same
         model, so this is recorded alongside them: changing the model has
         to invalidate what the old one produced rather than silently
-        mixing two vector spaces.
+        mixing two vector spaces.  It names the model itself, not what one
+        service calls it: two services serving the same weights under
+        different names should give the same name here.
         """
         ...
 
@@ -57,6 +65,14 @@ class Embedder(Protocol):
         """Embed a question, for searching."""
         ...
 
+    def available(self) -> bool:
+        """Whether the model answers now, without raising if it does not.
+
+        Asked before choosing among several services for one identity, so
+        it should be quick to say no.
+        """
+        ...
+
 
 class LlamaCppEmbedder:
     """An embedding model behind an OpenAI-compatible ``/v1/embeddings``.
@@ -68,6 +84,13 @@ class LlamaCppEmbedder:
     may be given with or without its trailing ``/v1``; an ``api_key``, when
     given, is sent as a bearer token; it may be a callable, called once
     on first contact, so a costly lookup is skipped when no vector is needed.
+
+    ``model`` is what this service calls the model, and is sent with every
+    request.  ``identity`` is what the store records with the vectors, and
+    defaults to ``model``; giving it lets two services that name one model
+    differently share the vectors either produces.  Nothing a service
+    reports identifies its weights reliably -- ``/v1/models`` lists the
+    same names -- so this is a claim the configuration makes.
     """
 
     #: What nomic-embed-text expects in front of the two kinds of text.
@@ -82,13 +105,17 @@ class LlamaCppEmbedder:
         timeout: float = 60.0,
         batch: int = 32,
         api_key: str | Callable[[], str | None] | None = None,
+        identity: str | None = None,
+        probe_timeout: float = 10.0,
     ) -> None:
         self.url = url.rstrip("/").removesuffix("/v1")
         self._api_key = api_key
-        self._name = model
+        self.model = model
+        self._name = identity or model
         self._dimensions = dimensions
         self.timeout = timeout
         self.batch = max(1, batch)
+        self.probe_timeout = probe_timeout
 
     @property
     def api_key(self) -> str | None:
@@ -123,16 +150,30 @@ class LlamaCppEmbedder:
 
     def available(self) -> bool:
         """Whether the server answers, without raising if it does not."""
+        return self.probe() is None
+
+    def probe(self) -> str | None:
+        """Why the model cannot be used now, or None when it can.
+
+        A one-word embedding rather than a look at ``/v1/models``: that
+        lists names, which some servers ignore and others map to models
+        on demand, where an embedding shows the service is reachable,
+        accepts the key, serves the model by that name, and gives vectors
+        of the configured width.  Uses the shorter ``probe_timeout``, so
+        an unreachable service is passed over quickly.
+        """
         try:
-            self._post(["ping"])
-        except EmbeddingError:
-            return False
-        return True
+            self._post(["ping"], timeout=self.probe_timeout)
+        except EmbeddingError as exc:
+            return str(exc)
+        return None
 
     # -- internals ----------------------------------------------------------
 
-    def _post(self, inputs: list[str]) -> list[list[float]]:
-        payload = json.dumps({"input": inputs, "model": self._name}).encode("utf-8")
+    def _post(
+        self, inputs: list[str], timeout: float | None = None
+    ) -> list[list[float]]:
+        payload = json.dumps({"input": inputs, "model": self.model}).encode("utf-8")
         headers = {"Content-Type": "application/json"}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
@@ -140,7 +181,9 @@ class LlamaCppEmbedder:
             f"{self.url}/v1/embeddings", data=payload, headers=headers
         )
         try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+            with urllib.request.urlopen(
+                request, timeout=timeout or self.timeout
+            ) as response:
                 answer = json.loads(response.read().decode("utf-8"))
         except urllib.error.URLError as exc:
             raise EmbeddingError(
@@ -163,7 +206,7 @@ class LlamaCppEmbedder:
         for vector in vectors:
             if len(vector) != self._dimensions:
                 raise EmbeddingError(
-                    f"{self._name} returned {len(vector)} dimensions, "
+                    f"{self.model} returned {len(vector)} dimensions, "
                     f"not the {self._dimensions} configured"
                 )
         return vectors

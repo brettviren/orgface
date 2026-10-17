@@ -29,7 +29,7 @@ pytest.importorskip("sqlite_vec", reason="the semantic extra is not installed")
 
 @pytest.fixture(scope="module")
 def model():
-    embedder = build_embedder(Config())
+    embedder = build_embedder(Config().embed[0])
     if not embedder.available():
         pytest.skip(f"no embedding model at {embedder.url}")
     return embedder
@@ -39,7 +39,7 @@ def model():
 def store(tmp_path, model) -> OrgStore:
     from org_store.adapters.orgparser import parse_file
 
-    opened = OrgStore(SqliteStore(tmp_path / "store.sqlite", embedder=model))
+    opened = OrgStore(SqliteStore(tmp_path / "store.sqlite"), [model])
     for name in ("fixture.org", "fixture-timestamps.org"):
         opened.create(parse_file(DATA / name), path_hint=name)
     opened.embed()
@@ -52,7 +52,8 @@ def test_the_model_reports_its_shape(model) -> None:
 
 
 def test_everything_gets_embedded(store: OrgStore) -> None:
-    assert store.embedding_status()["pending"] == 0
+    status = store.embedding_status()
+    assert status["identities"][store.embedders[0].name]["vectors"] > 0
 
 
 @pytest.mark.parametrize(

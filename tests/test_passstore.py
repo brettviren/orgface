@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 
 from org_store.embed import EmbeddingError
-from orgface.config import load
+from orgface.config import EmbedService, load
 from orgface.passstore import PassError, lookup
 from orgface.storage import embed_api_key, embedder
 
@@ -66,21 +66,17 @@ def test_lookup_reports_a_missing_program(tmp_path) -> None:
 
 
 def test_an_explicit_api_key_wins(fake_pass) -> None:
-    config = load(
-        overrides={"embed_api_key": "direct", "embed_api_key_passname": "good"},
-        environ={},
-    )
-    assert embed_api_key(config) == "direct"
+    service = EmbedService(api_key="direct", api_key_passname="good")
+    assert embed_api_key(service) == "direct"
     assert calls(fake_pass) == []
 
 
 def test_no_passname_means_no_key(fake_pass) -> None:
-    assert embed_api_key(load(environ={})) is None
+    assert embed_api_key(EmbedService()) is None
 
 
 def test_the_passname_is_read_only_when_needed(fake_pass) -> None:
-    config = load(overrides={"embed_api_key_passname": "good"}, environ={})
-    model = embedder(config)
+    model = embedder(EmbedService(api_key_passname="good"))
     assert calls(fake_pass) == []
     assert model.api_key == "sekrit"
     assert model.api_key == "sekrit"
@@ -88,12 +84,12 @@ def test_the_passname_is_read_only_when_needed(fake_pass) -> None:
 
 
 def test_a_failed_lookup_is_an_embedding_error(fake_pass) -> None:
-    config = load(overrides={"embed_api_key_passname": "absent"}, environ={})
     with pytest.raises(EmbeddingError, match="embedding API key"):
-        embedder(config).api_key
+        embedder(EmbedService(api_key_passname="absent")).api_key
 
 
 def test_the_passname_comes_from_the_config_file(tmp_path) -> None:
     path = tmp_path / "config.toml"
     path.write_text('[embed]\napi_key_passname = "some/entry"\n', encoding="utf-8")
-    assert load(path=path, environ={}).embed_api_key_passname == "some/entry"
+    (service,) = load(path=path, environ={}).embed
+    assert service.api_key_passname == "some/entry"

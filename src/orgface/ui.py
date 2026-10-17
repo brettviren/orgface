@@ -230,6 +230,35 @@ def format_search_results(
     return "\n".join(lines)
 
 
+def format_embed_status(status: dict, services: Sequence) -> str:
+    """Vectors per identity, then each service and whether it answers.
+
+    ``status`` is what the store reports; ``services`` pairs each
+    configured service with why it cannot be used, or None when it can.
+    An identity that is configured but has no vectors is listed with none.
+    """
+    counts = {
+        identity: facts["vectors"]
+        for identity, facts in status["identities"].items()
+    }
+    for service, _ in services:
+        counts.setdefault(service.identity, 0)
+
+    lines = [f"{status['nodes']} nodes in the store", "", "vectors:"]
+    width = max((len(identity) for identity in counts), default=0)
+    for identity, count in sorted(counts.items()):
+        lines.append(f"  {identity:<{width}}  {count}")
+
+    lines += ["", "services, in the order tried:"]
+    for service, problem in services:
+        answer = "ok" if problem is None else f"unavailable: {problem}"
+        lines.append(f"  {service.identity}")
+        lines.append(f"    url:    {service.url}")
+        lines.append(f"    model:  {service.model}")
+        lines.append(f"    status: {answer}")
+    return "\n".join(lines)
+
+
 def format_sync_report(report, heading: str, colour: bool = False) -> str:
     """What a sync did, one line per document that changed."""
     lines = [style(heading, "yellow", colour)]

@@ -6,10 +6,13 @@
 Settings are declared once in :data:`SETTINGS` and resolved in
 last-one-wins order:
 
-    built-in defaults -> environment variables -> config file -> CLI options
+    built-in defaults -> environment variables -> config file
+        -> host file -> CLI options
 
 The config file is TOML, either named explicitly or found at
-``$XDG_CONFIG_HOME/orgface/config.toml``.
+``$XDG_CONFIG_HOME/orgface/config.toml``.  Beside it, an optional
+``<host>.toml`` named for this machine's short host name overrides it, so
+one directory shared between machines can hold every machine's settings.
 """
 
 from __future__ import annotations
@@ -17,6 +20,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import socket
 import tomllib
 from collections.abc import Callable
 from dataclasses import dataclass, fields
@@ -251,52 +255,6 @@ SETTINGS: tuple[Setting, ...] = (
         "Sqlite file for the 'sqlite' store; defaults under the XDG state dir.",
     ),
     Setting(
-        "embed_url",
-        "embed",
-        "url",
-        "ORGFACE_EMBED_URL",
-        "http://127.0.0.1:8080",
-        parse_str,
-        "Base URL of an OpenAI-compatible embeddings service (with or without /v1).",
-    ),
-    Setting(
-        "embed_model",
-        "embed",
-        "model",
-        "ORGFACE_EMBED_MODEL",
-        "nomic-embed-text-v1.5",
-        parse_str,
-        "Which embedding model; recorded with every vector it produces.",
-    ),
-    Setting(
-        "embed_dimensions",
-        "embed",
-        "dimensions",
-        "ORGFACE_EMBED_DIMENSIONS",
-        768,
-        parse_int,
-        "How many numbers the embedding model returns per vector.",
-    ),
-    Setting(
-        "embed_api_key",
-        "embed",
-        "api_key",
-        "ORGFACE_EMBED_API_KEY",
-        None,
-        parse_str,
-        "Bearer token for the embeddings service; prefer the environment variable.",
-        secret=True,
-    ),
-    Setting(
-        "embed_api_key_passname",
-        "embed",
-        "api_key_passname",
-        "ORGFACE_EMBED_API_KEY_PASSNAME",
-        None,
-        parse_str,
-        "pass(1) entry whose first line is the API key, used when api_key is unset.",
-    ),
-    Setting(
         "store_directory",
         "store",
         "directory",
@@ -308,6 +266,89 @@ SETTINGS: tuple[Setting, ...] = (
 )
 
 _BY_NAME = {setting.name: setting for setting in SETTINGS}
+
+#: The section that may repeat, as ``[[embed]]``, one table per service.
+EMBED = "embed"
+
+#: Settings of one embedding service.  ``name`` is the attribute on
+#: :class:`EmbedService`; the environment variables describe one service,
+#: and supply what a service in a file leaves out.
+EMBED_SETTINGS: tuple[Setting, ...] = (
+    Setting(
+        "url",
+        "embed",
+        "url",
+        "ORGFACE_EMBED_URL",
+        "http://127.0.0.1:8080",
+        parse_str,
+        "Base URL of an OpenAI-compatible embeddings service (with or without /v1).",
+    ),
+    Setting(
+        "model",
+        "embed",
+        "model",
+        "ORGFACE_EMBED_MODEL",
+        "nomic-embed-text-v1.5",
+        parse_str,
+        "What this service calls the embedding model; sent with each request.",
+    ),
+    Setting(
+        "dimensions",
+        "embed",
+        "dimensions",
+        "ORGFACE_EMBED_DIMENSIONS",
+        768,
+        parse_int,
+        "How many numbers the embedding model returns per vector.",
+    ),
+    Setting(
+        "api_key",
+        "embed",
+        "api_key",
+        "ORGFACE_EMBED_API_KEY",
+        None,
+        parse_str,
+        "Bearer token for the embeddings service; prefer the environment variable.",
+        secret=True,
+    ),
+    Setting(
+        "api_key_passname",
+        "embed",
+        "api_key_passname",
+        "ORGFACE_EMBED_API_KEY_PASSNAME",
+        None,
+        parse_str,
+        "pass(1) entry whose first line is the API key, used when api_key is unset.",
+    ),
+    Setting(
+        "identity",
+        "embed",
+        "identity",
+        "ORGFACE_EMBED_IDENTITY",
+        None,
+        parse_str,
+        "Which model this is, whatever the service calls it; vectors are kept"
+        " per identity. Defaults to model.",
+    ),
+)
+
+_EMBED_BY_KEY = {setting.key: setting for setting in EMBED_SETTINGS}
+
+
+@dataclass(frozen=True)
+class EmbedService:
+    """One embedding service: where it is, and which model it serves."""
+
+    url: str = "http://127.0.0.1:8080"
+    model: str = "nomic-embed-text-v1.5"
+    dimensions: int = 768
+    api_key: str | None = None
+    api_key_passname: str | None = None
+    identity: str = "nomic-embed-text-v1.5"
+
+    def values(self) -> dict[str, Any]:
+        """Every setting's value, keyed by setting name."""
+        return {s.name: getattr(self, s.name) for s in EMBED_SETTINGS}
 
 
 @dataclass(frozen=True)
@@ -326,23 +367,18 @@ class Config:
     store_backend: str = "sqlite"
     store_database: Path | None = None
     store_directory: Path | None = None
-    embed_url: str = "http://127.0.0.1:8080"
-    embed_model: str = "nomic-embed-text-v1.5"
-    embed_dimensions: int = 768
-    embed_api_key: str | None = None
-    embed_api_key_passname: str | None = None
-    source: Path | None = None  # config file actually loaded, if any
+    embed: tuple[EmbedService, ...] = (EmbedService(),)  # in the order to try
+    sources: tuple[Path, ...] = ()  # config files actually loaded, in order
 
     def values(self) -> dict[str, Any]:
-        """Return every setting's resolved value, keyed by setting name."""
-        return {s.name: getattr(self, s.name) for s in SETTINGS}
+        """Return every setting's resolved value, keyed by setting name.
 
-    def describe(self) -> list[tuple[str, str, Any]]:
-        """Return ``(dotted_key, env_var, value)`` for each setting."""
-        return [
-            (f"{s.section}.{s.key}", s.env, getattr(self, s.name))
-            for s in SETTINGS
-        ]
+        The embedding services are under ``"embed"``, as a list of their
+        own values in the same form.
+        """
+        values = {s.name: getattr(self, s.name) for s in SETTINGS}
+        values[EMBED] = [service.values() for service in self.embed]
+        return values
 
 
 def _toml_value(setting: Setting, value: Any) -> str | None:
@@ -369,26 +405,33 @@ def to_toml(
     """Render setting values, keyed by setting name, as a TOML document.
 
     Settings are grouped into one table per section, in declaration
-    order.  Unset values are written as commented-out keys so the file
-    still names every setting.  ``env`` appends each environment
-    variable as a trailing comment; ``comments`` precedes each key with
-    its help text.  Secret settings are written commented out, value
-    withheld, unless ``secrets`` is true.  The result always parses back
-    with :func:`read_file`.
+    order, followed by one ``[[embed]]`` table per embedding service.
+    Unset values are written as commented-out keys so the file still
+    names every setting.  ``env`` appends each environment variable as a
+    trailing comment; ``comments`` precedes each key with its help text.
+    Secret settings are written commented out, value withheld, unless
+    ``secrets`` is true.  The result always parses back with
+    :func:`read_file`.
     """
     sections: dict[str, list[Setting]] = {}
     for setting in SETTINGS:
         sections.setdefault(setting.section, []).append(setting)
 
+    tables = [(f"[{section}]", settings, values) for section, settings in sections.items()]
+    tables += [
+        (f"[[{EMBED}]]", EMBED_SETTINGS, service)
+        for service in values.get(EMBED, [])
+    ]
+
     lines = [f"# {text}" for text in header or []]
-    for section, settings in sections.items():
+    for title, settings, table in tables:
         if lines:
             lines.append("")
-        lines.append(f"[{section}]")
+        lines.append(title)
         for setting in settings:
             if comments:
                 lines.append(f"# {setting.help}")
-            literal = _toml_value(setting, values.get(setting.name))
+            literal = _toml_value(setting, table.get(setting.name))
             if literal is None:
                 line = f"# {setting.key} ="
             elif setting.secret and not secrets:
@@ -403,7 +446,9 @@ def to_toml(
 
 def defaults() -> dict[str, Any]:
     """The built-in default of every setting, keyed by setting name."""
-    return {s.name: s.default for s in SETTINGS}
+    values = {s.name: s.default for s in SETTINGS}
+    values[EMBED] = [{s.name: s.default for s in EMBED_SETTINGS}]
+    return values
 
 
 def init_file(path: Path) -> bool:
@@ -423,19 +468,42 @@ def init_file(path: Path) -> bool:
     return True
 
 
-def _from_environ(environ: dict[str, str]) -> dict[str, Any]:
+def _from_environ(
+    environ: dict[str, str], settings: tuple[Setting, ...] = SETTINGS
+) -> dict[str, Any]:
     return {
-        s.name: environ[s.env] for s in SETTINGS if environ.get(s.env, "") != ""
+        s.name: environ[s.env] for s in settings if environ.get(s.env, "") != ""
     }
 
 
+def _embed_table(contents: Any, path: Path) -> dict[str, Any]:
+    """One ``[[embed]]`` table's raw values, keyed by setting name."""
+    if not isinstance(contents, dict):
+        raise ConfigError(f"{path}: [[{EMBED}]] must be a table")
+    values: dict[str, Any] = {}
+    for key, value in contents.items():
+        if key not in _EMBED_BY_KEY:
+            raise ConfigError(f"{path}: unknown key {EMBED}.{key}")
+        values[_EMBED_BY_KEY[key].name] = value
+    return values
+
+
 def _from_file(data: dict[str, Any], path: Path) -> dict[str, Any]:
+    """Raw setting values, keyed by setting name.
+
+    The embedding services, if the file names any, are under ``"embed"``
+    as a list.  A single ``[embed]`` table counts as a list of one.
+    """
     known: dict[str, set[str]] = {}
     for s in SETTINGS:
         known.setdefault(s.section, set()).add(s.key)
 
     values: dict[str, Any] = {}
     for section, contents in data.items():
+        if section == EMBED:
+            tables = contents if isinstance(contents, list) else [contents]
+            values[EMBED] = [_embed_table(table, path) for table in tables]
+            continue
         if section not in known:
             raise ConfigError(f"{path}: unknown section [{section}]")
         if not isinstance(contents, dict):
@@ -462,6 +530,39 @@ def read_file(path: Path) -> dict[str, Any]:
     return _from_file(data, path)
 
 
+def _coerce(setting: Setting, value: Any, where: str) -> Any:
+    try:
+        return setting.coerce(value)
+    except ConfigError as exc:
+        raise ConfigError(f"{where}: {exc}") from exc
+
+
+def _embed_service(raw: dict[str, Any], under: dict[str, Any], index: int) -> EmbedService:
+    """Resolve one service: its own values over those it inherits."""
+    merged = {**under, **raw}
+    resolved = {
+        s.name: _coerce(s, merged.get(s.name, s.default), f"{EMBED}[{index}].{s.key}")
+        for s in EMBED_SETTINGS
+    }
+    resolved["identity"] = resolved["identity"] or resolved["model"]
+    return EmbedService(**resolved)
+
+
+#: Names this machine for choosing its host file, instead of its host name.
+HOST_ENV = "ORGFACE_HOST"
+
+
+def host_name(environ: dict[str, str] | None = None) -> str:
+    """This machine's short host name, as ``hostname -s`` prints it."""
+    environ = os.environ if environ is None else environ
+    return environ.get(HOST_ENV) or socket.gethostname().split(".")[0]
+
+
+def host_file(base: Path, host: str) -> Path:
+    """The host file that goes with the config file BASE."""
+    return base.parent / f"{host}.toml"
+
+
 def load(
     path: Path | None = None,
     overrides: dict[str, Any] | None = None,
@@ -470,40 +571,52 @@ def load(
     """Resolve configuration from all layers.
 
     ``path`` names an explicit config file; when None the XDG location is
-    used if it exists.  ``overrides`` are command line values and win over
-    everything; entries whose value is None are ignored so that unset
-    Click options do not clobber lower layers.
+    used if it exists.  Either way a host file beside it, named for this
+    machine, is read after it when present.  ``overrides`` are command
+    line values and win over everything; entries whose value is None are
+    ignored so that unset Click options do not clobber lower layers.
     """
     environ = os.environ if environ is None else environ
 
-    source: Path | None = None
-    if path is not None:
-        if not path.exists():
-            raise ConfigError(f"{path}: no such config file")
-        source = path
-    else:
-        candidate = xdgpaths.config_file()
-        if candidate.exists():
-            source = candidate
+    base = path if path is not None else xdgpaths.config_file()
+    if path is not None and not path.exists():
+        raise ConfigError(f"{path}: no such config file")
+    host = host_file(base, host_name(environ))
+    sources = tuple(
+        candidate
+        for candidate in dict.fromkeys((base, host))
+        if candidate.exists()
+    )
 
     raw: dict[str, Any] = {}
     raw.update(_from_environ(dict(environ)))
-    if source is not None:
+    for source in sources:
         raw.update(read_file(source))
     if overrides:
         raw.update({k: v for k, v in overrides.items() if v is not None})
 
+    # The services as a whole come from the last layer naming any, so a
+    # host file lists the services that host uses rather than adding to
+    # another host's.  The environment fills in what a service leaves out.
+    under = _from_environ(dict(environ), EMBED_SETTINGS)
+    services = raw.pop(EMBED, None) or [{}]
+    embed = tuple(
+        _embed_service(service, under, index)
+        for index, service in enumerate(services)
+    )
+
     resolved: dict[str, Any] = {}
     for name, value in raw.items():
         setting = _BY_NAME[name]
-        try:
-            resolved[name] = setting.coerce(value)
-        except ConfigError as exc:
-            raise ConfigError(f"{setting.section}.{setting.key}: {exc}") from exc
+        resolved[name] = _coerce(setting, value, f"{setting.section}.{setting.key}")
 
     # Defaults for anything no layer supplied.
     for setting in SETTINGS:
         resolved.setdefault(setting.name, setting.coerce(setting.default))
 
     known = {f.name for f in fields(Config)}
-    return Config(**{k: v for k, v in resolved.items() if k in known}, source=source)
+    return Config(
+        **{k: v for k, v in resolved.items() if k in known},
+        embed=embed,
+        sources=sources,
+    )

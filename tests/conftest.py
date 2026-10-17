@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import json
 import os
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 import pytest
@@ -77,3 +79,43 @@ def store(backend: SqliteStore) -> OrgStore:
 def stored(store: OrgStore, fixture_json: dict) -> str:
     """A document already in the store; yields its id."""
     return store.create(fixture_json, path_hint="fixture.org")
+
+
+@pytest.fixture
+def service():
+    """A minimal OpenAI-style embeddings endpoint recording what it is sent."""
+    seen: list[dict] = []
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_POST(self) -> None:
+            body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+            seen.append(
+                {
+                    "path": self.path,
+                    "auth": self.headers.get("Authorization"),
+                    "model": body.get("model"),
+                }
+            )
+            if self.path != "/v1/embeddings":
+                self.send_error(404)
+                return
+            rows = [
+                {"index": i, "embedding": [0.0] * 4}
+                for i in range(len(body["input"]))
+            ]
+            answer = json.dumps({"data": rows}).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(answer)))
+            self.end_headers()
+            self.wfile.write(answer)
+
+        def log_message(self, *args) -> None:
+            pass
+
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    yield f"http://127.0.0.1:{server.server_port}", seen
+    server.shutdown()
+    server.server_close()

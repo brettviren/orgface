@@ -59,6 +59,14 @@ colour_option = click.option(
     help="Colourise the output.",
 )
 
+#: Shared by the commands that use an embedding model.
+identity_option = click.option(
+    "-i",
+    "--identity",
+    metavar="IDENTITY",
+    help="Use only embedding services of this model identity.",
+)
+
 #: Shared by every command that can write file names as terminal links.
 hyperlink_option = click.option(
     "--hyperlink",

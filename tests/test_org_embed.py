@@ -14,8 +14,6 @@ from __future__ import annotations
 
 import json
 import math
-import threading
-from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 import pytest
@@ -40,8 +38,10 @@ VOCABULARY = (
 class BagOfWords:
     """A deterministic stand-in for an embedding model."""
 
-    def __init__(self, name: str = "bag-of-words") -> None:
+    def __init__(self, name: str = "bag-of-words", up: bool = True) -> None:
         self._name = name
+        self.up = up
+        self.probes = 0
         self.document_calls: list[list[str]] = []
         self.query_calls: list[str] = []
 
@@ -61,6 +61,10 @@ class BagOfWords:
         self.query_calls.append(text)
         return self._vector(text)
 
+    def available(self) -> bool:
+        self.probes += 1
+        return self.up
+
     def _vector(self, text: str) -> list[float]:
         words = text.lower().split()
         raw = [float(words.count(term)) for term in VOCABULARY]
@@ -75,8 +79,7 @@ def model() -> BagOfWords:
 
 @pytest.fixture
 def store(tmp_path, model: BagOfWords) -> OrgStore:
-    backend = SqliteStore(tmp_path / "store.sqlite", embedder=model)
-    opened = OrgStore(backend)
+    opened = OrgStore(SqliteStore(tmp_path / "store.sqlite"), [model])
     from org_store.adapters.orgparser import parse_file
 
     opened.create(parse_file(DATA / "fixture.org"), path_hint="fixture.org")
@@ -85,6 +88,21 @@ def store(tmp_path, model: BagOfWords) -> OrgStore:
 
 def find(store: OrgStore, text: str, **kwargs):
     return store.search(SearchQuery(text=text, semantic=True, **kwargs))
+
+
+def vectors(store: OrgStore, identity: str = "bag-of-words") -> int:
+    """How many vectors IDENTITY has in STORE."""
+    found = store.embedding_status()["identities"].get(identity)
+    return 0 if found is None else found["vectors"]
+
+
+def stocked(tmp_path, *embedders) -> OrgStore:
+    """A store holding the fixture, offered EMBEDDERS in order."""
+    from org_store.adapters.orgparser import parse_file
+
+    store = OrgStore(SqliteStore(tmp_path / "store.sqlite"), embedders)
+    store.create(parse_file(DATA / "fixture.org"), path_hint="a.org")
+    return store
 
 
 # -- the protocol -----------------------------------------------------------
@@ -110,40 +128,6 @@ def test_an_absent_model_is_reported_not_hidden() -> None:
     assert embedder.available() is False
     with pytest.raises(EmbeddingError, match="no embedding model"):
         embedder.embed_query("anything")
-
-
-@pytest.fixture
-def service():
-    """A minimal OpenAI-style embeddings endpoint recording what it is sent."""
-    seen: list[dict] = []
-
-    class Handler(BaseHTTPRequestHandler):
-        def do_POST(self) -> None:
-            body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
-            seen.append({"path": self.path, "auth": self.headers.get("Authorization")})
-            if self.path != "/v1/embeddings":
-                self.send_error(404)
-                return
-            rows = [
-                {"index": i, "embedding": [0.0] * 4}
-                for i in range(len(body["input"]))
-            ]
-            answer = json.dumps({"data": rows}).encode("utf-8")
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", str(len(answer)))
-            self.end_headers()
-            self.wfile.write(answer)
-
-        def log_message(self, *args) -> None:
-            pass
-
-    server = HTTPServer(("127.0.0.1", 0), Handler)
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
-    yield f"http://127.0.0.1:{server.server_port}", seen
-    server.shutdown()
-    server.server_close()
 
 
 @pytest.mark.parametrize("suffix", ["", "/", "/v1", "/v1/"])
@@ -176,6 +160,21 @@ def test_a_callable_api_key_is_fetched_once(service) -> None:
     assert fetched == [1]
 
 
+def test_the_identity_is_recorded_but_the_model_is_asked_for(service) -> None:
+    url, seen = service
+    embedder = LlamaCppEmbedder(
+        url=url, model="nomic-embed-text-v1.5", dimensions=4,
+        identity="nomic-embed-text",
+    )
+    embedder.embed_query("hi")
+    assert seen[-1]["model"] == "nomic-embed-text-v1.5"
+    assert embedder.name == "nomic-embed-text"
+
+
+def test_the_identity_defaults_to_the_model() -> None:
+    assert LlamaCppEmbedder(model="m").name == "m"
+
+
 def test_no_api_key_sends_no_authorization(service) -> None:
     url, seen = service
     LlamaCppEmbedder(url=url, dimensions=4).embed_query("hi")
@@ -189,14 +188,14 @@ def test_nothing_is_embedded_until_asked(store: OrgStore) -> None:
     """A write must not depend on a model that may not be running."""
     status = store.embedding_status()
     assert status["nodes"] > 0
-    assert status["embedded"] == 0
-    assert status["pending"] == status["nodes"]
+    assert status["identities"] == {}
 
 
 def test_embedding_covers_the_store(store: OrgStore) -> None:
     done = store.embed()
     assert done["embedded"] == done["nodes"] > 0
-    assert store.embedding_status()["pending"] == 0
+    assert done["identity"] == "bag-of-words"
+    assert vectors(store) == done["nodes"]
 
 
 def test_a_second_pass_embeds_nothing(store: OrgStore, model: BagOfWords) -> None:
@@ -235,29 +234,128 @@ def test_only_changed_text_is_re_embedded(
 
 def test_removed_nodes_lose_their_vectors(store: OrgStore) -> None:
     store.embed()
-    before = store.embedding_status()["embedded"]
+    before = vectors(store)
     store.delete("fixture.org")
     done = store.embed()
     assert done["removed"] == before
-    assert store.embedding_status()["embedded"] == 0
+    assert vectors(store) == 0
 
 
-def test_changing_the_model_invalidates_everything(tmp_path) -> None:
-    """Vectors from two models are not in the same space."""
-    from org_store.adapters.orgparser import parse_file
+def test_each_identity_keeps_its_own_vectors(tmp_path) -> None:
+    """Vectors from two models are not in the same space, so both are kept."""
+    first, second = BagOfWords("first-model"), BagOfWords("second-model")
+    store = stocked(tmp_path, first, second)
+    nodes = store.embed()["nodes"]
+    assert store.embed(identity="second-model")["embedded"] == nodes
 
-    first = BagOfWords("first-model")
-    backend = SqliteStore(tmp_path / "store.sqlite", embedder=first)
-    store = OrgStore(backend)
-    store.create(parse_file(DATA / "fixture.org"), path_hint="a.org")
+    assert vectors(store, "first-model") == vectors(store, "second-model") == nodes
+    done = store.embed(identity="first-model")
+    assert (done["embedded"], done["removed"]) == (0, 0)
+
+
+def test_one_identity_under_two_model_names_shares_vectors(
+    tmp_path, service
+) -> None:
+    """Two services naming the same model differently must not re-embed."""
+    url, seen = service
+    remote = LlamaCppEmbedder(
+        url=url, model="nomic-embed-text", dimensions=4, identity="nomic"
+    )
+    local = LlamaCppEmbedder(
+        url=url, model="nomic-embed-text-v1.5", dimensions=4, identity="nomic"
+    )
+    assert stocked(tmp_path, remote).embed()["embedded"] > 0
+
+    done = stocked_again(tmp_path, local).embed()
+    assert (done["embedded"], done["removed"]) == (0, 0)
+    assert seen[-1]["model"] == "nomic-embed-text-v1.5"
+
+
+def stocked_again(tmp_path, *embedders) -> OrgStore:
+    """The store :func:`stocked` made, reopened with other EMBEDDERS."""
+    return OrgStore(SqliteStore(tmp_path / "store.sqlite"), embedders)
+
+
+def test_a_wider_model_cannot_claim_an_identity(tmp_path) -> None:
+    store = stocked(tmp_path, BagOfWords("same"))
     store.embed()
-    assert store.embedding_status()["pending"] == 0
 
-    backend.embedder = BagOfWords("second-model")
-    assert store.embedding_status()["pending"] > 0
-    done = store.embed()
-    assert done["removed"] > 0
-    assert done["embedded"] > 0
+    class Wider(BagOfWords):
+        @property
+        def dimensions(self) -> int:
+            return super().dimensions + 1
+
+    with pytest.raises(EmbeddingError, match="dimensions"):
+        stocked_again(tmp_path, Wider("same")).embed()
+
+
+# -- choosing a service -----------------------------------------------------
+
+
+def test_the_first_service_that_answers_is_used(tmp_path) -> None:
+    down, up, later = BagOfWords("m", up=False), BagOfWords("m"), BagOfWords("m")
+    store = stocked(tmp_path, down, up, later)
+    store.embed()
+    assert down.probes == 1 and down.document_calls == []
+    assert up.document_calls
+    assert later.probes == 0
+
+
+def test_an_identity_admits_only_its_services(tmp_path) -> None:
+    first, second = BagOfWords("first"), BagOfWords("second")
+    store = stocked(tmp_path, first, second)
+    assert store.embed(identity="second")["identity"] == "second"
+    assert first.probes == 0
+
+
+def test_an_unconfigured_identity_is_named(tmp_path) -> None:
+    store = stocked(tmp_path, BagOfWords("first"))
+    with pytest.raises(EmbeddingError, match="configured for other"):
+        store.embed(identity="other")
+
+
+def test_nothing_answering_is_an_error_naming_what_was_tried(tmp_path) -> None:
+    store = stocked(tmp_path, BagOfWords("a", up=False), BagOfWords("b", up=False))
+    with pytest.raises(EmbeddingError, match="tried a at .*, b at"):
+        store.embed()
+
+
+def test_search_skips_identities_with_no_vectors(tmp_path) -> None:
+    """A service whose model never embedded anything here is not asked."""
+    empty, full = BagOfWords("empty"), BagOfWords("full")
+    store = stocked(tmp_path, full)
+    store.embed()
+
+    store = stocked_again(tmp_path, empty, full)
+    assert find(store, "footnote")
+    assert empty.probes == 0 and empty.query_calls == []
+    assert full.query_calls == ["footnote"]
+
+
+def test_search_falls_through_to_another_service(tmp_path) -> None:
+    store = stocked(tmp_path, BagOfWords("first"), BagOfWords("second"))
+    store.embed(identity="first")
+    store.embed(identity="second")
+
+    down, up = BagOfWords("first", up=False), BagOfWords("second")
+    assert find(stocked_again(tmp_path, down, up), "footnote")
+    assert up.query_calls == ["footnote"]
+
+
+def test_search_by_identity(tmp_path) -> None:
+    first, second = BagOfWords("first"), BagOfWords("second")
+    store = stocked(tmp_path, first, second)
+    store.embed(identity="first")
+    store.embed(identity="second")
+    find(store, "footnote", identity="second")
+    assert first.query_calls == [] and second.query_calls == ["footnote"]
+
+
+def test_search_by_an_identity_with_no_vectors(tmp_path) -> None:
+    store = stocked(tmp_path, BagOfWords("first"), BagOfWords("second"))
+    store.embed(identity="first")
+    with pytest.raises(EmbeddingError, match="no vectors for second"):
+        find(store, "footnote", identity="second")
 
 
 def test_a_subset_can_be_embedded(store: OrgStore) -> None:
@@ -309,9 +407,10 @@ def test_the_query_is_embedded_as_a_query(
     assert model.query_calls == ["hello"]
 
 
-def test_nothing_embedded_means_no_results(store: OrgStore) -> None:
-    """Honest emptiness: there is nothing to be near."""
-    assert find(store, "hello") == []
+def test_nothing_embedded_says_so(store: OrgStore) -> None:
+    """Not an empty result, which would read as "nothing is near"."""
+    with pytest.raises(EmbeddingError, match="no vectors"):
+        find(store, "hello")
 
 
 def test_top_k_limits_results(store: OrgStore) -> None:
@@ -337,16 +436,16 @@ def test_property_filters_apply_too(store: OrgStore) -> None:
 
 def test_a_store_without_a_model_says_so(tmp_path) -> None:
     store = OrgStore(SqliteStore(tmp_path / "bare.sqlite"))
-    with pytest.raises(StoreError, match="no embedding model"):
+    with pytest.raises(StoreError, match="no embedding service is configured"):
         store.embed()
-    with pytest.raises(StoreError, match="no embedding model"):
+    with pytest.raises(StoreError, match="no embedding service is configured"):
         store.search(SearchQuery(text="x", semantic=True))
 
 
 def test_a_backend_that_keeps_none_says_so(tmp_path) -> None:
     from org_store.backends import OrgDirectoryStore
 
-    store = OrgStore(OrgDirectoryStore(tmp_path / "org"))
+    store = OrgStore(OrgDirectoryStore(tmp_path / "org"), [BagOfWords()])
     with pytest.raises(StoreError, match="no embeddings"):
         store.embed()
 
@@ -354,3 +453,38 @@ def test_a_backend_that_keeps_none_says_so(tmp_path) -> None:
 def test_text_search_still_works_alongside(store: OrgStore) -> None:
     store.embed()
     assert store.search(SearchQuery(text="hello"))
+
+
+# -- stores from before vector spaces ---------------------------------------
+
+
+def test_an_old_store_loses_its_vectors_but_not_its_documents(tmp_path) -> None:
+    import sqlite3
+
+    import sqlite_vec
+
+    path = tmp_path / "old.sqlite"
+    stocked(tmp_path, BagOfWords()).backend.close()
+    (tmp_path / "store.sqlite").rename(path)
+    db = sqlite3.connect(path)
+    db.enable_load_extension(True)
+    sqlite_vec.load(db)
+    db.executescript(
+        "DROP TABLE embeddings;"
+        "CREATE TABLE embeddings (doc_id TEXT, ref TEXT, model TEXT,"
+        " text_hash TEXT, vec_id INTEGER, PRIMARY KEY (doc_id, ref));"
+        "INSERT INTO embeddings VALUES ('a.org', 'x', 'm', 'h', 1);"
+        "CREATE VIRTUAL TABLE vec_nodes USING vec0(embedding float[4]);"
+    )
+    db.commit()
+    db.close()
+
+    store = OrgStore(SqliteStore(path), [BagOfWords()])
+    assert store.embedding_status()["identities"] == {}
+    assert store.read("a.org")
+    assert store.embed()["embedded"] > 0
+    names = {
+        row[0]
+        for row in sqlite3.connect(path).execute("SELECT name FROM sqlite_master")
+    }
+    assert "vec_nodes" not in names

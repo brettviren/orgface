@@ -108,21 +108,32 @@ CREATE VIRTUAL TABLE IF NOT EXISTS fts_nodes USING fts5(
     tokenize = "unicode61 remove_diacritics 2"
 );
 
--- Which nodes have a vector, and for what text.  Kept apart from the
--- derived tables above because embeddings are not free to recompute:
--- they cost a call to a model that may not even be running, so a write
--- must not depend on one.  The text hash is what lets a later pass embed
--- only what actually changed.
+-- One vector space per model identity.  Vectors from two models cannot
+-- be compared, so each identity has its own vec0 table, named for its
+-- space_id and as wide as that model's vectors.  Several can coexist, so
+-- machines sharing this file through different models each keep theirs.
+CREATE TABLE IF NOT EXISTS vector_spaces (
+    space_id   INTEGER PRIMARY KEY,
+    identity   TEXT NOT NULL UNIQUE,
+    dimensions INTEGER NOT NULL
+);
+
+-- Which nodes have a vector in which space, and for what text.  Kept
+-- apart from the derived tables above because embeddings are not free to
+-- recompute: they cost a call to a model that may not even be running,
+-- so a write must not depend on one.  The text hash is what lets a later
+-- pass embed only what actually changed.
 CREATE TABLE IF NOT EXISTS embeddings (
     doc_id    TEXT NOT NULL,
     ref       TEXT NOT NULL,
-    model     TEXT NOT NULL,
+    space_id  INTEGER NOT NULL REFERENCES vector_spaces(space_id),
     text_hash TEXT NOT NULL,
     vec_id    INTEGER NOT NULL,
-    PRIMARY KEY (doc_id, ref)
+    PRIMARY KEY (doc_id, ref, space_id)
 );
 
 CREATE INDEX IF NOT EXISTS embeddings_by_doc ON embeddings(doc_id);
+CREATE INDEX IF NOT EXISTS embeddings_by_space ON embeddings(space_id);
 CREATE INDEX IF NOT EXISTS nodes_by_type ON nodes(type);
 CREATE INDEX IF NOT EXISTS nodes_by_parent ON nodes(parent_ref);
 CREATE INDEX IF NOT EXISTS tags_by_tag ON tags(tag);
@@ -144,10 +155,15 @@ DERIVED = ("fts_nodes", "timestamps", "links", "properties", "tags", "nodes")
 #: Column positions in ``fts_nodes``, for bm25() and snippet().
 _FTS_HEADING, _FTS_BODY = 2, 3
 
-#: How a vector table is named, and where its shape is recorded.  The
-#: table cannot be created with the schema because its width is the
-#: model's dimension count, which is not known until one is configured.
-VEC_TABLE = "vec_nodes"
+#: The single vector table of the schema before vector spaces, dropped
+#: along with its ``embeddings`` rows when an old store is opened.
+OLD_VEC_TABLE = "vec_nodes"
+
+
+def vec_table(space_id: int) -> str:
+    """The vector table of one space.  It cannot be created with the
+    schema because its width is the model's, not known until one is used."""
+    return f"vec_space_{space_id}"
 
 #: bm25 weights per column.  A hit in a heading outranks one in a body:
 #: somebody who titled a note about a thing meant it to be about that
@@ -162,18 +178,22 @@ class SqliteStore:
     path, whose parent directories are created on demand.
     """
 
-    def __init__(self, database: Path | str, embedder: Embedder | None = None) -> None:
+    def __init__(self, database: Path | str) -> None:
         self.database = database
-        self.embedder = embedder
         if database != ":memory:":
             Path(database).parent.mkdir(parents=True, exist_ok=True)
         self._db = sqlite3.connect(str(database))
         self._db.row_factory = sqlite3.Row
         # Without this the ON DELETE CASCADE above is silently inert.
         self._db.execute("PRAGMA foreign_keys = ON")
-        self._db.executescript(SCHEMA)
-        self._db.commit()
-        self._vectors: bool | None = None
+        self._vec_loaded = False
+        try:
+            self._retire_single_space()
+            self._db.executescript(SCHEMA)
+            self._db.commit()
+        except sqlite3.Error as exc:
+            self._db.close()
+            raise StoreError(f"{database}: {exc}") from exc
 
     def close(self) -> None:
         self._db.close()
@@ -349,42 +369,40 @@ class SqliteStore:
 
     # -- embeddings ---------------------------------------------------------
 
-    def embed(self, doc_ids: Iterable[DocId] | None = None) -> dict[str, int]:
-        """Give every node that needs one an up-to-date vector.
+    def embed(
+        self, embedder: Embedder, doc_ids: Iterable[DocId] | None = None
+    ) -> dict[str, int]:
+        """Give every node that needs one an up-to-date vector from EMBEDDER.
 
         Incremental by text: a node whose text has not changed since it
         was embedded is left alone, because embedding is the expensive
-        part and most of a document is unchanged on most writes.  Changing
-        the model invalidates everything it did not produce, since vectors
-        from two models do not live in the same space and comparing them
-        would silently return nonsense.
+        part and most of a document is unchanged on most writes.  Only
+        EMBEDDER's space is written; vectors of other identities are kept,
+        except those of nodes that no longer exist.
 
         Returns what it did, so a caller can say so rather than guess.
         """
-        embedder = self._require_embedder()
-        self._ensure_vectors(embedder)
-
+        space = self._space(embedder, create=True)
         wanted = self._embeddable(doc_ids)
-        stale = self._stale(embedder, wanted)
-        tally = {"nodes": len(wanted), "embedded": 0, "removed": 0}
-
-        removed = self._drop_orphans(embedder, {(d, r) for d, r, _, _ in wanted})
-        tally["removed"] = removed
-
+        removed = self._drop_orphans()
+        stale = self._stale(space, wanted)
+        tally = {"nodes": len(wanted), "embedded": 0, "removed": removed}
         if not stale:
             return tally
 
         vectors = embedder.embed_documents([text for *_, text in stale])
         with self._db:
             for (doc_id, ref, digest, _), vector in zip(stale, vectors, strict=True):
-                self._store_vector(embedder, doc_id, ref, digest, vector)
+                self._store_vector(space, doc_id, ref, digest, vector)
         tally["embedded"] = len(stale)
         return tally
 
-    def semantic_search(self, query: SearchQuery) -> list[SearchResult]:
-        """Answer a query by nearest neighbour among the stored vectors."""
-        embedder = self._require_embedder()
-        if not self._has_vectors():
+    def semantic_search(
+        self, query: SearchQuery, embedder: Embedder
+    ) -> list[SearchResult]:
+        """Answer a query by nearest neighbour among EMBEDDER's vectors."""
+        space = self._space(embedder)
+        if space is None:
             return []
 
         wanted = _pack(embedder.embed_query(query.text or ""))
@@ -394,7 +412,7 @@ class SqliteStore:
         rows = self._db.execute(
             "SELECT rowid AS vec_id,"
             "       vec_distance_cosine(embedding, ?) AS cosine_distance"
-            f" FROM {VEC_TABLE}"
+            f" FROM {vec_table(space)}"
             " WHERE embedding MATCH ? AND k = ?"
             " ORDER BY distance",
             (wanted, wanted, depth),
@@ -408,14 +426,13 @@ class SqliteStore:
             else row["cosine_distance"]
             for row in rows
         }
-        marks = ", ".join("?" * len(found))
         meta = self._db.execute(
             "SELECT e.doc_id AS doc_id, e.ref AS ref, e.vec_id AS vec_id,"
             "       n.type AS type"
             "  FROM embeddings e"
             "  JOIN nodes n ON n.doc_id = e.doc_id AND n.ref = e.ref"
-            f" WHERE e.vec_id IN ({marks}) AND e.model = ?",
-            (*found, embedder.name),
+            f" WHERE e.vec_id IN ({_marks(found)}) AND e.space_id = ?",
+            (*found, space),
         ).fetchall()
 
         results = [
@@ -435,38 +452,104 @@ class SqliteStore:
         results.sort(key=lambda result: result.score, reverse=True)
         return results[: query.top_k]
 
-    def embedding_status(self) -> dict[str, int]:
-        """How much of the store has a current vector."""
+    def embedding_status(self) -> dict[str, Any]:
+        """How many nodes there are, and how many vectors each identity has."""
         total = self._db.execute(
-            f"SELECT count(*) AS n FROM fts_nodes"
+            "SELECT count(*) AS n FROM fts_nodes"
         ).fetchone()["n"]
-        current = 0
-        if self.embedder is not None:
-            current = self._db.execute(
-                "SELECT count(*) AS n FROM embeddings WHERE model = ?",
-                (self.embedder.name,),
-            ).fetchone()["n"]
-        return {"nodes": total, "embedded": current, "pending": max(total - current, 0)}
+        rows = self._db.execute(
+            "SELECT s.identity AS identity, s.dimensions AS dimensions,"
+            "       count(e.vec_id) AS vectors"
+            "  FROM vector_spaces s"
+            "  LEFT JOIN embeddings e ON e.space_id = s.space_id"
+            " GROUP BY s.space_id ORDER BY s.identity"
+        ).fetchall()
+        return {
+            "nodes": total,
+            "identities": {
+                row["identity"]: {
+                    "vectors": row["vectors"],
+                    "dimensions": row["dimensions"],
+                }
+                for row in rows
+            },
+        }
+
+    def embedded_identities(self) -> set[str]:
+        """The identities with at least one vector here."""
+        return {
+            row["identity"]
+            for row in self._db.execute(
+                "SELECT DISTINCT s.identity AS identity"
+                "  FROM vector_spaces s"
+                "  JOIN embeddings e ON e.space_id = s.space_id"
+            )
+        }
 
     # -- embedding internals ------------------------------------------------
 
-    def _require_embedder(self) -> Embedder:
-        if self.embedder is None:
-            raise StoreError("no embedding model is configured")
-        return self.embedder
+    def _retire_single_space(self) -> None:
+        """Drop the vectors of a store from before vector spaces.
 
-    def _has_vectors(self) -> bool:
-        if self._vectors is None:
-            row = self._db.execute(
-                "SELECT 1 FROM sqlite_master WHERE name = ?", (VEC_TABLE,)
-            ).fetchone()
-            self._vectors = row is not None
-            if self._vectors:
+        Those were tagged with a model name in a single table, and are not
+        worth converting: ``embed`` makes them again.
+        """
+        columns = {
+            row["name"]
+            for row in self._db.execute("PRAGMA table_info(embeddings)")
+        }
+        if "model" not in columns:
+            return
+        old = self._db.execute(
+            "SELECT 1 FROM sqlite_master WHERE name = ?", (OLD_VEC_TABLE,)
+        ).fetchone()
+        if old is not None:
+            # A vec0 table cannot be dropped without the extension; left
+            # behind it is unused and harmless.
+            with contextlib.suppress(StoreError, sqlite3.OperationalError):
                 self._load_vec()
-        return bool(self._vectors)
+                self._db.execute(f"DROP TABLE {OLD_VEC_TABLE}")
+        self._db.execute("DROP TABLE embeddings")
+        self._db.commit()
+
+    def _space(self, embedder: Embedder, create: bool = False) -> int | None:
+        """The space_id of EMBEDDER's identity, made on demand if CREATE.
+
+        None when it has no space and none was to be made.  A space keeps
+        the width it was made with, so a model claiming the identity with
+        another width is refused rather than mixed in.
+        """
+        row = self._db.execute(
+            "SELECT space_id, dimensions FROM vector_spaces WHERE identity = ?",
+            (embedder.name,),
+        ).fetchone()
+        if row is not None:
+            if row["dimensions"] != embedder.dimensions:
+                raise EmbeddingError(
+                    f"vectors for {embedder.name} here have {row['dimensions']}"
+                    f" dimensions, not the {embedder.dimensions} configured"
+                )
+            self._load_vec()
+            return row["space_id"]
+        if not create:
+            return None
+        self._load_vec()
+        with self._db:
+            cursor = self._db.execute(
+                "INSERT INTO vector_spaces (identity, dimensions) VALUES (?, ?)",
+                (embedder.name, embedder.dimensions),
+            )
+            space = cursor.lastrowid
+            self._db.execute(
+                f"CREATE VIRTUAL TABLE {vec_table(space)} USING"
+                f" vec0(embedding float[{embedder.dimensions}])"
+            )
+        return space
 
     def _load_vec(self) -> None:
-        """Load sqlite-vec into this connection."""
+        """Load sqlite-vec into this connection, once."""
+        if self._vec_loaded:
+            return
         try:
             import sqlite_vec
         except ImportError as exc:  # pragma: no cover - optional extra
@@ -484,18 +567,7 @@ class SqliteStore:
         finally:
             with contextlib.suppress(AttributeError):
                 self._db.enable_load_extension(False)
-
-    def _ensure_vectors(self, embedder: Embedder) -> None:
-        """Create the vector table, whose width the model decides."""
-        if self._has_vectors():
-            return
-        self._load_vec()
-        self._db.execute(
-            f"CREATE VIRTUAL TABLE {VEC_TABLE} USING"
-            f" vec0(embedding float[{embedder.dimensions}])"
-        )
-        self._db.commit()
-        self._vectors = True
+        self._vec_loaded = True
 
     def _embeddable(
         self, doc_ids: Iterable[DocId] | None
@@ -525,14 +597,14 @@ class SqliteStore:
         return out
 
     def _stale(
-        self, embedder: Embedder, wanted: list[tuple[str, str, str, str]]
+        self, space: int, wanted: list[tuple[str, str, str, str]]
     ) -> list[tuple[str, str, str, str]]:
-        """Those whose vector is missing, outdated, or from another model."""
+        """Those whose vector in SPACE is missing or outdated."""
         current = {
             (row["doc_id"], row["ref"]): row["text_hash"]
             for row in self._db.execute(
-                "SELECT doc_id, ref, text_hash FROM embeddings WHERE model = ?",
-                (embedder.name,),
+                "SELECT doc_id, ref, text_hash FROM embeddings WHERE space_id = ?",
+                (space,),
             )
         }
         return [
@@ -541,56 +613,64 @@ class SqliteStore:
             if current.get((entry[0], entry[1])) != entry[2]
         ]
 
-    def _drop_orphans(self, embedder: Embedder, keep: set[tuple[str, str]]) -> int:
-        """Forget vectors for nodes that no longer exist, or another model's."""
-        rows = self._db.execute(
-            "SELECT doc_id, ref, vec_id, model FROM embeddings"
-        ).fetchall()
+    def _drop_orphans(self) -> int:
+        """Forget vectors, in every space, of nodes no longer worth one.
+
+        Judged against the whole store, not just the documents being
+        embedded, so embedding a subset leaves the rest alone.
+        """
+        keep = {(doc_id, ref) for doc_id, ref, _, _ in self._embeddable(None)}
         doomed = [
             row
-            for row in rows
-            if row["model"] != embedder.name or (row["doc_id"], row["ref"]) not in keep
+            for row in self._db.execute(
+                "SELECT doc_id, ref, space_id, vec_id FROM embeddings"
+            ).fetchall()
+            if (row["doc_id"], row["ref"]) not in keep
         ]
         if not doomed:
             return 0
+        self._load_vec()
         with self._db:
             for row in doomed:
                 self._db.execute(
-                    f"DELETE FROM {VEC_TABLE} WHERE rowid = ?", (row["vec_id"],)
+                    f"DELETE FROM {vec_table(row['space_id'])} WHERE rowid = ?",
+                    (row["vec_id"],),
                 )
                 self._db.execute(
-                    "DELETE FROM embeddings WHERE doc_id = ? AND ref = ?",
-                    (row["doc_id"], row["ref"]),
+                    "DELETE FROM embeddings"
+                    " WHERE doc_id = ? AND ref = ? AND space_id = ?",
+                    (row["doc_id"], row["ref"], row["space_id"]),
                 )
         return len(doomed)
 
     def _store_vector(
         self,
-        embedder: Embedder,
+        space: int,
         doc_id: str,
         ref: str,
         digest: str,
         vector: list[float],
     ) -> None:
+        table = vec_table(space)
         previous = self._db.execute(
-            "SELECT vec_id FROM embeddings WHERE doc_id = ? AND ref = ?",
-            (doc_id, ref),
+            "SELECT vec_id FROM embeddings"
+            " WHERE doc_id = ? AND ref = ? AND space_id = ?",
+            (doc_id, ref, space),
         ).fetchone()
         if previous is not None:
             self._db.execute(
-                f"DELETE FROM {VEC_TABLE} WHERE rowid = ?", (previous["vec_id"],)
+                f"DELETE FROM {table} WHERE rowid = ?", (previous["vec_id"],)
             )
         cursor = self._db.execute(
-            f"INSERT INTO {VEC_TABLE}(embedding) VALUES (?)", (_pack(vector),)
+            f"INSERT INTO {table}(embedding) VALUES (?)", (_pack(vector),)
         )
         self._db.execute(
-            "INSERT INTO embeddings (doc_id, ref, model, text_hash, vec_id)"
+            "INSERT INTO embeddings (doc_id, ref, space_id, text_hash, vec_id)"
             " VALUES (?, ?, ?, ?, ?)"
-            " ON CONFLICT(doc_id, ref) DO UPDATE SET"
-            "  model = excluded.model,"
+            " ON CONFLICT(doc_id, ref, space_id) DO UPDATE SET"
             "  text_hash = excluded.text_hash,"
             "  vec_id = excluded.vec_id",
-            (doc_id, ref, embedder.name, digest, cursor.lastrowid),
+            (doc_id, ref, space, digest, cursor.lastrowid),
         )
 
     def _passes(self, query: SearchQuery, doc_id: str, ref: str, kind: str) -> bool:

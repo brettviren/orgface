@@ -1,6 +1,6 @@
 #+title: Embeddings in the store
 #+filetags: :concept:developer:search:
-#+summary: How vectors are kept, invalidated, and kept out of the write path.
+#+summary: How vectors are kept per model identity, and kept out of the write path.
 #+audience: developer
 #+status: current
 #+updated: 2026-08-23
@@ -8,12 +8,14 @@
 #+source: src/org_store/backends/sqlite.py
 
 A vector stands for a node's meaning, and is what
-[[file:semantic-search.org][semantic search]] compares. The =embeddings= table records, per node, which
-model produced its vector, a hash of the text that was embedded, and the
-row id of the vector itself in a =sqlite-vec= virtual table.
+[[file:semantic-search.org][semantic search]] compares. Each model identity has a vector space: a row in
+=vector_spaces= giving its width, and a =sqlite-vec= virtual table named
+=vec_space_<id>= holding its vectors. The =embeddings= table records, per
+node and space, a hash of the text that was embedded and the row id of the
+vector.
 
-That table cannot be created with the rest of the schema: its width is the
-model's dimension count, which is not known until one is configured.
+A space's table cannot be created with the rest of the schema: its width
+is the model's dimension count, not known until that model is first used.
 
 * Not a derived table
 
@@ -31,15 +33,31 @@ A node whose text has not changed since it was embedded is left alone. Most
 of a document is unchanged on most writes, so this is the difference
 between an edit costing one call and costing hundreds.
 
-Vectors for nodes that no longer exist are dropped in the same pass, so the
-index does not accumulate orphans.
+Vectors for nodes that no longer exist are dropped in the same pass, from
+every space, so the index does not accumulate orphans. That is judged
+against the whole store, so embedding some documents leaves the rest alone.
 
-* Changing the model invalidates everything
+* One space per model identity
 
 Vectors from two models do not live in the same space, and comparing them
-would silently return nonsense. The model name is stored beside every
-vector, so a different =embed.model= means the old ones no longer count
-rather than quietly mixing two spaces.
+would silently return nonsense. So each identity gets its own space, and
+embedding or searching with one never touches another's. A store shared
+between machines can therefore hold vectors from each machine's model at
+once, and several services naming one model differently share a space by
+sharing an identity.
+
+A space keeps the width it was made with; a model claiming an identity
+with another width is refused rather than mixed in.
+
+Which service to use is the service layer's choice, not the backend's:
+=OrgStore= holds the configured embedders in order and passes the chosen
+one to =embed= and =semantic_search=.
+
+* Stores from before vector spaces
+
+Their =embeddings= table tagged each vector with a model name, in one
+=vec_nodes= table. Opening one drops both, keeping every document;
+=org store embed= makes the vectors again.
 
 * Filtering after the search
 

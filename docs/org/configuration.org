@@ -17,7 +17,7 @@ new setting is one entry rather than four edits.
 
 Layers apply in last-one-wins order:
 
-: environment variables -> config file -> command line options
+: environment variables -> config file -> host file -> command line options
 
 That the file beats the environment is deliberate: the file is the
 considered choice and the environment is the ambient one. A command line
@@ -26,6 +26,56 @@ it cannot clobber a lower layer with =None=.
 
 The file is named with =-c/--config=, or found at
 =~/.config/orgface/config.toml= — see [[file:xdg-locations.org][XDG locations]].
+
+* One directory, several machines
+
+Beside the config file, a file named for the machine — its short host
+name, as =hostname -s= prints it, plus =.toml= — is read after it and
+overrides it. A directory synced between machines can therefore hold
+=config.toml= with what they share and =<host>.toml= with what differs:
+
+#+begin_src conf-toml
+# config.toml
+[store]
+database = "~/sync/orgface/store.sqlite"
+
+# haiku.toml
+[daemon]
+lifetime = "4h"
+#+end_src
+
+Either file may be absent. =ORGFACE_HOST= names the host file to use in
+place of the host name. =org config show= lists the files it read, and
+=org config paths= the host file it looks for.
+
+* Embedding services
+
+=[[embed]]= may repeat, one table per embedding service, listed in the
+order to try them. A single =[embed]= table is a list of one, and with
+none at all there is one service with the defaults below.
+
+#+begin_src conf-toml
+[[embed]]
+url   = "http://127.0.0.1:8080"
+model = "nomic-embed-text-v1.5"
+identity = "nomic-embed-text"
+
+[[embed]]
+url   = "https://api.example.org/v1"
+model = "nomic-embed-text"
+api_key_passname = "example/api/key"
+#+end_src
+
+Both name one model, so they share an =identity= and the vectors either
+makes. Listed together in the shared =config.toml=, each machine uses the
+first that answers: where the local server runs, that one; elsewhere it is
+refused quickly and the next is used. See [[file:semantic-search.org][Semantic search]].
+
+The services are a whole, taken from the last layer naming any: a host
+file with =[[embed]]= tables replaces the list rather than adding to it,
+which is how one machine tries them in another order. The =ORGFACE_EMBED_*=
+variables fill in what each service in a file leaves out — an API key
+given that way goes to every service.
 
 * The settings
 
@@ -47,12 +97,13 @@ topic = "Context Notes"           # ORGFACE_NOTE_TOPIC
 [log]
 pager = "less"                    # ORGFACE_PAGER
 
-[embed]
+[[embed]]                              # may repeat; see below
 url        = "http://127.0.0.1:8080"   # ORGFACE_EMBED_URL
 model      = "nomic-embed-text-v1.5"   # ORGFACE_EMBED_MODEL
 dimensions = 768                       # ORGFACE_EMBED_DIMENSIONS
 # api_key  = "..."                     # ORGFACE_EMBED_API_KEY; prefer the env var
 # api_key_passname = "embed/key"       # ORGFACE_EMBED_API_KEY_PASSNAME; first line of `pass embed/key`
+# identity = "nomic-embed-text"        # ORGFACE_EMBED_IDENTITY; stored with vectors, defaults to model
 
 [store]
 backend   = "sqlite"       # ORGFACE_STORE_BACKEND

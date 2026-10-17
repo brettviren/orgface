@@ -37,6 +37,9 @@ class SearchQuery(BaseModel):
     property_filters: dict[str, str] | None = None
     doc_ids: list[DocId] | None = None
     top_k: int = Field(default=20, ge=1)
+    #: For a semantic search, the model identity whose vectors to search;
+    #: None tries every configured one that has vectors here.
+    identity: str | None = None
 
 
 class SearchResult(BaseModel):

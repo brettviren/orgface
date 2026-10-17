@@ -9,7 +9,13 @@ import click
 
 from .. import ui
 from ..cli import Context, pass_context
-from . import HELP, colour_option, hyperlink_option, opened_store
+from . import (
+    HELP,
+    colour_option,
+    hyperlink_option,
+    identity_option,
+    opened_store,
+)
 
 
 @click.command(context_settings=HELP, no_args_is_help=True)
@@ -69,6 +75,7 @@ from . import HELP, colour_option, hyperlink_option, opened_store
     metavar="N",
     help="Return at most N results.",
 )
+@identity_option
 @colour_option
 @hyperlink_option
 @pass_context
@@ -82,6 +89,7 @@ def search(
     properties: tuple[str, ...],
     doc_ids: tuple[str, ...],
     top_k: int,
+    identity: str | None,
     colour: str,
     hyperlink: str,
 ) -> None:
@@ -100,6 +108,10 @@ def search(
     vector is of the whole node, not of its heading or its body. Each
     hit is led by its cosine similarity to the query, from 1 down.
 
+    The configured [[embed]] services are tried in order, skipping any
+    whose identity has no vectors in the store, and the first that answers
+    is used. -i/--identity tries only those of that identity.
+
     In a terminal that renders links, such as kitty, each document name is
     a link to its file. --hyperlink=always forces them on, for a terminal
     this does not recognise, and never turns them off.
@@ -115,6 +127,7 @@ def search(
         property_filters=_properties(properties),
         doc_ids=list(doc_ids) or None,
         top_k=top_k,
+        identity=identity,
     )
 
     with opened_store(ctx) as store:

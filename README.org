@@ -335,7 +335,7 @@ that keeps no index says so rather than quietly returning nothing.
 
 #+begin_src sh
 org store embed              # build them; only changed text is sent
-org store embed --status     # how much of the store is covered
+org store embed status      # vectors per identity, and which services answer
 org search -s "physics equations"
 #+end_src
 
@@ -362,8 +362,15 @@ so that is a difference in the interface rather than a flag to forget.
 to a model that may not be running, and storing a document should not
 fail for that reason. So =org store embed= is asked for, and it is
 incremental: a node whose text has not changed is not sent again.
-Changing =embed.model= invalidates every vector the old one produced,
-because vectors from two models do not live in the same space.
+
+*Vectors are kept per model identity.* Configuration may list several
+=[[embed]]= services. =org store embed= uses the first that answers;
+=org search -s= the first that answers whose identity has vectors in the
+store; =-i/--identity= on either picks an identity. Services that name the
+same model differently share vectors by sharing an =identity=, and a store
+synced between machines can hold vectors from each machine's model at
+once. =org store embed status= shows the vectors per identity and whether
+each service answers.
 
 ** Store backends
 
@@ -531,9 +538,18 @@ read from a file named with =-c/--config=, otherwise from
 =~/.config/orgface/config.toml=. Cached org-roam locations live
 under =~/.cache/orgface/=.
 
+A =<host>.toml= beside the config file, named by =hostname -s=, is read
+after it and overrides it, so one synced directory can hold every
+machine's settings: shared ones in =config.toml=, differences in each
+host's file.
+
+=[[embed]]= may repeat, one table per embedding service, in the order to
+try them; each machine uses the first that answers. Services naming one
+model differently share vectors by giving the same =identity=.
+
 Layers apply in last-one-wins order:
 
-: environment variables -> config file -> command line options
+: environment variables -> config file -> host file -> command line options
 
 #+begin_src conf-toml
 [daemon]
@@ -554,12 +570,13 @@ topic = "Context Notes"           # ORGFACE_NOTE_TOPIC
 [log]
 pager = "less"                    # ORGFACE_PAGER
 
-[embed]
+[[embed]]                              # may repeat, one per service
 url        = "http://127.0.0.1:8080"   # ORGFACE_EMBED_URL
 model      = "nomic-embed-text-v1.5"   # ORGFACE_EMBED_MODEL
 dimensions = 768                       # ORGFACE_EMBED_DIMENSIONS
 # api_key  = "..."                     # ORGFACE_EMBED_API_KEY; prefer the env var
 # api_key_passname = "embed/key"       # ORGFACE_EMBED_API_KEY_PASSNAME; first line of `pass embed/key`
+# identity = "nomic-embed-text"        # ORGFACE_EMBED_IDENTITY; stored with vectors, defaults to model
 
 [store]
 backend   = "sqlite"       # ORGFACE_STORE_BACKEND: sqlite or orgfs

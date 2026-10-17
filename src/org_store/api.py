@@ -63,6 +63,8 @@ class EmbedResponse(BaseModel):
     nodes: int
     embedded: int
     removed: int
+    #: The model identity the vectors were made for.
+    identity: str
 
 
 def create_app(provider: StoreProvider, title: str = "org store"):
@@ -250,11 +252,15 @@ def create_app(provider: StoreProvider, title: str = "org store"):
         "/embed",
         operation_id="embed",
         response_model=EmbedResponse,
-        summary="Build the embeddings semantic search needs, incrementally.",
+        summary=(
+            "Build the embeddings semantic search needs, incrementally. "
+            "Give identity to embed for that model; otherwise the first "
+            "configured service that answers is used."
+        ),
     )
-    def embed(store: OrgStore = Store) -> Any:
+    def embed(identity: str | None = None, store: OrgStore = Store) -> Any:
         try:
-            return EmbedResponse(**store.embed())
+            return EmbedResponse(**store.embed(identity=identity))
         except StoreError as exc:
             raise _fail(exc) from exc
 

@@ -13,14 +13,15 @@ and =clear-cache= change anything.
 org config show          # the resolved configuration
 org config show --env    # also name each environment variable
 org config init          # create the default config file if absent
-org config paths         # the XDG locations in use
+org config paths         # the XDG locations and host file in use
 org config clear-cache   # forget the cached org-roam locations
 #+end_src
 
 * show
 
-Prints the config file actually loaded — or the XDG path it looked at and
-did not find — then every setting as TOML, one table per section, in the
+Prints the config files actually loaded, in the order applied — the config
+file then this host's file — or the XDG path it looked at and did not
+find, then every setting as TOML, one table per section, in the
 order they are declared. Unset settings appear as commented-out keys. With
 =--env= each line also carries, as a trailing comment, the environment
 variable that would set it. Secret settings, such as =embed.api_key=, are

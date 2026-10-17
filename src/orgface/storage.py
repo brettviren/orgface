@@ -22,7 +22,7 @@ from org_store.service import OrgStore
 from org_store.store import StoreError
 
 from . import xdgpaths
-from .config import Config
+from .config import Config, EmbedService
 
 
 class StorageError(Exception):
@@ -67,8 +67,13 @@ def document_file(config: Config, doc_id: str) -> Path | None:
     return candidate if candidate.is_file() else None
 
 
-def embedder(config: Config):
-    """The embedding model configuration names.
+def embedders(config: Config) -> list:
+    """Every embedding service configuration names, in the order to try."""
+    return [embedder(service) for service in config.embed]
+
+
+def embedder(service: EmbedService):
+    """The embedder for one configured service.
 
     Built unconditionally but contacted lazily: nothing talks to the
     model until something asks for a vector, so a store opens fine with
@@ -77,23 +82,24 @@ def embedder(config: Config):
     from org_store.embed import LlamaCppEmbedder
 
     return LlamaCppEmbedder(
-        url=config.embed_url,
-        model=config.embed_model,
-        dimensions=config.embed_dimensions,
-        api_key=embed_api_key(config),
+        url=service.url,
+        model=service.model,
+        dimensions=service.dimensions,
+        api_key=embed_api_key(service),
+        identity=service.identity,
     )
 
 
-def embed_api_key(config: Config):
+def embed_api_key(service: EmbedService):
     """The embedding service's API key, or a callable that fetches it.
 
-    An explicit ``embed.api_key`` wins.  Otherwise ``embed.api_key_passname``
-    names a pass(1) entry, read only when the service is first contacted
-    so that commands which never embed do not trigger a password prompt.
+    An explicit ``api_key`` wins.  Otherwise ``api_key_passname`` names a
+    pass(1) entry, read only when the service is first contacted so that
+    commands which never embed do not trigger a password prompt.
     """
-    if config.embed_api_key or not config.embed_api_key_passname:
-        return config.embed_api_key
-    passname = config.embed_api_key_passname
+    if service.api_key or not service.api_key_passname:
+        return service.api_key
+    passname = service.api_key_passname
 
     def fetch() -> str:
         from org_store.embed import EmbeddingError
@@ -133,7 +139,9 @@ def open_spec(config: Config, spec: str) -> OrgStore:
 
         emacs = Emacs(config)
     try:
-        return OrgStore(open_backend(chosen.name, target, emacs, embedder(config)))
+        return OrgStore(
+            open_backend(chosen.name, target, emacs), embedders(config)
+        )
     except StoreError as exc:
         raise StorageError(str(exc)) from exc
     except OSError as exc:
@@ -159,7 +167,7 @@ def open_store(config: Config) -> OrgStore:
         emacs = Emacs(config)
     try:
         return OrgStore(
-            open_backend(chosen.name, location(config), emacs, embedder(config))
+            open_backend(chosen.name, location(config), emacs), embedders(config)
         )
     except StoreError as exc:
         raise StorageError(str(exc)) from exc

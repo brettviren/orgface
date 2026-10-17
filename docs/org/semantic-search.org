@@ -11,8 +11,10 @@
 
 #+begin_src sh
 org store embed              # build the vectors; only changed text is sent
-org store embed --status     # how much of the store is covered
+org store embed -i nomic     # ... with a service of that model identity
+org store embed status       # vectors per identity, and which services answer
 org search -s "physics equations"
+org search -s -i nomic "physics equations"
 #+end_src
 
 Word search finds nothing for "physics equations" in a note that says
@@ -31,10 +33,32 @@ It costs a call to a model that may not be running, and storing a document
 should not fail for that reason. So =org store embed= is asked for, and it
 is incremental: a node whose text has not changed is not sent again.
 
-Changing =embed.model= invalidates every vector the old one produced,
-because vectors from two models do not live in the same space. The model
-name is stored beside each vector so that this can be noticed rather than
-quietly mixed.
+* Several services, several models
+
+Configuration may name any number of embedding services, as repeated
+=[[embed]]= tables, in the order to try them (see [[file:configuration.org][Configuration]]). Each has
+a =url=, the =model= name that service uses, and an =identity= saying which
+model it really is, defaulting to =model=.
+
+Vectors are kept per identity. Services name the same model differently —
+one serves =nomic-embed-text=, a local =llama-server=
+=nomic-embed-text-v1.5= — and nothing they report identifies the weights
+behind a name, so the configuration says which names are one model: give
+them the same =identity= and the vectors either makes serve both.
+Different identities keep separate vectors side by side, so a store shared
+between machines can hold what each embedded with its own model.
+
+- =org store embed= :: uses the first service that answers, among those of
+  =-i/--identity= when given. Answering means a one-word embedding came
+  back from that model with the configured width.
+- =org search -s= :: the same, but skips any service whose identity has no
+  vectors in the store: an empty index would answer, uselessly.
+- =org store embed status= :: the vectors each identity has, then every
+  configured service with its identity, url, model and whether it answers.
+
+Be careful an identity is true. Two different models under one identity
+mix two vector spaces and search quietly returns nonsense. A model whose
+width differs from the vectors already under its identity is refused.
 
 * Questions and passages are embedded differently
 
@@ -57,5 +81,5 @@ uv sync --extra semantic
 * Related
 
 - [[file:command-search.org][org search]] :: the word-matching default.
-- [[file:embeddings.org][Embeddings in the store]] :: how vectors are kept and invalidated.
-- [[file:configuration.org][Configuration]] :: =embed.url=, =embed.model=, =embed.dimensions=, =embed.api_key=, =embed.api_key_passname=.
+- [[file:embeddings.org][Embeddings in the store]] :: how vectors are kept, per identity.
+- [[file:configuration.org][Configuration]] :: the =[[embed]]= settings =url=, =model=, =identity=, =dimensions=, =api_key=, =api_key_passname=.

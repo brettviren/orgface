@@ -47,6 +47,14 @@ Search, reindex and embed are not on the backend protocol. The service asks
 whether the active backend can do them and, when it cannot, says so — an
 empty result would read as "no matches" when it means "never looked".
 
+* Choosing an embedding service
+
+=OrgStore= is given the configured embedders, in order. =embed= uses the
+first that answers, of the requested identity when there is one; a
+semantic =search= also passes over any whose identity has no vectors in
+the backend. The backend is handed the chosen embedder and never chooses
+one itself, so the policy is the same for every adapter.
+
 * Related
 
 - [[file:backend-protocol.org][The backend protocol]] :: what is deliberately not in it.

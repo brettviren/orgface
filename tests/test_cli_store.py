@@ -405,3 +405,78 @@ def test_sync_rejects_an_unknown_backend(runner, paired) -> None:
     result = runner.invoke(main, ["store", "sync", "postgres:/tmp/x"])
     assert result.exit_code != 0
     assert "unknown store backend" in result.output
+
+
+# -- embedding --------------------------------------------------------------
+
+
+@pytest.fixture
+def services(tmp_path, service) -> Path:
+    """A config naming an unreachable service then a working one, sharing
+    an identity, and a second identity only the working server answers."""
+    pytest.importorskip("sqlite_vec", reason="the semantic extra is not installed")
+    url, _ = service
+    path = tmp_path / "config.toml"
+    path.write_text(
+        f'[store]\ndatabase = "{tmp_path / "store.sqlite"}"\n'
+        '[[embed]]\nurl = "http://127.0.0.1:9"\nmodel = "far"\n'
+        'identity = "nomic"\ndimensions = 4\n'
+        f'[[embed]]\nurl = "{url}"\nmodel = "near"\n'
+        'identity = "nomic"\ndimensions = 4\n'
+        f'[[embed]]\nurl = "{url}"\nmodel = "other"\ndimensions = 4\n',
+        encoding="utf-8",
+    )
+    return path
+
+
+def test_embed_uses_the_first_service_that_answers(
+    runner, services, source, service
+) -> None:
+    _, seen = service
+    runner.invoke(main, ["-c", str(services), "store", "add", str(source)])
+    result = runner.invoke(main, ["-c", str(services), "store", "embed"])
+    assert result.exit_code == 0, result.output
+    assert result.output.startswith("nomic: embedded ")
+    assert {request["model"] for request in seen} == {"near"}
+
+
+def test_embed_by_identity(runner, services, source, service) -> None:
+    _, seen = service
+    runner.invoke(main, ["-c", str(services), "store", "add", str(source)])
+    result = runner.invoke(
+        main, ["-c", str(services), "store", "embed", "-i", "other"]
+    )
+    assert result.exit_code == 0, result.output
+    assert result.output.startswith("other: embedded ")
+    assert {request["model"] for request in seen} == {"other"}
+
+
+def test_embed_status_lists_vectors_and_services(
+    runner, services, source
+) -> None:
+    config = ["-c", str(services)]
+    runner.invoke(main, [*config, "store", "add", str(source)])
+    runner.invoke(main, [*config, "store", "embed"])
+    result = runner.invoke(main, [*config, "store", "embed", "status"])
+    assert result.exit_code == 0, result.output
+    lines = result.output.splitlines()
+    nomic = next(line for line in lines if line.strip().startswith("nomic "))
+    assert int(nomic.split()[-1]) > 0
+    assert any(line.split() == ["other", "0"] for line in lines)
+    assert "url:    http://127.0.0.1:9" in result.output
+    assert "model:  far" in result.output
+    assert result.output.count("status: ok") == 2
+    assert "status: unavailable: no embedding model at http://127.0.0.1:9" in (
+        result.output
+    )
+
+
+def test_search_needs_vectors_for_the_identity(runner, services, source) -> None:
+    config = ["-c", str(services)]
+    runner.invoke(main, [*config, "store", "add", str(source)])
+    runner.invoke(main, [*config, "store", "embed"])
+    found = runner.invoke(main, [*config, "search", "-s", "hello"])
+    assert found.exit_code == 0, found.output
+    missing = runner.invoke(main, [*config, "search", "-s", "-i", "other", "hello"])
+    assert missing.exit_code != 0
+    assert "no vectors for other" in missing.output

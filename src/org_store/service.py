@@ -16,11 +16,13 @@ models an adapter would have to walk.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
 from pydantic import ValidationError
 
+from .embed import Embedder, EmbeddingError
 from .extract import Index, index_document
 from .model import OrgDocument, OrgNodeBase
 from .refs import assign_refs, compute_ref
@@ -61,10 +63,19 @@ class NodeSummary:
 
 
 class OrgStore:
-    """CRUDS operations against one backend."""
+    """CRUDS operations against one backend.
 
-    def __init__(self, backend: StoreBackend) -> None:
+    ``embedders`` are the embedding services semantic work may use, in
+    the order to try them.  Several may share an identity -- the same
+    model behind different services -- and the first that answers is
+    used, so a store can be embedded and searched from wherever it is.
+    """
+
+    def __init__(
+        self, backend: StoreBackend, embedders: Sequence[Embedder] = ()
+    ) -> None:
         self.backend = backend
+        self.embedders = list(embedders)
 
     # -- documents ----------------------------------------------------------
 
@@ -186,16 +197,21 @@ class OrgStore:
         worse than saying so.  A backend that keeps no index says that
         here rather than returning an empty list, which would read as "no
         matches" when it means "never looked".
-        """
-        kind = "semantic_search" if query.semantic else "search"
-        answer = getattr(self.backend, kind, None)
-        if answer is None:
-            raise StoreError(
-                f"{type(self.backend).__name__} keeps no search index"
-            )
-        return answer(query)
 
-    def embed(self, doc_ids: list[DocId] | None = None) -> dict[str, int]:
+        A semantic search uses the first embedder, of ``query.identity``
+        when given, whose identity has vectors here and which answers.
+        """
+        if not query.semantic:
+            answer = self._capability("search", "keeps no search index")
+            return answer(query)
+        answer = self._capability("semantic_search", "keeps no search index")
+        have = self._capability("embedded_identities", "keeps no embeddings")()
+        embedder = self.choose_embedder(query.identity, among=have)
+        return answer(query, embedder)
+
+    def embed(
+        self, doc_ids: list[DocId] | None = None, identity: str | None = None
+    ) -> dict[str, Any]:
         """Bring the store's embeddings up to date with its content.
 
         Kept out of the write path deliberately.  Embedding costs a call
@@ -203,22 +219,61 @@ class OrgStore:
         one would fail for a reason that has nothing to do with storing a
         document.  So this is asked for, and it is incremental: only text
         that actually changed is embedded again.
-        """
-        run = getattr(self.backend, "embed", None)
-        if run is None:
-            raise StoreError(
-                f"{type(self.backend).__name__} keeps no embeddings"
-            )
-        return run(doc_ids)
 
-    def embedding_status(self) -> dict[str, int]:
-        """How much of the store has a current vector."""
-        status = getattr(self.backend, "embedding_status", None)
-        if status is None:
-            raise StoreError(
-                f"{type(self.backend).__name__} keeps no embeddings"
-            )
-        return status()
+        Uses the first embedder, of IDENTITY when given, that answers, and
+        says which identity it embedded for.
+        """
+        run = self._capability("embed", "keeps no embeddings")
+        embedder = self.choose_embedder(identity)
+        return {**run(embedder, doc_ids), "identity": embedder.name}
+
+    def embedding_status(self) -> dict[str, Any]:
+        """How many nodes there are, and how many vectors each identity has."""
+        return self._capability("embedding_status", "keeps no embeddings")()
+
+    def choose_embedder(
+        self, identity: str | None = None, among: set[str] | None = None
+    ) -> Embedder:
+        """The first embedder, in order, that may be used and answers.
+
+        IDENTITY, when given, admits only embedders of that identity;
+        AMONG, when given, only those whose identity is in it -- a search
+        passes the identities that have vectors, so a service whose model
+        never embedded anything here is not even asked.
+        """
+        candidates = [
+            embedder
+            for embedder in self.embedders
+            if (identity is None or embedder.name == identity)
+            and (among is None or embedder.name in among)
+        ]
+        if not candidates:
+            raise EmbeddingError(self._nothing_to_try(identity, among))
+        for embedder in candidates:
+            if embedder.available():
+                return embedder
+        names = ", ".join(
+            f"{embedder.name} at {getattr(embedder, 'url', '?')}"
+            for embedder in candidates
+        )
+        raise EmbeddingError(f"no embedding service answered: tried {names}")
+
+    def _nothing_to_try(self, identity: str | None, among: set[str] | None) -> str:
+        if not self.embedders:
+            return "no embedding service is configured"
+        if identity is not None and all(e.name != identity for e in self.embedders):
+            return f"no embedding service is configured for {identity}"
+        if among is not None:
+            which = identity or "any configured identity"
+            return f"no vectors for {which} in this store; run embed first"
+        return "no embedding service to try"
+
+    def _capability(self, name: str, missing: str):
+        """The backend's NAME method, or a StoreError saying it has none."""
+        found = getattr(self.backend, name, None)
+        if found is None:
+            raise StoreError(f"{type(self.backend).__name__} {missing}")
+        return found
 
     def briefs(self) -> list[DocumentSummary]:
         """A short summary of every document, for listing.

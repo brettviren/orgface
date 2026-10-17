@@ -28,6 +28,9 @@ here are not guessable from a tool signature:
 - The identifier that survives editing is org's own =ID= property.
 - [[file:command-search.org][Search]] matches words literally, so punctuation and maths need no
   escaping; =semantic= matches by meaning and only finds what is embedded.
+  Both =search= and =embed= take an optional =identity= naming the model
+  whose vectors to use; without one, the first configured service that
+  answers is used.
 
 * Naming
 
